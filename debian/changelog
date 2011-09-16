@@ -1,4 +1,4 @@
-gyoto (0.0.0~git20110831-1) unstable; urgency=low
+gyoto (0.0.0-1) unstable; urgency=low
 
   * Initial release (Closes: #640809)
 
