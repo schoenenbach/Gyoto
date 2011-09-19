@@ -18,11 +18,13 @@
  */
 
 #include "GyotoUtils.h"
-#include <GyotoPhoton.h>
-#include <GyotoScreen.h>
-#include <GyotoWorldlineIntegState.h>
-#include <GyotoDefs.h>
-#include <GyotoError.h>
+#include "GyotoFactoryMessenger.h"
+#include "GyotoPhoton.h"
+#include "GyotoScreen.h"
+#include "GyotoWorldlineIntegState.h"
+#include "GyotoDefs.h"
+#include "GyotoError.h"
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -60,14 +62,14 @@ Photon::Photon(const Photon& o) :
 
 Photon * Photon::clone() const { return new Photon(*this); }
 
-Photon::Photon(SmartPointer<Metric> met, SmartPointer<Astrobj> obj,
+Photon::Photon(SmartPointer<Metric::Generic> met, SmartPointer<Astrobj::Generic> obj,
 	       double* coord):
   Worldline(), transmission_freqobs_(1.), spectro_(NULL), transmission_(NULL)
 {
   setInitialCondition(met, obj, coord);
 }
 
-Photon::Photon(SmartPointer<Metric> met, SmartPointer<Astrobj> obj, 
+Photon::Photon(SmartPointer<Metric::Generic> met, SmartPointer<Astrobj::Generic> obj, 
 	       SmartPointer<Screen> screen, double d_alpha, double d_delta):
   Worldline(), object_(obj), transmission_freqobs_(1.),
   spectro_(NULL), transmission_(NULL)
@@ -106,7 +108,7 @@ void Photon::resetTransmission() {
 
 double Photon::getMass() const { return 0.; }
 
-void Photon::setAstrobj(SmartPointer<Astrobj> ao) {
+void Photon::setAstrobj(SmartPointer<Astrobj::Generic> ao) {
   imin_=imax_=i0_;
   object_=ao;
 }
@@ -121,12 +123,12 @@ SmartPointer<Spectrometer> Photon::getSpectrometer() const { return spectro_; }
 string Photon::className() const { return  string("Photon"); }
 string Photon::className_l() const { return  string("photon"); }
 
-SmartPointer<Astrobj> Photon::getAstrobj() const { return object_; }
+SmartPointer<Astrobj::Generic> Photon::getAstrobj() const { return object_; }
 
 
 
-void Photon::setInitialCondition(SmartPointer<Metric> met,
-				 SmartPointer<Astrobj> obj,
+void Photon::setInitialCondition(SmartPointer<Metric::Generic> met,
+				 SmartPointer<Astrobj::Generic> obj,
 				 SmartPointer<Screen> screen,
 				 const double d_alpha,
 				 const double d_delta)
@@ -138,8 +140,8 @@ void Photon::setInitialCondition(SmartPointer<Metric> met,
 
 }
 
-void Photon::setInitialCondition(SmartPointer<Metric> met,
-				 SmartPointer<Astrobj> obj,
+void Photon::setInitialCondition(SmartPointer<Metric::Generic> met,
+				 SmartPointer<Astrobj::Generic> obj,
 				 const double coord[8])
 {
   
@@ -161,13 +163,13 @@ void Photon::setInitialCondition(SmartPointer<Metric> met,
   object_=obj;
 }
 
-int Photon::hit(AstrobjProperties *data) {
+int Photon::hit(Astrobj::Properties *data) {
 
   /*
     Ray-tracing of the photon until the object_ is hit. Radiative
     transfer inside the object_ may then be performed depending on
     flag_radtransf. Final result (observed flux for instance,
-    depending on object_'s AstrobjProperties) will be stored in data.
+    depending on object_'s Astrobj::Properties) will be stored in data.
    */
 
   //tlim_=-1000.;//DEBUG //NB: integration stops when t < Worldline::tlim_
@@ -398,7 +400,8 @@ int Photon::hit(AstrobjProperties *data) {
   
 }
 
-double Photon::findMin(Astrobj* object, double t1, double t2, double &tmin,
+double Photon::findMin(Astrobj::Generic* object,
+		       double t1, double t2, double &tmin,
 		       double threshold) {
   if (debug())
     cerr << "DEBUG: in Photon::findMind()\n";
@@ -438,7 +441,7 @@ double Photon::findMin(Astrobj* object, double t1, double t2, double &tmin,
 
 }
 
-void Photon::findValue(Astrobj* object, double value,
+void Photon::findValue(Astrobj::Generic* object, double value,
 		       double tinside, double &toutside) {
   double pcur[4];
   while (fabs(toutside-tinside) > GYOTO_T_TOL) {
@@ -458,7 +461,7 @@ double Photon::getTransmission(size_t i) const {
     throwError("Photon::getTransmission(): i > nsamples");
   return transmission_[i];
 }
-double const * const Photon::getTransmission() const { return transmission_; }
+double const * Photon::getTransmission() const { return transmission_; }
 void Photon::transmit(size_t i, double t) {
   if (i==size_t(-1)) { transmission_freqobs_ *= t; return; }
   if (!spectro_() || i>=spectro_->getNSamples())
@@ -470,7 +473,7 @@ void Photon::transmit(size_t i, double t) {
 }
 
 #ifdef GYOTO_USE_XERCES
-void Photon::fillElement(factoryMessenger *fmp) {
+void Photon::fillElement(FactoryMessenger *fmp) {
   if (metric_)     fmp -> setMetric (metric_) ;
   if (object_)    fmp -> setAstrobj (object_) ;
 
@@ -482,11 +485,11 @@ void Photon::fillElement(factoryMessenger *fmp) {
     fmp -> setParameter ("Delta", delta_);
 }
 
-SmartPointer<Photon> Gyoto::PhotonSubcontractor(factoryMessenger* fmp) {
+SmartPointer<Photon> Gyoto::PhotonSubcontractor(FactoryMessenger* fmp) {
 
   string name="", content="";
-  SmartPointer<Metric> gg = NULL;
-  SmartPointer<Astrobj> ao = NULL;
+  SmartPointer<Metric::Generic> gg = NULL;
+  SmartPointer<Astrobj::Generic> ao = NULL;
 
   SmartPointer<Photon> ph = new Photon();
   ph -> setMetric(  fmp->getMetric() );

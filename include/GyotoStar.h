@@ -30,11 +30,12 @@
 #define __GyotoStar_H_ 
 
 namespace Gyoto{
-  class Star;
+  namespace Astrobj { class Star; }
 }
 
 #include <GyotoMetric.h>
 #include <GyotoAstrobj.h>
+#include <GyotoSpectrum.h>
 
 #ifdef GYOTO_USE_XERCES
 #include <GyotoRegister.h>
@@ -49,8 +50,10 @@ namespace Gyoto{
  * Gyoto can compute the Star's orbit in a Gyoto::Metric and to
  * perform ray-tracing on this target.
  */
-class Gyoto::Star : public Gyoto::Astrobj, public Gyoto::Worldline {
-  friend class Gyoto::SmartPointer<Gyoto::Star>;
+class Gyoto::Astrobj::Star :
+  public Gyoto::Astrobj::Generic,
+  public Gyoto::Worldline {
+  friend class Gyoto::SmartPointer<Gyoto::Astrobj::Star>;
   
   // Data : 
   // -----
@@ -69,7 +72,7 @@ class Gyoto::Star : public Gyoto::Astrobj, public Gyoto::Worldline {
   * \param pos[4] initial position
   * \param v[3] initial velocity
   */
-  Star(SmartPointer<Metric> gg, double radius,
+  Star(SmartPointer<Metric::Generic> gg, double radius,
        double pos[4], double v[3]) ;                        ///< Standard constructor
 
  /**
@@ -91,8 +94,8 @@ class Gyoto::Star : public Gyoto::Astrobj, public Gyoto::Worldline {
   virtual std::string className() const ; ///< "Star"
   virtual std::string className_l() const ; ///< "star"
 
-  virtual void setMetric(SmartPointer<Metric>);
-  virtual SmartPointer<Metric> getMetric() const;
+  virtual void setMetric(SmartPointer<Metric::Generic>);
+  virtual SmartPointer<Metric::Generic> getMetric() const;
   virtual void setSpectrum(SmartPointer<Spectrum::Generic>);
   virtual SmartPointer<Spectrum::Generic> getSpectrum() const;
   virtual void setOpacity(SmartPointer<Spectrum::Generic>);
@@ -116,7 +119,7 @@ class Gyoto::Star : public Gyoto::Astrobj, public Gyoto::Worldline {
 
  public:
 #ifdef GYOTO_USE_XERCES
-  virtual void fillElement(factoryMessenger *fmp) const ; /// < called from Factory
+  virtual void fillElement(FactoryMessenger *fmp) const ; /// < called from Factory
   static Astrobj::Subcontractor_t Subcontractor;
   static void Init();
 #endif
@@ -133,7 +136,7 @@ class Gyoto::Star : public Gyoto::Astrobj, public Gyoto::Worldline {
    * integration points. Since the integration happens in spherical
    * coordinates, this is not true.
    */
-  virtual int Impact_(Photon *ph, size_t index, AstrobjProperties* data=NULL);
+  virtual int Impact_(Photon *ph, size_t index, Astrobj::Properties* data=NULL);
  protected:
   virtual void getVelocity(double const pos[4], double vel[4]) ;
 

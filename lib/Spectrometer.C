@@ -19,6 +19,8 @@
 
 #include "GyotoSpectrometer.h"
 #include "GyotoUtils.h"
+#include "GyotoFactoryMessenger.h"
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -153,15 +155,15 @@ std::string Spectrometer::getKindStr() const {
 
 size_t Spectrometer::getNSamples() const { return nsamples_; }
 
-double const * const Spectrometer::getBand() const { return band_; }
+double const * Spectrometer::getBand() const { return band_; }
 
-double const * const Spectrometer::getMidpoints() const { return midpoints_; }
-double const * const Spectrometer::getChannels() const { return boundaries_; }
-double const * const Spectrometer::getWidths() const { return widths_; }
+double const * Spectrometer::getMidpoints() const { return midpoints_; }
+double const * Spectrometer::getChannels() const { return boundaries_; }
+double const * Spectrometer::getWidths() const { return widths_; }
 
 #ifdef GYOTO_USE_XERCES
 
-void Spectrometer::fillElement(factoryMessenger *fmp) {
+void Spectrometer::fillElement(FactoryMessenger *fmp) {
   fmp -> setSelfAttribute( "kind", getKindStr() );
   fmp -> setSelfAttribute( "nsamples", nsamples_ );
   ostringstream ss;
@@ -171,7 +173,7 @@ void Spectrometer::fillElement(factoryMessenger *fmp) {
 }
 
 SmartPointer<Spectrometer>
-Gyoto::SpectrometerSubcontractor(factoryMessenger* fmp) {
+Gyoto::SpectrometerSubcontractor(FactoryMessenger* fmp) {
 
   string skind = fmp -> getSelfAttribute( "kind" );
   size_t nsamples = atol( fmp -> getSelfAttribute( "nsamples" ) . c_str () );

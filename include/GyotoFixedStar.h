@@ -33,7 +33,7 @@
 #include <iomanip>
 
 namespace Gyoto{
-  class FixedStar;
+  namespace Astrobj { class FixedStar; }
 }
 
 #include <GyotoAstrobj.h>
@@ -45,8 +45,8 @@ namespace Gyoto{
  *
  *  The target of ray-traced Gyoto::Photon
  */
-class Gyoto::FixedStar : public Astrobj {
-  friend class Gyoto::SmartPointer<Gyoto::FixedStar>;
+class Gyoto::Astrobj::FixedStar : public Astrobj::Generic {
+  friend class Gyoto::SmartPointer<Gyoto::Astrobj::FixedStar>;
 
  // Data : 
   // -----
@@ -70,7 +70,7 @@ class Gyoto::FixedStar : public Astrobj {
   FixedStar(const FixedStar& orig);///< Copy constructor
   virtual FixedStar* clone() const;
 
-  FixedStar(SmartPointer<Gyoto::Metric> gg, double StPsn[3], double radius);
+  FixedStar(SmartPointer<Gyoto::Metric::Generic> gg, double StPsn[3], double radius);
                    ///< Standard constructor
   
   virtual ~FixedStar() ;                        ///< Destructor
@@ -80,11 +80,11 @@ class Gyoto::FixedStar : public Astrobj {
   // ---------
  public:
   double getRadius() const ; ///< Get radius_
-  const double* const getPos() const; ///< Get const pointer to pos_
+  double const * getPos() const; ///< Get const pointer to pos_
   void getPos(double* dst) const; ///< Get a copy of the pos_ array
   //  const int getCoordSys() const; ///< Get coordinate system
   
-  virtual void setMetric(SmartPointer<Metric> metric) ;
+  virtual void setMetric(SmartPointer<Metric::Generic> metric) ;
   void setRadius(double); ///< Set radius
   void setPos(const double[3]); ///< Set pos_ array
   //  void setCoordSys(int); ///< set coordinate system
@@ -92,7 +92,7 @@ class Gyoto::FixedStar : public Astrobj {
   
  public:
 #ifdef GYOTO_USE_XERCES
-  virtual void fillElement(factoryMessenger *fmp) const ;
+  virtual void fillElement(FactoryMessenger *fmp) const ;
   static Astrobj::Subcontractor_t Subcontractor;
   static void Init();
   ///< called from Factory
@@ -103,11 +103,11 @@ class Gyoto::FixedStar : public Astrobj {
  public:
   virtual double operator()(double const coord[4]) ;
 
-  virtual int Impact(Photon *ph, size_t index, AstrobjProperties *data=NULL);
+  virtual int Impact(Photon *ph, size_t index, Astrobj::Properties *data=NULL);
 
 
  protected:
-  int Impact_(Photon *ph, size_t index, AstrobjProperties *data=NULL);
+  int Impact_(Photon *ph, size_t index, Astrobj::Properties *data=NULL);
   virtual void getVelocity(double const pos[4], double vel[4]) ;
 
   double emission(double nu_em, double dsem, double cp[8], double co[8]=NULL)

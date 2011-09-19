@@ -100,7 +100,7 @@ class Gyoto::Scenery : protected Gyoto::SmartPointee {
   /**
    * The Metric, or stage, for this scenery.
    */
-  SmartPointer<Metric> gg_;
+  SmartPointer<Metric::Generic> gg_;
 
   /**
    * Screen, the camera for this scenery.
@@ -110,7 +110,7 @@ class Gyoto::Scenery : protected Gyoto::SmartPointee {
   /**
    * The astrophysical emitting light in this scenery... the actor.
    */
-  SmartPointer<Astrobj> obj_;
+  SmartPointer<Astrobj::Generic> obj_;
 
   /**
    * Default integration step for the photons
@@ -134,7 +134,7 @@ class Gyoto::Scenery : protected Gyoto::SmartPointee {
    * To ensure consistency, the Metric will be forcibly attached to
    * the Screen and to the Astrobj.
    */
-  Scenery(SmartPointer<Metric>, SmartPointer<Screen>, SmartPointer<Astrobj>);
+  Scenery(SmartPointer<Metric::Generic>, SmartPointer<Screen>, SmartPointer<Astrobj::Generic>);
   
   ~Scenery();
 
@@ -143,22 +143,22 @@ class Gyoto::Scenery : protected Gyoto::SmartPointee {
  public:
   // Accessors
   // ---------
-  SmartPointer<Metric> getMetric(); ///< Get Metric
+  SmartPointer<Metric::Generic> getMetric(); ///< Get Metric
   /**
    * The provided Metric will also be atached to the Screen and the Astrobj.
    */
-  void setMetric(SmartPointer<Metric>);  ///< Set Metric
+  void setMetric(SmartPointer<Metric::Generic>);  ///< Set Metric
   SmartPointer<Screen> getScreen(); ///< Get Screen object
 
   /**
    * The Metric attached to the Scenery will be attached to the Screen
    */
   void setScreen(SmartPointer<Screen>);///< Set screen object
-  SmartPointer<Astrobj> getAstrobj();
+  SmartPointer<Astrobj::Generic> getAstrobj();
   /**
    * The Metric attached to the Scenery will be attached to the Astrobj
    */
-  void setAstrobj(SmartPointer<Astrobj>);
+  void setAstrobj(SmartPointer<Astrobj::Generic>);
   double getDelta() const ;
   void setDelta(double);
 
@@ -171,20 +171,20 @@ class Gyoto::Scenery : protected Gyoto::SmartPointee {
   // Worker:
  public:
   void rayTrace(size_t imin, size_t imax, size_t jmin, size_t jmax,
-		AstrobjProperties* data, int save=0);
+		Astrobj::Properties* data, int save=0);
 
-  void operator() (size_t i, size_t j, AstrobjProperties *data);
+  void operator() (size_t i, size_t j, Astrobj::Properties *data);
 
 #ifdef GYOTO_USE_XERCES
  public:
-    void fillElement(factoryMessenger *fmp); /// < called from Factory
+    void fillElement(FactoryMessenger *fmp); /// < called from Factory
 #endif
  
 };
 
 #ifdef GYOTO_USE_XERCES
 namespace Gyoto {
-  SmartPointer<Scenery> ScenerySubcontractor(Gyoto::factoryMessenger*);
+  SmartPointer<Scenery> ScenerySubcontractor(Gyoto::FactoryMessenger*);
 }
 #endif
 

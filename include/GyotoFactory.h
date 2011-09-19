@@ -45,13 +45,13 @@
 
 namespace Gyoto {
   class Factory;
-  class factoryMessenger;
+  class FactoryMessenger;
   class Spectrometer;
 }
 
 class Gyoto::Factory
 {
-  friend class Gyoto::factoryMessenger;
+  friend class Gyoto::FactoryMessenger;
 
  protected:
   // XERCES MACHINERY
@@ -70,9 +70,9 @@ class Gyoto::Factory
 
   // GYOTO elements
   SmartPointer<Scenery> scenery_;
-  SmartPointer<Metric> gg_;
+  SmartPointer<Metric::Generic> gg_;
   SmartPointer<Screen> screen_;
-  SmartPointer<Astrobj> obj_;
+  SmartPointer<Astrobj::Generic> obj_;
   SmartPointer<Photon> photon_;
   SmartPointer<Spectrometer> spectro_;
 
@@ -86,8 +86,8 @@ class Gyoto::Factory
 
   // Constructors for SAVING
   Factory(SmartPointer<Scenery> sc);
-  Factory(SmartPointer<Metric> gg);
-  Factory(SmartPointer<Astrobj> ao);
+  Factory(SmartPointer<Metric::Generic> gg);
+  Factory(SmartPointer<Astrobj::Generic> ao);
   Factory(SmartPointer<Spectrum::Generic> sp);
   Factory(SmartPointer<Screen> screen);
   Factory(SmartPointer<Photon> photon);
@@ -108,20 +108,20 @@ class Gyoto::Factory
 
   // Building and getting SmartPointer<OBJECTS>
   Gyoto::SmartPointer<Gyoto::Scenery> getScenery();
-  Gyoto::SmartPointer<Gyoto::Metric>  getMetric();
+  Gyoto::SmartPointer<Gyoto::Metric::Generic>  getMetric();
   Gyoto::SmartPointer<Gyoto::Screen>  getScreen();
-  Gyoto::SmartPointer<Gyoto::Astrobj> getAstrobj();
+  Gyoto::SmartPointer<Gyoto::Astrobj::Generic> getAstrobj();
   Gyoto::SmartPointer<Gyoto::Photon>  getPhoton();
   Gyoto::SmartPointer<Gyoto::Spectrum::Generic>  getSpectrum();
-  Gyoto::SmartPointer<Gyoto::AstrobjProperties> getAstrobjProperties();
+  Gyoto::SmartPointer<Gyoto::Astrobj::Properties> getAstrobjProperties();
 
   // XML OUTPUT
   void write(const char* const fname=0);
   std::string format();
 
   // Setting elements
-  void setMetric(SmartPointer<Metric> gg, xercesc::DOMElement *el);
-  void setAstrobj(SmartPointer<Astrobj> ao, xercesc::DOMElement *el);
+  void setMetric(SmartPointer<Metric::Generic> gg, xercesc::DOMElement *el);
+  void setAstrobj(SmartPointer<Astrobj::Generic> ao, xercesc::DOMElement *el);
   void setScreen(SmartPointer<Screen> scr, xercesc::DOMElement *el);
   void setContent(std::string content, xercesc::DOMElement *el);
   void setParameter(std::string name, xercesc::DOMElement *pel);
@@ -132,7 +132,7 @@ class Gyoto::Factory
   void setParameter(std::string name, unsigned long value, xercesc::DOMElement *pel);
   void setParameter(std::string name, std::string sval, xercesc::DOMElement*);
   void setParameter(std::string , double val[], size_t, xercesc::DOMElement*,
-		    factoryMessenger **child = NULL);
+		    FactoryMessenger **child = NULL);
 
   /**
    * Input is path relative to XML file. Output is absolute path to same file.

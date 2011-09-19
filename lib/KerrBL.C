@@ -18,11 +18,12 @@
  */
 
 #include "GyotoUtils.h"
-#include <iostream>
-#include <GyotoKerrBL.h>
-#include <GyotoWorldline.h>
-#include <GyotoError.h>
+#include "GyotoFactoryMessenger.h"
+#include "GyotoKerrBL.h"
+#include "GyotoWorldline.h"
+#include "GyotoError.h"
 
+#include <iostream>
 #include <cmath>
 #include <fstream>
 #include <iomanip>
@@ -32,6 +33,7 @@
 
 using namespace std ; 
 using namespace Gyoto ;
+using namespace Gyoto::Metric ;
 
 /*
   NB: points delicats de KerrBL:
@@ -70,12 +72,13 @@ militari stop.
   //OK for a<0.999)
 					       
 KerrBL::KerrBL() :
-    Metric(GYOTO_COORDKIND_SPHERICAL), spin_(0.)
+  Generic(GYOTO_COORDKIND_SPHERICAL), spin_(0.)
 {
   setKind("KerrBL");
 }
 
-KerrBL::KerrBL(double a, double m) : Metric(m, GYOTO_COORDKIND_SPHERICAL), spin_(a) 
+KerrBL::KerrBL(double a, double m) :
+  Generic(m, GYOTO_COORDKIND_SPHERICAL), spin_(a) 
 {
   //DEBUG!!!
   //spin_=0.;
@@ -958,12 +961,12 @@ void KerrBL::setParticleProperties(Worldline * line, const double* coord) const
 }
 
 #ifdef GYOTO_USE_XERCES
-void KerrBL::fillElement(Gyoto::factoryMessenger *fmp) {
+void KerrBL::fillElement(Gyoto::FactoryMessenger *fmp) {
   fmp -> setParameter("Spin", spin_);
-  Metric::fillElement(fmp);
+  Metric::Generic::fillElement(fmp);
 }
 
-SmartPointer<Metric> KerrBL::Subcontractor(factoryMessenger* fmp) {
+SmartPointer<Metric::Generic> KerrBL::Subcontractor(FactoryMessenger* fmp) {
 
   double spin=0., mass=1.; //default values
   string name="", content="";
@@ -976,7 +979,7 @@ SmartPointer<Metric> KerrBL::Subcontractor(factoryMessenger* fmp) {
   return gg;
 }
 
-void Gyoto::KerrBL::Init() {
-  Gyoto::Metric::Register("KerrBL", &Subcontractor);
+void Gyoto::Metric::KerrBL::Init() {
+  Gyoto::Metric::Register("KerrBL", &KerrBL::Subcontractor);
 }
 #endif

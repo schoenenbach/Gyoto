@@ -34,9 +34,9 @@
 #define YGYOTO_MAX_REGISTERED 20
 
 typedef void
-ygyoto_Metric_eval_worker_t(Gyoto::SmartPointer<Gyoto::Metric>*, int);
+ygyoto_Metric_eval_worker_t(Gyoto::SmartPointer<Gyoto::Metric::Generic>*, int);
 typedef void
-ygyoto_Astrobj_eval_worker_t(Gyoto::SmartPointer<Gyoto::Astrobj>*, int);
+ygyoto_Astrobj_eval_worker_t(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>*, int);
 typedef void
 ygyoto_Spectrum_eval_worker_t(Gyoto::SmartPointer<Gyoto::Spectrum::Generic>*,\
 			      int);
@@ -48,11 +48,11 @@ ygyoto_Spectrum_eval_worker_t(Gyoto::SmartPointer<Gyoto::Spectrum::Generic>*,\
   functions ypush_obj() and yget_obj(). yarg_OBJTYPE return 1 if iarg
   is an object of that type.
  */
-Gyoto::SmartPointer<Gyoto::Metric> *yget_Metric(int iarg);
-Gyoto::SmartPointer<Gyoto::Metric> *ypush_Metric();
+Gyoto::SmartPointer<Gyoto::Metric::Generic> *yget_Metric(int iarg);
+Gyoto::SmartPointer<Gyoto::Metric::Generic> *ypush_Metric();
 int yarg_Metric(int iarg);
-Gyoto::SmartPointer<Gyoto::Astrobj>* yget_Astrobj(int iarg);
-Gyoto::SmartPointer<Gyoto::Astrobj>* ypush_Astrobj();
+Gyoto::SmartPointer<Gyoto::Astrobj::Generic>* yget_Astrobj(int iarg);
+Gyoto::SmartPointer<Gyoto::Astrobj::Generic>* ypush_Astrobj();
 int yarg_Astrobj(int iarg);
 Gyoto::SmartPointer<Gyoto::Screen>* yget_Screen(int iarg);
 Gyoto::SmartPointer<Gyoto::Screen>* ypush_Screen();
@@ -84,13 +84,13 @@ int yarg_Spectrometer(int iarg);
   has been pushed.
  */ 
 void ygyoto_Metric_register(char const * const kind, ygyoto_Metric_eval_worker_t* on_eval);
-void ygyoto_Metric_generic_eval(Gyoto::SmartPointer<Gyoto::Metric>*,
+void ygyoto_Metric_generic_eval(Gyoto::SmartPointer<Gyoto::Metric::Generic>*,
 				int *kiargs, int *piargs, int *rvset,
 				int *paUsed);
 
 
 void ygyoto_Astrobj_register(char const * const kind, ygyoto_Astrobj_eval_worker_t* on_eval);
-void ygyoto_Astrobj_generic_eval(Gyoto::SmartPointer<Gyoto::Astrobj>*,
+void ygyoto_Astrobj_generic_eval(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>*,
 				 int *kiargs, int *piargs, int *rvset,
 				 int *paUsed);
 
@@ -139,19 +139,19 @@ void ygyoto_Spectrum_generic_eval
 
  */
 
-typedef Gyoto::SmartPointer<Gyoto::Metric> *ygyoto_yget_Metric_t(int);
-typedef Gyoto::SmartPointer<Gyoto::Metric> *ygyoto_ypush_Metric_t();
+typedef Gyoto::SmartPointer<Gyoto::Metric::Generic> *ygyoto_yget_Metric_t(int);
+typedef Gyoto::SmartPointer<Gyoto::Metric::Generic> *ygyoto_ypush_Metric_t();
 typedef int yarg_OBJTYPE_t(int);
 typedef void ygyoto_Metric_register_t(char const * const, ygyoto_Metric_eval_worker_t*);
-typedef void ygyoto_Metric_generic_eval_t(Gyoto::SmartPointer<Gyoto::Metric>*, \
+typedef void ygyoto_Metric_generic_eval_t(Gyoto::SmartPointer<Gyoto::Metric::Generic>*, \
 			       int *, int *, int*, int*);
 
-typedef Gyoto::SmartPointer<Gyoto::Astrobj> *ygyoto_yget_Astrobj_t(int);
-typedef Gyoto::SmartPointer<Gyoto::Astrobj> *ygyoto_ypush_Astrobj_t();
+typedef Gyoto::SmartPointer<Gyoto::Astrobj::Generic> *ygyoto_yget_Astrobj_t(int);
+typedef Gyoto::SmartPointer<Gyoto::Astrobj::Generic> *ygyoto_ypush_Astrobj_t();
 //typedef int yarg_Astrobj_t(int);
 typedef void ygyoto_Astrobj_register_t(char const * const, ygyoto_Astrobj_eval_worker_t*);
 typedef void ygyoto_Astrobj_generic_eval_t \
-(Gyoto::SmartPointer<Gyoto::Astrobj>*, int *, int *, int*, int*);
+(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>*, int *, int *, int*, int*);
 
 typedef Gyoto::SmartPointer<Gyoto::Spectrum::Generic> *\
 ygyoto_yget_Spectrum_t(int);

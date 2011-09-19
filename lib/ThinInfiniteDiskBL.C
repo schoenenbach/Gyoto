@@ -17,9 +17,11 @@
     along with Gyoto.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <GyotoPhoton.h>
-#include <GyotoThinInfiniteDiskBL.h>
+#include "GyotoPhoton.h"
+#include "GyotoThinInfiniteDiskBL.h"
 #include "GyotoUtils.h"
+#include "GyotoFactoryMessenger.h"
+
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -32,12 +34,13 @@
 
 using namespace std;
 using namespace Gyoto;
+using namespace Gyoto::Astrobj;
 
-ThinInfiniteDiskBL::ThinInfiniteDiskBL(const SmartPointer<KerrBL>& metric) :
-  Astrobj("ThinInfiniteDiskBL"), gg_(metric), Lr_(0.)
+ThinInfiniteDiskBL::ThinInfiniteDiskBL(const SmartPointer<Metric::KerrBL>& metric) :
+  Generic("ThinInfiniteDiskBL"), gg_(metric), Lr_(0.)
 {
   if (debug()) cout << "ThinInfiniteDiskBL Construction" << endl;
-  Astrobj::gg_=gg_;
+  Generic::gg_=gg_;
 
   double aa=gg_->getSpin(), aa2=aa*aa;
   //ISCO radius, see Bardeen et al. 72, (2.21)
@@ -49,11 +52,11 @@ ThinInfiniteDiskBL::ThinInfiniteDiskBL(const SmartPointer<KerrBL>& metric) :
 }
 
 ThinInfiniteDiskBL::ThinInfiniteDiskBL(const ThinInfiniteDiskBL& o) :
-  Astrobj(o),
+  Generic(o),
   gg_(NULL), Lr_(o.Lr_), rmin_(o.rmin_)
 {
   if (o.gg_()) gg_=o.gg_->clone();
-  Astrobj::gg_=gg_;
+  Generic::gg_=gg_;
 }
 ThinInfiniteDiskBL* ThinInfiniteDiskBL::clone() const
 { return new ThinInfiniteDiskBL(*this); }
@@ -63,9 +66,9 @@ ThinInfiniteDiskBL::~ThinInfiniteDiskBL() {
 }
 
 int ThinInfiniteDiskBL::Impact(Photon *ph, size_t index,
-			       AstrobjProperties *data) {
+			       Astrobj::Properties *data) {
   double coord_ph_hit[8], coord_obj_hit[8];
-  double tmp, frac, rcross;
+  double frac, rcross;
   double coord1[8], coord2[8];
   ph->getCoord(index, coord1);
   ph->getCoord(index+1, coord2);
@@ -73,7 +76,7 @@ int ThinInfiniteDiskBL::Impact(Photon *ph, size_t index,
   double theta1 = coord1[2];
   double theta2 = coord2[2];
   
-  if ((tmp=theta2-theta1) > M_PI | tmp < -M_PI)
+  if (fabs(theta2-theta1) > M_PI)
     throwError ("ThinInfiniteDiskBL::Impact: fishy heuristic");
   
   theta1 -= M_PI*0.5;
@@ -161,12 +164,12 @@ double ThinInfiniteDiskBL::emission(double, double,
 }
 
 #ifdef GYOTO_USE_XERCES
-void ThinInfiniteDiskBL::fillElement(factoryMessenger *fmp) const {
+void ThinInfiniteDiskBL::fillElement(FactoryMessenger *fmp) const {
   fmp->setMetric(gg_);
-  Astrobj::fillElement(fmp);
+  Generic::fillElement(fmp);
 }
 
-SmartPointer<Astrobj> ThinInfiniteDiskBL::Subcontractor(factoryMessenger* fmp) {
+SmartPointer<Astrobj::Generic> ThinInfiniteDiskBL::Subcontractor(FactoryMessenger* fmp) {
   string name, content;
   SmartPointer<ThinInfiniteDiskBL> ao =
     new ThinInfiniteDiskBL(fmp->getMetric());

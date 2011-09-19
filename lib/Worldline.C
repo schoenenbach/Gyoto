@@ -167,7 +167,7 @@ size_t Worldline::xExpand(int dir) {
   return retval;
 }
 
-void Worldline::setMetric(SmartPointer<Metric> gg) {
+void Worldline::setMetric(SmartPointer<Metric::Generic> gg) {
   // Set the Metric
   metric_=gg;
   if (debug())
@@ -186,7 +186,7 @@ void Worldline::setMetric(SmartPointer<Metric> gg) {
 
 }
 
-SmartPointer<Metric> Worldline::getMetric() const { return metric_; }
+SmartPointer<Metric::Generic> Worldline::getMetric() const { return metric_; }
 
 string Worldline::className() const { return  string("Worldline"); }
 string Worldline::className_l() const { return  string("worldline"); }
@@ -205,10 +205,10 @@ void Worldline::setInitCoord(const double coord[8], const int dir) {
   if (metric_())   metric_ -> setParticleProperties(this,coord);
 }
 
-void Worldline::setInitialCondition(SmartPointer<Metric> met,
+void Worldline::setInitialCondition(SmartPointer<Metric::Generic> met,
 				    const double coord[8],
 				    const int dir)
-/*void Worldline::setInitialCondition(SmartPointer<Metric> met,
+/*void Worldline::setInitialCondition(SmartPointer<Metric::Generic> met,
 				    const double coord[8],
 				    const SmartPointer<GetGmunu> orig, const int dir)*/
 {
@@ -304,7 +304,7 @@ void Worldline::xFill(double tlim) {
     // Check stop condition and whether we need to expand the arrays
     if (dir==1) {
       if (coord[0]>tlim) stopcond=1;
-      if (!stopcond & ind==x_size_-1) {
+      if ((!stopcond) & (ind==x_size_-1)) {
 	imax_=x_size_-1;
 	ind=xExpand(1);
       }
@@ -312,7 +312,7 @@ void Worldline::xFill(double tlim) {
       if (coord[0]<tlim) {
 	stopcond=1;
       }
-      if (!stopcond & ind==0) {
+      if ((!stopcond) & (ind==0)) {
 	imin_=0;
 	ind=xExpand(-1);
       }
@@ -803,7 +803,7 @@ void Worldline::setDelta(const double del) { delta_=del; }
 double Worldline::getTlim() { return tlim_; }
 void Worldline::setTlim(double tlim) { tlim_ = tlim; }
 
-double const * const  Worldline::getCst() const {
+double const * Worldline::getCst() const {
   return cst_;
 }
 

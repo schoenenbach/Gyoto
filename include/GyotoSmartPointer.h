@@ -10,7 +10,7 @@
 
   @code
   class Gyoto::Metric : public Gyoto::SmartPointee {...}
-  SmartPointer<Gyoto::Metric> ObjPtr (new Gyoto::Metric(...))
+  SmartPointer<Gyoto::Metric::Generic> ObjPtr (new Gyoto::Metric(...))
   @endcode
 
 
@@ -41,6 +41,7 @@
 
 namespace Gyoto {
   class SmartPointee;
+  class FactoryMessenger;
   template <class T> class SmartPointer;
 }
 
@@ -64,7 +65,7 @@ namespace Gyoto {
  * @code
  * class Gyoto::Metric : protected Gyoto::SmartPointee
  * {
- *    friend class Gyoto::SmartPointer<Gyoto::Metric>;
+ *    friend class Gyoto::SmartPointer<Gyoto::Metric::Generic>;
  *    ...
  *  }
  *  @endcode
@@ -81,6 +82,9 @@ class Gyoto::SmartPointee
   void incRefCount () ; ///< Increment the reference counter. Warning: Don't mess with the counter.
   int decRefCount () ;  ///< Decrement the reference counter and return current value. Warning: Don't mess with the counter.
   int getRefCount () ;  ///< Get the current number of references
+  typedef Gyoto::SmartPointer<Gyoto::SmartPointee>
+    Subcontractor_t(Gyoto::FactoryMessenger*);
+
 };
 
 
@@ -93,7 +97,7 @@ class Gyoto::SmartPointee
  * To create an object and a SmartPointer pointing to it:
  *
  * \code
- * SmartPointer<Gyoto::Metric> ObjPtr (new Gyoto::Metric(...))
+ * SmartPointer<Gyoto::Metric::Generic> ObjPtr (new Gyoto::Metric(...))
  * \endcode
  */
 template< class T >
@@ -130,7 +134,7 @@ class Gyoto::SmartPointer
    *
    * Example:
    * \code 
-   * SmartPointer<Gyoto::Metric> ObjPtr (new Gyoto::Metric(...)) // create SmartPointer ObjPtr
+   * SmartPointer<Gyoto::Metric::Generic> ObjPtr (new Gyoto::Metric(...)) // create SmartPointer ObjPtr
    * \endcode
    */
   SmartPointer (T *orig = NULL) : obj(orig)
@@ -146,8 +150,8 @@ class Gyoto::SmartPointer
    *
    * Example:
    * \code 
-   * SmartPointer<Gyoto::Metric> ObjPtr (new Gyoto::Metric(...)) // create SmartPointer ObjPtr
-   * SmartPointer<Gyoto::Metric> ObjPtr2 = ObjPtr // create SmartPointer ObjPtr2
+   * SmartPointer<Gyoto::Metric::Generic> ObjPtr (new Gyoto::Metric(...)) // create SmartPointer ObjPtr
+   * SmartPointer<Gyoto::Metric::Generic> ObjPtr2 = ObjPtr // create SmartPointer ObjPtr2
    * \endcode
    *
    * ObjPtr and ObjPtr2 point to the same instance of class T. Copying

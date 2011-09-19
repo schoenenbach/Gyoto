@@ -20,6 +20,8 @@
 #include "GyotoSpectrum.h"
 #include "GyotoRegister.h"
 #include "GyotoUtils.h"
+#include "GyotoFactoryMessenger.h"
+
 #include <cmath>
 #include <iostream>
 using namespace Gyoto;
@@ -119,7 +121,7 @@ double Spectrum::Generic::operator()(double nu, double opacity, double ds)
 
 #ifdef GYOTO_USE_XERCES
 // do nothing... for now
-void Spectrum::Generic::fillElement(factoryMessenger *fmp ) const {
+void Spectrum::Generic::fillElement(FactoryMessenger *fmp ) const {
   fmp->setSelfAttribute("kind", kind_);
 }
 void Spectrum::Generic::setGenericParameter(std::string, std::string) {}
@@ -130,7 +132,9 @@ void Gyoto::Spectrum::Register(std::string name,
 			       Gyoto::Spectrum::Subcontractor_t* scp)
 {
   Register::Entry* ne =
-    new Register::Entry(name, (void*)scp, Gyoto::Spectrum::Register_);
+    new Register::Entry(name,
+			(Gyoto::SmartPointee::Subcontractor_t*)scp,
+			Gyoto::Spectrum::Register_);
   Gyoto::Spectrum::Register_ = ne;
 }
 

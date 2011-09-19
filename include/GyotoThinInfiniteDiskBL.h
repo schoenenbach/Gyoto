@@ -32,7 +32,7 @@
 #include <iomanip>
 
 namespace Gyoto{
-  class ThinInfiniteDiskBL;
+  namespace Astrobj { class ThinInfiniteDiskBL; }
 }
 
 //#include <GyotoMetric.h>
@@ -47,8 +47,8 @@ namespace Gyoto{
  *   The metric is supposed to be KerrBL.
  * 
  */
-class Gyoto::ThinInfiniteDiskBL : public Astrobj {
-  friend class Gyoto::SmartPointer<Gyoto::ThinInfiniteDiskBL>;
+class Gyoto::Astrobj::ThinInfiniteDiskBL : public Astrobj::Generic {
+  friend class Gyoto::SmartPointer<Gyoto::Astrobj::ThinInfiniteDiskBL>;
 
   /*
    */
@@ -57,7 +57,7 @@ class Gyoto::ThinInfiniteDiskBL : public Astrobj {
   // -----
  protected:
   
-  SmartPointer<Gyoto::KerrBL> gg_ ; 
+  SmartPointer<Gyoto::Metric::KerrBL> gg_ ; 
 
   double Lr_;//luminosity at the position where the disk has been hit (beaming taken into account)
   double rmin_;//ISCO radius
@@ -66,7 +66,7 @@ class Gyoto::ThinInfiniteDiskBL : public Astrobj {
   // -------------------------
  public:
   
-  ThinInfiniteDiskBL(const SmartPointer<KerrBL>& metric);
+  ThinInfiniteDiskBL(const SmartPointer<Metric::KerrBL>& metric);
                    ///< Standard constructor
   
   ThinInfiniteDiskBL(const ThinInfiniteDiskBL& ) ;                ///< Copy constructor
@@ -87,7 +87,7 @@ class Gyoto::ThinInfiniteDiskBL : public Astrobj {
   // ---------
  public:
   virtual int Impact(Photon *ph, size_t index,
-		     AstrobjProperties *data=NULL);
+		     Astrobj::Properties *data=NULL);
 
  protected:
   virtual double emission(double nu_em, double dsem,
@@ -103,7 +103,7 @@ class Gyoto::ThinInfiniteDiskBL : public Astrobj {
   
  public:
 #ifdef GYOTO_USE_XERCES
-  virtual void fillElement(factoryMessenger *fmp) const ; /// < called from Factory
+  virtual void fillElement(FactoryMessenger *fmp) const ; /// < called from Factory
   static Astrobj::Subcontractor_t Subcontractor;
   static void Init();
 #endif

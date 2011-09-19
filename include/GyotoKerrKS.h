@@ -27,7 +27,7 @@
 #define __GyotoKerrKS_H_ 
 
 namespace Gyoto {
-  class KerrKS;
+  namespace Metric { class KerrKS; }
 }
 
 #include <GyotoMetric.h>
@@ -40,8 +40,8 @@ namespace Gyoto {
  * \class Gyoto::KerrKS
  * \brief Gyoto::Metric for KerrKS black hole
  */
-class Gyoto::KerrKS : public Metric {
-  friend class Gyoto::SmartPointer<Gyoto::KerrKS>;
+class Gyoto::Metric::KerrKS : public Metric::Generic {
+  friend class Gyoto::SmartPointer<Gyoto::Metric::KerrKS>;
   
   // Data : 
   // -----
@@ -96,7 +96,7 @@ class Gyoto::KerrKS : public Metric {
   //  friend std::ostream& operator<<(std::ostream& , const KerrKS& ) ;
   //  std::ostream& print(std::ostream&) const ;
 #ifdef GYOTO_USE_XERCES
-  virtual void fillElement(factoryMessenger *fmp); /// < called from Factory
+  virtual void fillElement(FactoryMessenger *fmp); /// < called from Factory
   static Metric::Subcontractor_t Subcontractor;
   static void Init();
 #endif

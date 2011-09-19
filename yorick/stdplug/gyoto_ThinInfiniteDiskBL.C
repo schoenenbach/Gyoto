@@ -22,6 +22,7 @@
 #include "yapi.h"
 
 using namespace Gyoto;
+using namespace Gyoto::Astrobj;
 
 extern "C" {
   // THININFINITEDISK CLASS
@@ -30,10 +31,10 @@ extern "C" {
   Y_gyoto_ThinInfiniteDiskBL(int n)
   {
     if (n!=2) y_error("gyoto_ThinInfiniteDisk_new takes exactly 2 arguments");
-    SmartPointer<Metric> *gg = yget_Metric(1);
+    SmartPointer<Metric::Generic> *gg = yget_Metric(1);
     if ((*gg)->getKind() != "KerrBL") y_error("Metric must be KerrBL");
 
-    SmartPointer<Astrobj> *astrobj=ypush_Astrobj();
+    SmartPointer<Astrobj::Generic> *astrobj=ypush_Astrobj();
     try {
       *astrobj=new ThinInfiniteDiskBL(*gg);
     } YGYOTO_STD_CATCH ;

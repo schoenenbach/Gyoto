@@ -23,6 +23,7 @@
 #include "GyotoPowerLawSpectrum.h"
 #include "GyotoMetric.h"
 #include "GyotoPhoton.h"
+#include "GyotoFactoryMessenger.h"
 
 #include <float.h>
 #include <cmath>
@@ -30,9 +31,10 @@
 #include <cstdlib>
 
 using namespace Gyoto;
+using namespace Gyoto::Astrobj;
 using namespace std;
 
-Torus::Torus() : Astrobj("Torus"),
+Torus::Torus() : Generic("Torus"),
 	  c_(3.5)
 {
   critical_value_ = 0.25; // 0.5*0.5
@@ -42,7 +44,7 @@ Torus::Torus() : Astrobj("Torus"),
 }
 
 Torus::Torus(const Torus& o)
-  : Astrobj(o),
+  : Generic(o),
     c_(o.c_),
     spectrum_(o.spectrum_()?o.spectrum_->clone():NULL),
     opacity_(o.opacity_()?o.opacity_->clone():NULL)
@@ -131,8 +133,8 @@ void Torus::getVelocity(double const pos[4], double vel[4]) {
 
 
 #ifdef GYOTO_USE_XERCES
-void Torus::fillElement(factoryMessenger *fmp) const {
-  factoryMessenger * childfmp=NULL;
+void Torus::fillElement(FactoryMessenger *fmp) const {
+  FactoryMessenger * childfmp=NULL;
 
   fmp -> setMetric (gg_) ;
   fmp -> setParameter ("LargeRadius", c_);
@@ -146,15 +148,15 @@ void Torus::fillElement(factoryMessenger *fmp) const {
   opacity_ -> fillElement(childfmp);
   delete childfmp;
 
-  Astrobj::fillElement(fmp);
+  Generic::fillElement(fmp);
 }
 
-SmartPointer<Astrobj> Gyoto::Torus::Subcontractor(factoryMessenger* fmp) {
+SmartPointer<Astrobj::Generic> Gyoto::Astrobj::Torus::Subcontractor(FactoryMessenger* fmp) {
 
   string name="", content="";
-  SmartPointer<Metric> gg = NULL;
+  SmartPointer<Metric::Generic> gg = NULL;
   SmartPointer<Spectrum::Generic> sp = NULL;
-  factoryMessenger * child = NULL;
+  FactoryMessenger * child = NULL;
 
   SmartPointer<Torus> st = new Torus();
 
@@ -183,7 +185,7 @@ SmartPointer<Astrobj> Gyoto::Torus::Subcontractor(factoryMessenger* fmp) {
   return st;
 }
 
-void Gyoto::Torus::Init() {
-  Gyoto::Astrobj::Register("Torus", &Gyoto::Torus::Subcontractor);
+void Gyoto::Astrobj::Torus::Init() {
+  Gyoto::Astrobj::Register("Torus", &Gyoto::Astrobj::Torus::Subcontractor);
 }
 #endif

@@ -18,9 +18,11 @@
  */
 
 #include "GyotoUtils.h"
+#include "GyotoFactoryMessenger.h"
+#include "GyotoScreen.h"
+
 #include <iostream>
 #include <cstdlib>
-#include <GyotoScreen.h>
 #include <cmath>
 #include <string>
 #include <sstream>
@@ -142,14 +144,14 @@ void Screen::setArgument(double arg)     {
   euler_[2]=arg;  computeBaseVectors();
 }
 
-void Screen::setMetric(SmartPointer<Metric> gg) { gg_ = gg; computeBaseVectors(); }
+void Screen::setMetric(SmartPointer<Metric::Generic> gg) { gg_ = gg; computeBaseVectors(); }
 
 int Screen::getCoordKind()      const { return gg_ -> getCoordKind(); }
 double Screen::getDistance()    const { return distance_; }
 double Screen::getPALN()        const { return euler_[0]; }
 double Screen::getInclination() const { return euler_[1]; }
 double Screen::getArgument()    const { return euler_[2]; }
-SmartPointer<Metric> Screen::getMetric() const { return gg_; }
+SmartPointer<Metric::Generic> Screen::getMetric() const { return gg_; }
 
 void Screen::setObserverPos(const double coord[4]) {
   tobs_ = coord[0] * gg_ -> unitLength() / GYOTO_C;
@@ -451,8 +453,8 @@ size_t Screen::getResolution() { return npix_; }
 void Screen::setResolution(size_t n) { npix_ = n; }
 
 #ifdef GYOTO_USE_XERCES
-void Screen::fillElement(factoryMessenger *fmp) {
-  factoryMessenger* child = NULL;
+void Screen::fillElement(FactoryMessenger *fmp) {
+  FactoryMessenger* child = NULL;
   if (gg_) fmp -> setMetric (gg_) ;
   fmp -> setParameter ("Time", tobs_);
   fmp -> setParameter ("FieldOfView", fov_);
@@ -491,7 +493,7 @@ void Screen::fillElement(factoryMessenger *fmp) {
   }
 }
 
-SmartPointer<Screen> Screen::Subcontractor(factoryMessenger* fmp) {
+SmartPointer<Screen> Screen::Subcontractor(FactoryMessenger* fmp) {
 
   string name="", content="", unit="", tunit="";
   SmartPointer<Screen> scr = new Screen();
