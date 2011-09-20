@@ -27,10 +27,10 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"XStr::XStr(unsigned short const*)@Base" 0.0.0
  (c++)"XStr::~XStr()@Base" 0.0.0
  (c++)"XStr::~XStr()@Base" 0.0.0
- (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double, double, double, double, unsigned int, unsigned int)@Base" 0.0.0
- (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double, double, unsigned int, unsigned int, double, double)@Base" 0.0.0
- (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double, double, double, double, unsigned int, unsigned int)@Base" 0.0.0
- (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double, double, unsigned int, unsigned int, double, double)@Base" 0.0.0
+ (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double, double, double, double, unsigned int, unsigned int)@Base" 0.0.0
+ (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double, double, unsigned int, unsigned int, double, double)@Base" 0.0.0
+ (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double, double, double, double, unsigned int, unsigned int)@Base" 0.0.0
+ (c++)"Gyoto::FocalPlane::FocalPlane(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double, double, unsigned int, unsigned int, double, double)@Base" 0.0.0
  (c++)"Gyoto::FocalPlane::~FocalPlane()@Base" 0.0.0
  (c++)"Gyoto::FocalPlane::~FocalPlane()@Base" 0.0.0
  (c++)"Gyoto::loadPlugin(char const*, int)@Base" 0.0.0
@@ -61,19 +61,19 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::SmartPointer<Gyoto::WorldlineIntegState>::~SmartPointer()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::WorldlineIntegState>::~SmartPointer()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::WorldlineIntegState>::operator->()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::decRef()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::SmartPointer(Gyoto::Metric*)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::SmartPointer(Gyoto::SmartPointer<Gyoto::Metric> const&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::SmartPointer(Gyoto::Metric*)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::SmartPointer(Gyoto::SmartPointer<Gyoto::Metric> const&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::~SmartPointer()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::~SmartPointer()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator=(Gyoto::Metric*)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator=(Gyoto::SmartPointer<Gyoto::Metric>&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator Gyoto::Metric*()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator bool()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator!=(Gyoto::SmartPointer<Gyoto::Metric> const&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator->()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::decRef()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::SmartPointer(Gyoto::Metric::Generic*)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::SmartPointer(Gyoto::SmartPointer<Gyoto::Metric::Generic> const&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::SmartPointer(Gyoto::Metric::Generic*)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::SmartPointer(Gyoto::SmartPointer<Gyoto::Metric::Generic> const&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::~SmartPointer()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::~SmartPointer()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator=(Gyoto::Metric::Generic*)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator=(Gyoto::SmartPointer<Gyoto::Metric::Generic>&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator Gyoto::Metric::Generic*()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator bool()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator!=(Gyoto::SmartPointer<Gyoto::Metric::Generic> const&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator->()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Photon>::decRef()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Photon>::SmartPointer(Gyoto::Photon*)@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Photon>::SmartPointer(Gyoto::SmartPointer<Gyoto::Photon> const&)@Base" 0.0.0
@@ -97,19 +97,19 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::SmartPointer<Gyoto::Screen>::operator bool()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Screen>::operator!=(Gyoto::SmartPointer<Gyoto::Screen> const&)@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Screen>::operator->()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::decRef()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::SmartPointer(Gyoto::Astrobj*)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::SmartPointer(Gyoto::SmartPointer<Gyoto::Astrobj> const&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::SmartPointer(Gyoto::Astrobj*)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::SmartPointer(Gyoto::SmartPointer<Gyoto::Astrobj> const&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::~SmartPointer()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::~SmartPointer()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator=(Gyoto::Astrobj*)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator=(Gyoto::SmartPointer<Gyoto::Astrobj>&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator Gyoto::Astrobj*()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator bool()@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator!=(Gyoto::SmartPointer<Gyoto::Astrobj> const&)@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator->()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::decRef()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::SmartPointer(Gyoto::Astrobj::Generic*)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::SmartPointer(Gyoto::SmartPointer<Gyoto::Astrobj::Generic> const&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::SmartPointer(Gyoto::Astrobj::Generic*)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::SmartPointer(Gyoto::SmartPointer<Gyoto::Astrobj::Generic> const&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::~SmartPointer()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::~SmartPointer()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator=(Gyoto::Astrobj::Generic*)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator=(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator Gyoto::Astrobj::Generic*()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator bool()@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator!=(Gyoto::SmartPointer<Gyoto::Astrobj::Generic> const&)@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator->()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Scenery>::decRef()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Scenery>::SmartPointer(Gyoto::Scenery*)@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Scenery>::SmartPointer(Gyoto::SmartPointer<Gyoto::Scenery> const&)@Base" 0.0.0
@@ -121,7 +121,7 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::SmartPointer<Gyoto::Scenery>::operator Gyoto::Scenery*()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Scenery>::operator->()@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Spectrum::Generic>::operator->()@Base" 0.0.0
- (c++)"Gyoto::Spectrometer::fillElement(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Spectrometer::fillElement(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::setNSamples(unsigned int)@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::reset_()@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::setBand(double*)@Base" 0.0.0
@@ -146,109 +146,101 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::DOMErrorReporter::~DOMErrorReporter()@Base" 0.0.0
  (c++)"Gyoto::DOMErrorReporter::~DOMErrorReporter()@Base" 0.0.0
  (c++)"Gyoto::DOMErrorReporter::~DOMErrorReporter()@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getAstrobj()@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double*, unsigned int, Gyoto::factoryMessenger**)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned int)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, long)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned long)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setFullContent(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getNextParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >*, std::basic_string<char, std::char_traits<char>, std::allocator<char> >*)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned long)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned int)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::reset()@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::fullPath(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getMetric()@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getPhoton()@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getScreen()@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::makeChild(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setMetric(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::setScreen(Gyoto::SmartPointer<Gyoto::Screen>)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::factoryMessenger(Gyoto::Factory*, xercesc_3_1::DOMElement*)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::factoryMessenger(Gyoto::factoryMessenger const&, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::factoryMessenger(Gyoto::Factory*, xercesc_3_1::DOMElement*)@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::factoryMessenger(Gyoto::factoryMessenger const&, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::init(unsigned int)@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::AstrobjProperties(double*, double*)@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::AstrobjProperties(Gyoto::AstrobjProperties const&)@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::AstrobjProperties()@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::AstrobjProperties(double*, double*)@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::AstrobjProperties(Gyoto::AstrobjProperties const&)@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::AstrobjProperties()@Base" 0.0.0
- (c++)"Gyoto::AstrobjProperties::operator++()@Base" 0.0.0
- (c++)"Gyoto::PhotonSubcontractor(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getAstrobj()@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double*, unsigned int, Gyoto::FactoryMessenger**)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned int)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, long)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned long)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setFullContent(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getNextParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >*, std::basic_string<char, std::char_traits<char>, std::allocator<char> >*)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned int)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, unsigned long)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::reset()@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::fullPath(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getMetric()@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getPhoton()@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getScreen()@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::makeChild(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setMetric(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::setScreen(Gyoto::SmartPointer<Gyoto::Screen>)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::FactoryMessenger(Gyoto::Factory*, xercesc_3_1::DOMElement*)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::FactoryMessenger(Gyoto::FactoryMessenger const&, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::FactoryMessenger(Gyoto::Factory*, xercesc_3_1::DOMElement*)@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::FactoryMessenger(Gyoto::FactoryMessenger const&, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::PhotonSubcontractor(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::nextStep(Gyoto::Worldline*, double*, double)@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::setCoord(double*)@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::get_delta()@Base" 0.0.0
- (c++)"Gyoto::WorldlineIntegState::WorldlineIntegState(Gyoto::SmartPointer<Gyoto::Metric>, double const*, double)@Base" 0.0.0
+ (c++)"Gyoto::WorldlineIntegState::WorldlineIntegState(Gyoto::SmartPointer<Gyoto::Metric::Generic>, double const*, double)@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::WorldlineIntegState()@Base" 0.0.0
- (c++)"Gyoto::WorldlineIntegState::WorldlineIntegState(Gyoto::SmartPointer<Gyoto::Metric>, double const*, double)@Base" 0.0.0
+ (c++)"Gyoto::WorldlineIntegState::WorldlineIntegState(Gyoto::SmartPointer<Gyoto::Metric::Generic>, double const*, double)@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::WorldlineIntegState()@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::~WorldlineIntegState()@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::~WorldlineIntegState()@Base" 0.0.0
  (c++)"Gyoto::WorldlineIntegState::~WorldlineIntegState()@Base" 0.0.0
- (c++)"Gyoto::ScenerySubcontractor(Gyoto::factoryMessenger*)@Base" 0.0.0
- (c++)"Gyoto::SpectrometerSubcontractor(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::ScenerySubcontractor(Gyoto::FactoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::SpectrometerSubcontractor(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::Error::Error(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
  (c++)"Gyoto::Error::Error(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
  (c++)"Gyoto::Error::~Error()@Base" 0.0.0
  (c++)"Gyoto::Error::~Error()@Base" 0.0.0
  (c++)"Gyoto::debug(int)@Base" 0.0.0
  (c++)"Gyoto::debug()@Base" 0.0.0
- (c++)"Gyoto::Metric::fillElement(Gyoto::factoryMessenger*)@Base" 0.0.0
- (c++)"Gyoto::Metric::getRefCount()@Base" 0.0.0
  (c++)"Gyoto::Metric::initRegister()@Base" 0.0.0
- (c++)"Gyoto::Metric::setCoordKind(int)@Base" 0.0.0
  (c++)"Gyoto::Metric::getSubcontractor(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Metric::processGenericParameters(Gyoto::factoryMessenger*)@Base" 0.0.0
- (c++)"Gyoto::Metric::setKind(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Metric::setMass(double)@Base" 0.0.0
- (c++)"Gyoto::Metric::setMass(double, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Metric::Register(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Metric> (*)(Gyoto::factoryMessenger*))@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::fillElement(Gyoto::FactoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::getRefCount()@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::setCoordKind(int)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::processGenericParameters(Gyoto::FactoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::setKind(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::setMass(double)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::setMass(double, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Generic(double, int)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Generic(int)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Generic()@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Generic(double, int)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Generic(int)@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Generic()@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::~Generic()@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::~Generic()@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::~Generic()@Base" 0.0.0
+ (c++)"Gyoto::Metric::Register(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Metric::Generic> (*)(Gyoto::FactoryMessenger*))@Base" 0.0.0
  (c++)"Gyoto::Metric::Register_@Base" 0.0.0
- (c++)"Gyoto::Metric::Metric(double, int)@Base" 0.0.0
- (c++)"Gyoto::Metric::Metric(int)@Base" 0.0.0
- (c++)"Gyoto::Metric::Metric()@Base" 0.0.0
- (c++)"Gyoto::Metric::Metric(double, int)@Base" 0.0.0
- (c++)"Gyoto::Metric::Metric(int)@Base" 0.0.0
- (c++)"Gyoto::Metric::Metric()@Base" 0.0.0
- (c++)"Gyoto::Metric::~Metric()@Base" 0.0.0
- (c++)"Gyoto::Metric::~Metric()@Base" 0.0.0
- (c++)"Gyoto::Metric::~Metric()@Base" 0.0.0
- (c++)"Gyoto::Photon::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
- (c++)"Gyoto::Photon::fillElement(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Photon::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
+ (c++)"Gyoto::Photon::fillElement(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::Photon::setSpectrometer(Gyoto::SmartPointer<Gyoto::Spectrometer>)@Base" 0.0.0
  (c++)"Gyoto::Photon::resetTransmission()@Base" 0.0.0
- (c++)"Gyoto::Photon::setInitialCondition(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, Gyoto::SmartPointer<Gyoto::Screen>, double, double)@Base" 0.0.0
- (c++)"Gyoto::Photon::setInitialCondition(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double const*)@Base" 0.0.0
+ (c++)"Gyoto::Photon::setInitialCondition(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, Gyoto::SmartPointer<Gyoto::Screen>, double, double)@Base" 0.0.0
+ (c++)"Gyoto::Photon::setInitialCondition(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double const*)@Base" 0.0.0
  (c++)"Gyoto::Photon::_allocateTransmission()@Base" 0.0.0
- (c++)"Gyoto::Photon::hit(Gyoto::AstrobjProperties*)@Base" 0.0.0
- (c++)"Gyoto::Photon::findMin(Gyoto::Astrobj*, double, double, double&, double)@Base" 0.0.0
+ (c++)"Gyoto::Photon::hit(Gyoto::Astrobj::Properties*)@Base" 0.0.0
+ (c++)"Gyoto::Photon::findMin(Gyoto::Astrobj::Generic*, double, double, double&, double)@Base" 0.0.0
  (c++)"Gyoto::Photon::transmit(unsigned int, double)@Base" 0.0.0
- (c++)"Gyoto::Photon::findValue(Gyoto::Astrobj*, double, double, double&)@Base" 0.0.0
- (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, Gyoto::SmartPointer<Gyoto::Screen>, double, double)@Base" 0.0.0
- (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double*)@Base" 0.0.0
+ (c++)"Gyoto::Photon::findValue(Gyoto::Astrobj::Generic*, double, double, double&)@Base" 0.0.0
+ (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, Gyoto::SmartPointer<Gyoto::Screen>, double, double)@Base" 0.0.0
+ (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double*)@Base" 0.0.0
  (c++)"Gyoto::Photon::Photon(Gyoto::Photon const&)@Base" 0.0.0
  (c++)"Gyoto::Photon::Photon()@Base" 0.0.0
- (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, Gyoto::SmartPointer<Gyoto::Screen>, double, double)@Base" 0.0.0
- (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Astrobj>, double*)@Base" 0.0.0
+ (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, Gyoto::SmartPointer<Gyoto::Screen>, double, double)@Base" 0.0.0
+ (c++)"Gyoto::Photon::Photon(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, double*)@Base" 0.0.0
  (c++)"Gyoto::Photon::Photon(Gyoto::Photon const&)@Base" 0.0.0
  (c++)"Gyoto::Photon::Photon()@Base" 0.0.0
  (c++)"Gyoto::Photon::~Photon()@Base" 0.0.0
  (c++)"Gyoto::Photon::~Photon()@Base" 0.0.0
  (c++)"Gyoto::Photon::~Photon()@Base" 0.0.0
- (c++)"Gyoto::Screen::fillElement(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Screen::fillElement(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::Screen::setArgument(double)@Base" 0.0.0
  (c++)"Gyoto::Screen::setArgument(double, std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@Base" 0.0.0
  (c++)"Gyoto::Screen::setDistance(double)@Base" 0.0.0
  (c++)"Gyoto::Screen::setDistance(double, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Screen::Subcontractor(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Screen::Subcontractor(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::Screen::getResolution()@Base" 0.0.0
  (c++)"Gyoto::Screen::setProjection(double, double, double)@Base" 0.0.0
  (c++)"Gyoto::Screen::setProjection(double, double, double, double)@Base" 0.0.0
@@ -267,7 +259,7 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Screen::setPALN(double, std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@Base" 0.0.0
  (c++)"Gyoto::Screen::setTime(double)@Base" 0.0.0
  (c++)"Gyoto::Screen::setTime(double, std::basic_string<char, std::char_traits<char>, std::allocator<char> > const&)@Base" 0.0.0
- (c++)"Gyoto::Screen::setMetric(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
+ (c++)"Gyoto::Screen::setMetric(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Screen::Screen(Gyoto::Screen const&)@Base" 0.0.0
  (c++)"Gyoto::Screen::Screen()@Base" 0.0.0
  (c++)"Gyoto::Screen::Screen(Gyoto::Screen const&)@Base" 0.0.0
@@ -275,39 +267,47 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Screen::~Screen()@Base" 0.0.0
  (c++)"Gyoto::Screen::~Screen()@Base" 0.0.0
  (c++)"Gyoto::Screen::~Screen()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::getVelocity(double const*, double*)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::init(unsigned int)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::Properties(double*, double*)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::Properties(Gyoto::Astrobj::Properties const&)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::Properties()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::Properties(double*, double*)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::Properties(Gyoto::Astrobj::Properties const&)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::Properties()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Properties::operator++()@Base" 0.0.0
  (c++)"Gyoto::Astrobj::initRegister()@Base" 0.0.0
  (c++)"Gyoto::Astrobj::getSubcontractor(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::setFlag_radtransf(int)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::setGenericParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::getDefaultQuantities()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Impact(Gyoto::Photon*, unsigned int, Gyoto::AstrobjProperties*)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::getRmax()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::setRmax(double)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Register(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Astrobj> (*)(Gyoto::factoryMessenger*))@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::getVelocity(double const*, double*)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::setFlag_radtransf(int)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::setGenericParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::getDefaultQuantities()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Impact(Gyoto::Photon*, unsigned int, Gyoto::Astrobj::Properties*)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::getRmax()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::setRmax(double)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::setMetric(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::unsetRmax()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic(Gyoto::Astrobj::Generic const&)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic(double)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic(Gyoto::Astrobj::Generic const&)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic(double)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::Generic()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::~Generic()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::~Generic()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::~Generic()@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::operator()(double const*)@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Register(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Astrobj::Generic> (*)(Gyoto::FactoryMessenger*))@Base" 0.0.0
  (c++)"Gyoto::Astrobj::Register_@Base" 0.0.0
- (c++)"Gyoto::Astrobj::setMetric(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::unsetRmax()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj(Gyoto::Astrobj const&)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj(double)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj(Gyoto::Astrobj const&)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj(double)@Base" 0.0.0
- (c++)"Gyoto::Astrobj::Astrobj()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::~Astrobj()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::~Astrobj()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::~Astrobj()@Base" 0.0.0
- (c++)"Gyoto::Astrobj::operator()(double const*)@Base" 0.0.0
  (c++)"Gyoto::Factory::getAstrobj()@Base" 0.0.0
  (c++)"Gyoto::Factory::getScenery()@Base" 0.0.0
- (c++)"Gyoto::Factory::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj>, xercesc_3_1::DOMElement*)@Base" 0.0.0
+ (c++)"Gyoto::Factory::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>, xercesc_3_1::DOMElement*)@Base" 0.0.0
  (c++)"Gyoto::Factory::setContent(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, xercesc_3_1::DOMElement*)@Base" 0.0.0
  (c++)"Gyoto::Factory::getSpectrum()@Base" 0.0.0
  (c++)"Gyoto::Factory::setReporter(xercesc_3_1::ErrorHandler*)@Base" 0.0.0
  (c++)"Gyoto::Factory::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, xercesc_3_1::DOMElement*)@Base" 0.0.0
- (c++)"Gyoto::Factory::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double*, unsigned int, xercesc_3_1::DOMElement*, Gyoto::factoryMessenger**)@Base" 0.0.0
+ (c++)"Gyoto::Factory::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double*, unsigned int, xercesc_3_1::DOMElement*, Gyoto::FactoryMessenger**)@Base" 0.0.0
  (c++)"Gyoto::Factory::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, xercesc_3_1::DOMElement*)@Base" 0.0.0
  (c++)"Gyoto::Factory::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, double, xercesc_3_1::DOMElement*)@Base" 0.0.0
  (c++)"Gyoto::Factory::setParameter(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, int, xercesc_3_1::DOMElement*)@Base" 0.0.0
@@ -323,54 +323,54 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Factory::getMetric()@Base" 0.0.0
  (c++)"Gyoto::Factory::getPhoton()@Base" 0.0.0
  (c++)"Gyoto::Factory::getScreen()@Base" 0.0.0
- (c++)"Gyoto::Factory::setMetric(Gyoto::SmartPointer<Gyoto::Metric>, xercesc_3_1::DOMElement*)@Base" 0.0.0
+ (c++)"Gyoto::Factory::setMetric(Gyoto::SmartPointer<Gyoto::Metric::Generic>, xercesc_3_1::DOMElement*)@Base" 0.0.0
  (c++)"Gyoto::Factory::setScreen(Gyoto::SmartPointer<Gyoto::Screen>, xercesc_3_1::DOMElement*)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Spectrometer>)@Base" 0.0.0
- (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
+ (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Photon>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Screen>)@Base" 0.0.0
- (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
+ (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Scenery>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Spectrum::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(char*)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Spectrometer>)@Base" 0.0.0
- (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
+ (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Photon>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Screen>)@Base" 0.0.0
- (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
+ (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Scenery>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(Gyoto::SmartPointer<Gyoto::Spectrum::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Factory::Factory(char*)@Base" 0.0.0
  (c++)"Gyoto::Factory::~Factory()@Base" 0.0.0
  (c++)"Gyoto::Factory::~Factory()@Base" 0.0.0
  (c++)"Gyoto::Scenery::getAstrobj()@Base" 0.0.0
- (c++)"Gyoto::Scenery::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
- (c++)"Gyoto::Scenery::fillElement(Gyoto::factoryMessenger*)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::setAstrobj(Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::fillElement(Gyoto::FactoryMessenger*)@Base" 0.0.0
  (c++)"Gyoto::Scenery::setRequestedQuantities(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
  (c++)"Gyoto::Scenery::setRequestedQuantities(unsigned int)@Base" 0.0.0
- (c++)"Gyoto::Scenery::rayTrace(unsigned int, unsigned int, unsigned int, unsigned int, Gyoto::AstrobjProperties*, int)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::rayTrace(unsigned int, unsigned int, unsigned int, unsigned int, Gyoto::Astrobj::Properties*, int)@Base" 0.0.0
  (c++)"Gyoto::Scenery::setDelta(double)@Base" 0.0.0
  (c++)"Gyoto::Scenery::getMetric()@Base" 0.0.0
  (c++)"Gyoto::Scenery::getScreen()@Base" 0.0.0
- (c++)"Gyoto::Scenery::setMetric(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::setMetric(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Scenery::setScreen(Gyoto::SmartPointer<Gyoto::Screen>)@Base" 0.0.0
- (c++)"Gyoto::Scenery::Scenery(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Screen>, Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::Scenery(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Screen>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Scenery::Scenery(Gyoto::Scenery const&)@Base" 0.0.0
  (c++)"Gyoto::Scenery::Scenery()@Base" 0.0.0
- (c++)"Gyoto::Scenery::Scenery(Gyoto::SmartPointer<Gyoto::Metric>, Gyoto::SmartPointer<Gyoto::Screen>, Gyoto::SmartPointer<Gyoto::Astrobj>)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::Scenery(Gyoto::SmartPointer<Gyoto::Metric::Generic>, Gyoto::SmartPointer<Gyoto::Screen>, Gyoto::SmartPointer<Gyoto::Astrobj::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Scenery::Scenery(Gyoto::Scenery const&)@Base" 0.0.0
  (c++)"Gyoto::Scenery::Scenery()@Base" 0.0.0
  (c++)"Gyoto::Scenery::~Scenery()@Base" 0.0.0
  (c++)"Gyoto::Scenery::~Scenery()@Base" 0.0.0
- (c++)"Gyoto::Scenery::operator()(unsigned int, unsigned int, Gyoto::AstrobjProperties*)@Base" 0.0.0
+ (c++)"Gyoto::Scenery::operator()(unsigned int, unsigned int, Gyoto::Astrobj::Properties*)@Base" 0.0.0
  (c++)"Gyoto::convert(double*, unsigned int, double, double, std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
  (c++)"Gyoto::verbose(int)@Base" 0.0.0
  (c++)"Gyoto::verbose()@Base" 0.0.0
  (c++)"Gyoto::Register::init(char const*)@Base" 0.0.0
  (c++)"Gyoto::Register::list()@Base" 0.0.0
  (c++)"Gyoto::Register::Entry::getSubcontractor(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Register::Entry::Entry(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, void*, Gyoto::Register::Entry*)@Base" 0.0.0
- (c++)"Gyoto::Register::Entry::Entry(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, void*, Gyoto::Register::Entry*)@Base" 0.0.0
+ (c++)"Gyoto::Register::Entry::Entry(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::SmartPointee> (*)(Gyoto::FactoryMessenger*), Gyoto::Register::Entry*)@Base" 0.0.0
+ (c++)"Gyoto::Register::Entry::Entry(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::SmartPointee> (*)(Gyoto::FactoryMessenger*), Gyoto::Register::Entry*)@Base" 0.0.0
  (c++)"Gyoto::Register::Entry::~Entry()@Base" 0.0.0
  (c++)"Gyoto::Register::Entry::~Entry()@Base" 0.0.0
  (c++)"Gyoto::Spectrum::initRegister()@Base" 0.0.0
@@ -380,11 +380,11 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Spectrum::Generic::integrate(double, double, Gyoto::Spectrum::Generic const*, double)@Base" 0.0.0
  (c++)"Gyoto::Spectrum::Generic::Generic(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
  (c++)"Gyoto::Spectrum::Generic::Generic(std::basic_string<char, std::char_traits<char>, std::allocator<char> >)@Base" 0.0.0
- (c++)"Gyoto::Spectrum::Register(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Spectrum::Generic> (*)(Gyoto::factoryMessenger*))@Base" 0.0.0
+ (c++)"Gyoto::Spectrum::Register(std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Spectrum::Generic> (*)(Gyoto::FactoryMessenger*))@Base" 0.0.0
  (c++)"Gyoto::Spectrum::Register_@Base" 0.0.0
  (c++)"Gyoto::Worldline::getCartesian(double const*, unsigned int, double*, double*, double*, double*, double*, double*)@Base" 0.0.0
  (c++)"Gyoto::Worldline::setInitCoord(double const*, int)@Base" 0.0.0
- (c++)"Gyoto::Worldline::setInitialCondition(Gyoto::SmartPointer<Gyoto::Metric>, double const*, int)@Base" 0.0.0
+ (c++)"Gyoto::Worldline::setInitialCondition(Gyoto::SmartPointer<Gyoto::Metric::Generic>, double const*, int)@Base" 0.0.0
  (c++)"Gyoto::Worldline::reset()@Base" 0.0.0
  (c++)"Gyoto::Worldline::xFill(double)@Base" 0.0.0
  (c++)"Gyoto::Worldline::setCst(double const*, unsigned int)@Base" 0.0.0
@@ -394,7 +394,7 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Worldline::getCoord(double const*, unsigned int, double*, double*, double*, double*, double*, double*, double*)@Base" 0.0.0
  (c++)"Gyoto::Worldline::setDelta(double)@Base" 0.0.0
  (c++)"Gyoto::Worldline::save_txyz(char*, double, double, double, std::basic_string<char, std::char_traits<char>, std::allocator<char> >, Gyoto::SmartPointer<Gyoto::Screen>)@Base" 0.0.0
- (c++)"Gyoto::Worldline::setMetric(Gyoto::SmartPointer<Gyoto::Metric>)@Base" 0.0.0
+ (c++)"Gyoto::Worldline::setMetric(Gyoto::SmartPointer<Gyoto::Metric::Generic>)@Base" 0.0.0
  (c++)"Gyoto::Worldline::xAllocate(unsigned int)@Base" 0.0.0
  (c++)"Gyoto::Worldline::xAllocate()@Base" 0.0.0
  (c++)"Gyoto::Worldline::Worldline(Gyoto::Worldline const&)@Base" 0.0.0
@@ -423,16 +423,16 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::FocalPlane::getYmin() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Spectrometer>::operator()() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Spectrometer>::operator->() const@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator()() const@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator!() const@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Metric>::operator->() const@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator()() const@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator!() const@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Metric::Generic>::operator->() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Photon>::operator!() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Screen>::operator()() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Screen>::operator!() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Screen>::operator->() const@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator()() const@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator!() const@Base" 0.0.0
- (c++)"Gyoto::SmartPointer<Gyoto::Astrobj>::operator->() const@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator()() const@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator!() const@Base" 0.0.0
+ (c++)"Gyoto::SmartPointer<Gyoto::Astrobj::Generic>::operator->() const@Base" 0.0.0
  (c++)"Gyoto::SmartPointer<Gyoto::Scenery>::operator!() const@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::getKindStr() const@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::getChannels() const@Base" 0.0.0
@@ -442,29 +442,29 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Spectrometer::getBand() const@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::getKind() const@Base" 0.0.0
  (c++)"Gyoto::Spectrometer::getWidths() const@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >) const@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getFullContent() const@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >) const@Base" 0.0.0
- (c++)"Gyoto::factoryMessenger::getChild() const@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >) const@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getFullContent() const@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getSelfAttribute(std::basic_string<char, std::char_traits<char>, std::allocator<char> >) const@Base" 0.0.0
+ (c++)"Gyoto::FactoryMessenger::getChild() const@Base" 0.0.0
  (c++)"Gyoto::Error::getErrcode() const@Base" 0.0.0
  (c++)"Gyoto::Error::get_message() const@Base" 0.0.0
  (c++)"Gyoto::Error::Report() const@Base" 0.0.0
- (c++)"Gyoto::Metric::ScalarProd(double const*, double const*, double const*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::unitLength() const@Base" 0.0.0
- (c++)"Gyoto::Metric::getCoordKind() const@Base" 0.0.0
- (c++)"Gyoto::Metric::nullifyCoord(double*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::nullifyCoord(double*, double&) const@Base" 0.0.0
- (c++)"Gyoto::Metric::SysPrimeToTdot(double const*, double const*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::myrk4_adaptive(Gyoto::Worldline*, double const*, double, double, double*, double, double&) const@Base" 0.0.0
- (c++)"Gyoto::Metric::isStopCondition(double const*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::circularVelocity(double const*, double*, double) const@Base" 0.0.0
- (c++)"Gyoto::Metric::setParticleProperties(Gyoto::Worldline*, double const*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::diff(double const*, double*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::clone() const@Base" 0.0.0
- (c++)"Gyoto::Metric::myrk4(Gyoto::Worldline*, double const*, double, double*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::Norm3D(double*) const@Base" 0.0.0
- (c++)"Gyoto::Metric::getKind() const@Base" 0.0.0
- (c++)"Gyoto::Metric::getMass() const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::ScalarProd(double const*, double const*, double const*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::unitLength() const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::getCoordKind() const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::nullifyCoord(double*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::nullifyCoord(double*, double&) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::SysPrimeToTdot(double const*, double const*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::myrk4_adaptive(Gyoto::Worldline*, double const*, double, double, double*, double, double&) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::isStopCondition(double const*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::circularVelocity(double const*, double*, double) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::setParticleProperties(Gyoto::Worldline*, double const*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::diff(double const*, double*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::clone() const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::myrk4(Gyoto::Worldline*, double const*, double, double*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::Norm3D(double*) const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::getKind() const@Base" 0.0.0
+ (c++)"Gyoto::Metric::Generic::getMass() const@Base" 0.0.0
  (c++)"Gyoto::Photon::getAstrobj() const@Base" 0.0.0
  (c++)"Gyoto::Photon::getFreqObs() const@Base" 0.0.0
  (c++)"Gyoto::Photon::className_l() const@Base" 0.0.0
@@ -490,20 +490,20 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"Gyoto::Screen::getDmax() const@Base" 0.0.0
  (c++)"Gyoto::Screen::getPALN() const@Base" 0.0.0
  (c++)"Gyoto::Screen::getMetric() const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::fillElement(Gyoto::factoryMessenger*) const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::transmission(double, double, double*) const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::getFlag_radtransf() const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::integrateEmission(double, double, double, double*, double*) const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::processHitQuantities(Gyoto::Photon*, double*, double*, double, Gyoto::AstrobjProperties*) const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::clone() const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::getKind() const@Base" 0.0.0
- (c++)"Gyoto::Astrobj::getMetric() const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::fillElement(Gyoto::FactoryMessenger*) const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::transmission(double, double, double*) const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::getFlag_radtransf() const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::integrateEmission(double, double, double, double*, double*) const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::processHitQuantities(Gyoto::Photon*, double*, double*, double, Gyoto::Astrobj::Properties*) const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::clone() const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::getKind() const@Base" 0.0.0
+ (c++)"Gyoto::Astrobj::Generic::getMetric() const@Base" 0.0.0
  (c++)"Gyoto::Scenery::getRequestedQuantities() const@Base" 0.0.0
  (c++)"Gyoto::Scenery::getScalarQuantitiesCount() const@Base" 0.0.0
  (c++)"Gyoto::Scenery::getRequestedQuantitiesString() const@Base" 0.0.0
  (c++)"Gyoto::Scenery::clone() const@Base" 0.0.0
  (c++)"Gyoto::Scenery::getDelta() const@Base" 0.0.0
- (c++)"Gyoto::Spectrum::Generic::fillElement(Gyoto::factoryMessenger*) const@Base" 0.0.0
+ (c++)"Gyoto::Spectrum::Generic::fillElement(Gyoto::FactoryMessenger*) const@Base" 0.0.0
  (c++)"Gyoto::Spectrum::Generic::clone() const@Base" 0.0.0
  (c++)"Gyoto::Spectrum::Generic::getKind() const@Base" 0.0.0
  (c++)"Gyoto::Spectrum::Generic::operator()(double, double, double) const@Base" 0.0.0
@@ -549,19 +549,19 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"typeinfo for Gyoto::DOMErrorReporter@Base" 0.0.0
  (c++)"typeinfo for Gyoto::WorldlineIntegState@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Error@Base" 0.0.0
- (c++)"typeinfo for Gyoto::Metric@Base" 0.0.0
+ (c++)"typeinfo for Gyoto::Metric::Generic@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Photon@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Screen@Base" 0.0.0
- (c++)"typeinfo for Gyoto::Astrobj@Base" 0.0.0
+ (c++)"typeinfo for Gyoto::Astrobj::Generic@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Scenery@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Spectrum::Generic@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Worldline@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Spectrometer*@Base" 0.0.0
  (c++)"typeinfo for Gyoto::WorldlineIntegState*@Base" 0.0.0
- (c++)"typeinfo for Gyoto::Metric*@Base" 0.0.0
+ (c++)"typeinfo for Gyoto::Metric::Generic*@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Photon*@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Screen*@Base" 0.0.0
- (c++)"typeinfo for Gyoto::Astrobj*@Base" 0.0.0
+ (c++)"typeinfo for Gyoto::Astrobj::Generic*@Base" 0.0.0
  (c++)"typeinfo for Gyoto::Scenery*@Base" 0.0.0
  (c++)"typeinfo name for xercesc_3_1::XMLDeleter@Base" 0.0.0
  (c++)"typeinfo name for xercesc_3_1::PSVIHandler@Base" 0.0.0
@@ -575,19 +575,19 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"typeinfo name for Gyoto::DOMErrorReporter@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::WorldlineIntegState@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Error@Base" 0.0.0
- (c++)"typeinfo name for Gyoto::Metric@Base" 0.0.0
+ (c++)"typeinfo name for Gyoto::Metric::Generic@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Photon@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Screen@Base" 0.0.0
- (c++)"typeinfo name for Gyoto::Astrobj@Base" 0.0.0
+ (c++)"typeinfo name for Gyoto::Astrobj::Generic@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Scenery@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Spectrum::Generic@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Worldline@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Spectrometer*@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::WorldlineIntegState*@Base" 0.0.0
- (c++)"typeinfo name for Gyoto::Metric*@Base" 0.0.0
+ (c++)"typeinfo name for Gyoto::Metric::Generic*@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Photon*@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Screen*@Base" 0.0.0
- (c++)"typeinfo name for Gyoto::Astrobj*@Base" 0.0.0
+ (c++)"typeinfo name for Gyoto::Astrobj::Generic*@Base" 0.0.0
  (c++)"typeinfo name for Gyoto::Scenery*@Base" 0.0.0
  (c++)"vtable for xercesc_3_1::XMLDeleter@Base" 0.0.0
  (c++)"vtable for xercesc_3_1::PSVIHandler@Base" 0.0.0
@@ -598,9 +598,9 @@ libgyoto.so.0 libgyoto0 #MINVER#
  (c++)"vtable for Gyoto::Spectrometer@Base" 0.0.0
  (c++)"vtable for Gyoto::DOMErrorReporter@Base" 0.0.0
  (c++)"vtable for Gyoto::WorldlineIntegState@Base" 0.0.0
- (c++)"vtable for Gyoto::Metric@Base" 0.0.0
+ (c++)"vtable for Gyoto::Metric::Generic@Base" 0.0.0
  (c++)"vtable for Gyoto::Photon@Base" 0.0.0
  (c++)"vtable for Gyoto::Screen@Base" 0.0.0
- (c++)"vtable for Gyoto::Astrobj@Base" 0.0.0
+ (c++)"vtable for Gyoto::Astrobj::Generic@Base" 0.0.0
  (c++)"vtable for Gyoto::Spectrum::Generic@Base" 0.0.0
  (c++)"vtable for Gyoto::Worldline@Base" 0.0.0
