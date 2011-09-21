@@ -71,3 +71,11 @@ override_dh_strip:
 %:
 	dh $@ 
 
+# maintainer-only rule
+git-clean: clean
+	debuild clean
+	-quilt pop -a
+	-rm .pc/.version .pc/.quilt_series .pc/.quilt_patches
+	if test -e .pc; then rmdir .pc; fi
+
+.PHONY: clean git-clean override_dh_strip override_dh_auto_test 
