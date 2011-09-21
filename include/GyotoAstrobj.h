@@ -277,7 +277,7 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
   /**
    * Astrobj implementations should impement fillElement to save their
    * parameters to XML and call the generic implementation to save
-   * generic parts such as Flag_radtrans: Astrobj::fillElement(fmp).
+   * generic parts such as Flag_radtrans: Generic::fillElement(fmp).
    */
 
   virtual void fillElement(FactoryMessenger *fmp) const ;
