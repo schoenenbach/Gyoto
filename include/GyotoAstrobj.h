@@ -1,6 +1,6 @@
 /**
  * \file GyotoAstrobj.h
- * \brief Astronomical object
+ * \brief Astronomical objects (light emitters)
  *
  *  The target of ray-traced Gyoto::Photon
  */
@@ -143,7 +143,7 @@ namespace Gyoto{
  */
 /**
  * \class Gyoto::Astrobj::Generic
- * \brief Astronomical object
+ * \brief Base class for astronomical object
  *
  * See introduction in the Gyoto::Astrobj namespace.
  */

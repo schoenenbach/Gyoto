@@ -53,11 +53,19 @@ namespace Gyoto {
  * Metric::Generic::fillElement(), Spectrum::Generic::fillElement()).
  *
  * A subcontractor function typically loops calling getNextParameter()
- * to read all the parameters provided for it in an XML file:
+ * to read all the parameters provided for it in an XML file. If BASE
+ * is one of Astrobj, Metric or Spectrum, and MyClass is an
+ * implementation of BASE::Generic, the subcontractor static member
+ * function often looks like this:
+ *
 \code
-while (messenger->getNextParameter(name, content) {
-  if (name=="SomeProperty") setSomeProperty(content);
-  else if (name=="AnotherProperty") setAnotherProperty(content);
+SmartPointer<Gyoto::BASE::Generic> MyClass::Subcontractor(Gyoto::FactoryMessenger *messenger) {
+ SmartPointer<Gyoto::BASE::MyClass> deliverable = new MyClass();
+ while (messenger->getNextParameter(name, content) {
+   if (name=="SomeProperty") deliverable -> setSomeProperty(content);
+   else if (name=="AnotherProperty") deliverable -> setAnotherProperty(content);
+ }
+ return deliverable;
 }
 \endcode
  *
@@ -200,11 +208,19 @@ class Gyoto::FactoryMessenger {
    * correct subcontractor:
 \code
 SmartPointer<Spectrum::Generic> spectrum = NULL;
+<<<<<<< HEAD
 while (getNextParameter(name, content) {
  if (name=="Spectrum") {
   content = getAttribute("kind");
   FactoryMessenger* child = getChild();
   spectrum = (*Spectrum::getSubcontractor(content))(child);
+=======
+while (messenger->getNextParameter(name, content) {
+ if (name=="Spectrum") {
+  content = messenger->getAttribute("kind");
+  FactoryMessenger* child = messenger->getChild();
+  deliverable->setSpectrum( (*Spectrum::getSubcontractor(content))(child) );
+>>>>>>> master
   delete child;
  }
 }
@@ -280,7 +296,13 @@ messenger->setAstrobj(Scenery::obj_);
 <name/>
 \endcode
    * for instance when "name" is boolean (present or absent), or only
+<<<<<<< HEAD
    * takes attributes (see FactoryMessenger::setAttribute()).
+=======
+   * takes attributes (see FactoryMessenger::setAttribute()). As an
+   * example, Astrobj::Generic::fillElement() uses
+   * setParameter() to set either Opticallythin or OpticallyThick.
+>>>>>>> master
    */
   void setParameter(std::string name);
   ///< Output parameter
