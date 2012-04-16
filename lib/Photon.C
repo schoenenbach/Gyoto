@@ -62,6 +62,21 @@ Photon::Photon(const Photon& o) :
 
 Photon * Photon::clone() const { return new Photon(*this); }
 
+Photon::Photon(Photon* orig, size_t i0, int dir, double step_max) :
+  Worldline(orig, i0, dir, step_max), SmartPointee(),
+  object_(orig->object_),
+  freq_obs_(orig->freq_obs_),
+  transmission_freqobs_(orig->transmission_freqobs_),
+  spectro_(orig->spectro_), transmission_(orig->transmission_)
+{
+}
+
+Photon::Refined::Refined(Photon* orig, size_t i0, int dir, double step_max) :
+  Photon(orig, i0, dir, step_max),
+  parent_(orig)
+{
+}
+
 Photon::Photon(SmartPointer<Metric::Generic> met, SmartPointer<Astrobj::Generic> obj,
 	       double* coord):
   Worldline(), transmission_freqobs_(1.), spectro_(NULL), transmission_(NULL)
@@ -220,7 +235,7 @@ int Photon::hit(Astrobj::Properties *data) {
   if (rr<rmax)
     hitt = object_ -> Impact(this, ind, data);
   if (hitt) {
-    if (debug()) cout << "Photon.C: Hit for already computed position; "
+    if (debug()) cerr << "DEBUG: Photon.C: Hit for already computed position; "
 		      << "Warning: radiative transfer not implemented "
 		      << "for that case" << endl;
     return hitt;
@@ -268,12 +283,16 @@ int Photon::hit(Astrobj::Properties *data) {
   /*
     3- Integration loop: integrate the geodesic until stopcond is 1.
     Possible stopping conditions: 
-    - transmission_freqobs_ low
-    - t < tlim_ (if dir=-1) 
-    - t does not evolve
-    - metric tells it's time to stop
-    - count>count_max (should never be used, just to prevent infinite
-    integration in case of a bug)
+    - transmission_freqobs_ low [see transmission() function 
+       in astrobjs, which defaults to 0 (optically thick) 
+       or 1 (optically thin) in Astrobj.C]
+    - t < tlim_ (if dir=-1), [NB: tlim_ defaults to 0 in Worldline.C]
+    - photon is at r>rmax (defined for each object) and goes even further
+    - metric tells it's time to stop (eg horizon crossing)
+    - t does not evolve [to investigate, metric should have stopped
+       integration before, see above]
+    - count>count_max [should never be used, just to prevent infinite
+    integration in case of a bug]
    */
 
   while (!stopcond) {
@@ -344,13 +363,15 @@ int Photon::hit(Astrobj::Properties *data) {
       cerr << "DEBUG: Photon::hit(): rmax="<< rmax <<", rr="<<rr<<endl;
     if (rr<rmax) {
       if (debug()) cerr << "DEBUG: Photon::hit() calling Astrobj::Impact\n";
-      hitt = object_ -> Impact(this, ind, data);
+      hitt |= object_ -> Impact(this, ind, data);
+      if (hitt && !data) stopcond=1;
       if (debug()) cerr << "DEBUG: Photon::hit(): transmission_freqobs_="
 			<< transmission_freqobs_ << endl;
       if ( transmission_freqobs_ < 1e-6 ) {
 	stopcond=1;
-	if (debug()) cerr << "DEBUG: Photon::hit(): stopping because we "
-			  << "are optically thick\n";
+	if (debug()) 
+	  cerr << "DEBUG: Photon::hit(): stopping because we "
+	       << "are optically thick\n";
       }
     } else {
       if ( rr > rr_prev ) {
@@ -375,6 +396,9 @@ int Photon::hit(Astrobj::Properties *data) {
     switch (dir) {
     case 1:
       if (coord[0]>tlim_) {
+	if (debug()) 
+	  cerr << "DEBUG: Photon::hit(): stopping because time "
+	       << "goes beyond time limit\n";
 	stopcond=1;
       }
       if ((!stopcond) && (ind==x_size_)) {
@@ -384,6 +408,9 @@ int Photon::hit(Astrobj::Properties *data) {
       break;
     default:
       if (coord[0]<tlim_) {
+	if (debug()) 
+	  cerr << "DEBUG: Photon::hit(): stopping because time "
+	       << "goes beyond time limit\n";
 	stopcond=1;
       }
       if ((!stopcond) && (imin_==0)) {
@@ -400,7 +427,7 @@ int Photon::hit(Astrobj::Properties *data) {
   
 }
 
-double Photon::findMin(Astrobj::Generic* object,
+double Photon::findMin(Functor::Double_constDoubleArray* object,
 		       double t1, double t2, double &tmin,
 		       double threshold) {
   if (debug())
@@ -441,7 +468,8 @@ double Photon::findMin(Astrobj::Generic* object,
 
 }
 
-void Photon::findValue(Astrobj::Generic* object, double value,
+void Photon::findValue(Functor::Double_constDoubleArray* object,
+		       double value,
 		       double tinside, double &toutside) {
   double pcur[4];
   while (fabs(toutside-tinside) > GYOTO_T_TOL) {
@@ -471,6 +499,11 @@ void Photon::transmit(size_t i, double t) {
     cerr << "DEBUG: Photon::transmit(i="<<i<< ", transmission="<<t<<"):"
 	 << "transmission_[i]="<< transmission_[i]<< "\n";
 }
+void Photon::Refined::transmit(size_t i, double t) {
+  parent_->transmit(i, t);
+  if (i==size_t(-1)) transmission_freqobs_ = parent_->transmission_freqobs_;
+}
+
 
 #ifdef GYOTO_USE_XERCES
 void Photon::fillElement(FactoryMessenger *fmp) {

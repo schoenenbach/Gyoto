@@ -26,8 +26,8 @@ PKG_I=gyoto_std.i gyoto_Kerr.i gyoto_Star.i
 
 OBJS = StdPlug.o gyoto_KerrBL.o gyoto_KerrKS.o \
 	gyoto_Star.o gyoto_FixedStar.o \
-	gyoto_Torus.o \
-	gyoto_ThinInfiniteDiskBL.o gyoto_ThinInfiniteDiskKS.o \
+	gyoto_Torus.o gyoto_PageThorneDisk.o gyoto_PatternDisk.o \
+	gyoto_Disk3D.o \
 	gyoto_PowerLawSpectrum.o gyoto_BlackBodySpectrum.o
 
 # change to give the executable a name other than yorick
@@ -42,7 +42,7 @@ PKG_DEPLIBS+=-bundle_loader ../../lib/libgyoto-stdplug.$(DYLIB_SFX) \
 endif
 
 # set compiler (or rarely loader) flags specific to this package
-PKG_CFLAGS= -I../../include -I..
+PKG_CFLAGS= -I../../include -I.. $(GYOTO_INC)
 PKG_LDFLAGS=
 
 # list of additional package names you want in PKG_EXENAME

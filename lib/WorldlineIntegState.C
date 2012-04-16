@@ -52,7 +52,7 @@ int WorldlineIntegState::nextStep(Worldline* line, double coord[8], double del) 
 
   if (coutcoord){
     cout << "previous coord in Wl ada= " ;
-    for (int ii=0;ii<8;ii++) cout << coord_[ii] << " ";
+    for (int ii=0;ii<8;ii++) cout << setprecision(10) << coord_[ii] << " ";
     cout << endl;
   }
 
@@ -60,7 +60,7 @@ int WorldlineIntegState::nextStep(Worldline* line, double coord[8], double del) 
     if (gg_ -> myrk4_adaptive(line,coord_,norm_,normref_,coordnew_,delta_,h1_)) return 1;
     if (coutcoord){
       cout << "coordnew in Wl ada= " ;
-      for (int ii=0;ii<8;ii++) cout << coordnew_[ii] << " ";
+      for (int ii=0;ii<8;ii++) cout << setprecision(10) << coordnew_[ii] << " ";
       cout << endl;
     }
     if (coutnormdel){
@@ -102,9 +102,11 @@ int WorldlineIntegState::nextStep(Worldline* line, double coord[8], double del) 
 
   double normtol=.001;
   if (fabs(norm_-normref_)>normtol) {
-
-    if (verbose() >= GYOTO_SEVERE_VERBOSITY)
-      cout << "***WARNING (severe): WlIntegState.C: Norm pb with norm,x1,x2,x3= " << norm_ << " " << coord[1] << " " << coord[2] << " " << coord[3] << " " << sqrt(coord[1]*coord[1]+coord[2]*coord[2]+coord[3]*coord[3]) << endl;
+    if (verbose() >= GYOTO_SEVERE_VERBOSITY){
+      cerr << "***WARNING: in WlIntegState.C: norm is drifting"
+	" - with norm,x1,x2,x3= " << norm_ << " " << coord[1] 
+	   << " " << coord[2] << " " << coord[3] << " " << endl;
+    }
   }
 
   if (delta_==delta_+1) return 1; // delta == Infinity : stop condition
@@ -122,6 +124,10 @@ int WorldlineIntegState::nextStep(Worldline* line, double coord[8], double del) 
 double WorldlineIntegState::get_delta() {
 
   return delta_;
+}
+
+void WorldlineIntegState::set_delta(double delta) {
+  delta_ = delta;
 }
 
 void WorldlineIntegState::setCoord(double coord[8]){

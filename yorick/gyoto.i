@@ -39,7 +39,6 @@ extern __gyoto_exportSupplier;
 
 
 require, "pl3d.i";
-#include "gyoto_Metric.i"
 #include "gyoto_Photon.i"
 #include "gyoto_Scenery.i"
 #include "gyoto_constants.i"
@@ -272,6 +271,96 @@ local gyoto;
     
  */
 
+extern gyoto_Metric;
+/* DOCUMENT gg = gyoto_Metric( filename, [members=values] )
+            gg, members=values
+            retval = gg(member=);
+            retval = gg(function_method=par1, par2...)
+            gg, xmlwrite=filename
+            coef = gg(coordinates, mu, nu)
+
+   PURPOSE:
+     Create and manipulate GYOTO Metric objects
+
+   INTRODUCTION:
+
+     See GYOTO for basic concepts.
+   
+     The GYOTO plug-in for Yorick introduces "Metric" objects (see
+     GYOTO for an introduction). Such objects are created used for
+     instance the gyoto_KerrBL() function. Any kind of metric (even if
+     not explicitely exposed in this plug-in) can be loaded from an
+     XML file using the FILENAME parameter. This XML file can by any
+     GYOTO file containing a Metric section: the top-level can be a
+     Metric, a Scenery, an Astrobj or whatever which contains a
+     reference to a Metric.
+
+     When printed, a Metric displays an XML description of itself,
+     which can be dumped to a file using the XMLWRITE keyword.
+
+     Most GYOTO functions which accept a Metric as a parameter accept
+     any kind of Metric. There are nevertheless specific
+     functionsAstrobjs which make sense only in the framework of a
+     specific kind of Metric, notably gyoto_KerrBL. This is the case
+     for gyoto_PolishDoughnut for instance.
+
+
+   MEMBER KEYWORDS:
+
+     mass=, unitlength=, kind=
+   
+     All the Metric kinds have a mass that can be set and retrieved
+     using the mass keyword:
+        gg, mass=value;
+        value = gg(mass=);
+        
+     Setting the mass gives the scale of the black hole in physical
+     units. The unit length can be retrieve using the unitlength
+     keyword:
+        len = gg(unitlength=)
+     where LEN is in meters if MASS was set in kilograms.
+
+     Finally, the kind of the metric (e.g. "KerrBL") can be queried:
+        kind_string = gg(kind=)
+
+   METHODS
+
+     Without any keywords, the metric can output its coefficient at
+     4-position POSITION:
+        coefs = gg(position, mu, nu);
+     where mu and nu are indices or ranges (1-4, 1 is for time).
+        coefs = gg(position)
+     returns the 16 metric coefficients at position.
+   
+     Additional function-like or subroutine like methods:
+     
+       coord=gg(prime2tdot=pos, vel): COORD is the 8-vector where
+              COORD[1-4]==POS and COORD[5-8] is the 4-velocity
+              corresponding to the 3-velocity VEL;
+       
+       gg, nullifycoord=pos, vel    return nullified (photon) coord tangent
+                                    to vel at pos.
+
+       vels = gg(circularvelocity=coords [, dir])
+               On input, COORDS is an array of doubles yielding
+               4-position vectors: x0=coords(1,..), x1=coords(2, ..),
+               x3=coords(3, ..), x4=coords(4, ..). The return value
+               VELS has the same dimensionality as coords(1:4, ..). It
+               contains the circular velocity (on te equatorial plane,
+               so COORDS is projected) corresponding to each position
+               specified by coords.
+
+               If the optional parameter DIR is -1, VELS corresponds
+               to the counter-rotating circular velocity.
+
+   SET KEYWORDS:
+     List of set-like keywords ("set" is never specified). Specific
+     Metric kinds may recognize more:
+       mass=new_mass                gyoto_Metric_setMass, gg, new_mass
+
+   SEE ALSO: gyoto, gyoto_KerrBL, gyoto_KerrKS
+ */
+
 extern gyoto_Astrobj;
 /* DOCUMENT ao = gyoto_Astrobj( filename );
             ao, member1=val1, member2=val2...;
@@ -317,15 +406,56 @@ extern gyoto_Astrobj;
    
      xmlwite="filename.xml" dump a description of the object to an XML
                   file.
+
+     setparameter="name","content" generic method to set a parameter
+                  in an Astrobj object, even if is has not been
+                  explicitely exposed in the Yorick plug-in. For
+                  instance, if st is a gyoto_Star object, the two
+                  following commands yield the same result, although
+                  the former is faster than the latter:
+                     st, radius=1.0;
+                     st, setparameter="Radius","1.0";
+                  The list of values that "name" can take is (or
+                  should be) documented in the doxygen documentation
+                  for the specific class. See
+                  Gyoto::Astrobj::Generic::setParameter().
      
    SEE ALSO: gyoto
-    The following implement specific objects:
+    The following implement specific objects, most require gyoto_std.i:
      gyoto_Star               A spherical object moving along a geodesic
      gyoto_FixedStar          A spherical object of constant coordinates
      gyoto_Torus              A simple torus (solid, Keplerian rotation)
-     gyoto_PolishDoughnut     A toroidal acretion structure
-     gyoto_ThinInfiniteDiskBL An accretion disk
-     gyoto_ThinInfiniteDiskKS An accretion disk
+     gyoto_ThinDisk           A geometrically thin disk
+     gyoto_PageThorneDisk     As above with Page & Thorne 1974 emission
+     gyoto_PatternDisk        As above, emission numerically provided
+     gyoto_Disk3D             Thick disk, emission numerically provided
+     
+ */
+
+extern gyoto_ThinDisk;
+/* DOCUMENT ao = gyoto_ThinDisk( filename );
+            ao, member1=val1, member2=val2...;
+            val = ao(member=)
+            ao, xmlwrite=filename
+
+     A more specific version of the gyoto_Astrobj function. A very
+     crude Astrobj can be instanciated using gyoto_ThinDisk. More
+     elaborate derived classes also exist. gyoto_ThinDisk accepts a
+     few keywords in addition to those processed by gyoto_Astrobj.
+            
+   MEMBER KEYWORDS
+
+     innerradius:  inner radius of the disk.
+                  
+     outer radius: outer radius of the disk.
+
+     dir:          1 if corotating (relative to the coordinate system),
+                  -1 if coounter rotating.
+
+   SEE ALSO: gyoto, gyoto_Astrobj
+    There are two derived classes in gyoto_std.i:
+     gyoto_PageThorneDisk     As above with Page & Thorne 1974 emission
+     gyoto_PatternDisk        As above, emission numerically provided
      
  */
 

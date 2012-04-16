@@ -3,14 +3,23 @@ include ../local_settings
 
 .SUFFIXES : .o .C
 
-SRC = Astrobj.C Factory.C Register.C SmartPointer.C Utils.C Metric.C \
-	Worldline.C FocalPlane.C Photon.C Scenery.C WorldlineIntegState.C \
-	Error.C Screen.C Spectrum.C Spectrometer.C
+SRC = Astrobj.C Factory.C Register.C SmartPointer.C Utils.C Metric.C	\
+	Worldline.C FocalPlane.C Photon.C Scenery.C			\
+	WorldlineIntegState.C Error.C Screen.C Spectrum.C		\
+	Spectrometer.C ThinDisk.C
 
 STDPLUG_SRC = KerrBL.C KerrKS.C \
 	Star.C FixedStar.C Torus.C \
-	ThinInfiniteDiskBL.C ThinInfiniteDiskKS.C \
-	PowerLawSpectrum.C BlackBodySpectrum.C
+	PowerLawSpectrum.C BlackBodySpectrum.C \
+	ComplexAstrobj.C UniformSphere.C \
+	StandardAstrobj.C PageThorneDisk.C \
+	ThinDiskPL.C
+
+ifneq (,$(findstring -DGYOTO_USE_CFITSIO,$(GYOTO_FLAGS)))
+STDPLUG_SRC += 	PatternDisk.C PatternDiskBB.C DynamicalDisk.C Disk3D.C \
+	Disk3D_BB.C
+endif
+
 
 LORENEPLUG_SRC= RotStar3_1.C LorenePlug.C
 
@@ -45,7 +54,7 @@ endif
 	g++ -o $(LIBGYOTO_FILE) $(DYLIB_CFLAG)  $(LIB_CXX) $^
 
 libgyoto-stdplug.$(DYLIB_SFX): $(STDPLUG_OBJ) StdPlug.o $(LIBGYOTO_FILE) Metric.o
-	g++ -o $@  $(PLUG_FLAGS)  $(LIB_CXX) $(STDPLUG_OBJ) StdPlug.o
+	g++ -o $@  $(PLUG_FLAGS) $(STDPLUG_OBJ) StdPlug.o $(LIB_CXX)
 
 $(LORENEPLUG_OBJ): $(LORENEPLUG_SRC)
 	make -f Makefile.lorene $@

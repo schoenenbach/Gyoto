@@ -29,8 +29,8 @@
 #include <iostream>
 #include <fstream>
 #include <cstdlib>
-#include <string>
-#include <float.h>
+#include <cstring>
+#include <cfloat>
 #include <cmath>
 #include <sstream>
 
@@ -43,8 +43,7 @@ Register::Entry* Gyoto::Astrobj::Register_ = NULL;
 
 Generic::Generic(string kind) :
 
-  gg_(NULL), rmax_(DBL_MAX), rmax_set_(0), kind_(kind), flag_radtransf_(0),
-  critical_value_(DBL_MIN), safety_value_(DBL_MAX)
+  gg_(NULL), rmax_(DBL_MAX), rmax_set_(0), kind_(kind), flag_radtransf_(0)
 {
   if (debug()) cerr << "Astrobj Construction" << endl;
   
@@ -52,23 +51,21 @@ Generic::Generic(string kind) :
 
 Generic::Generic() :
 
-  gg_(NULL), rmax_(DBL_MAX), rmax_set_(0), kind_("Default"), flag_radtransf_(0),
-  critical_value_(DBL_MIN), safety_value_(DBL_MAX)
+  gg_(NULL), rmax_(DBL_MAX), rmax_set_(0), kind_("Default"), flag_radtransf_(0)
 {
   if (debug()) cerr << "Astrobj Construction" << endl;
 }
 
 Generic::Generic(double radmax) :
-  gg_(NULL), rmax_(radmax), rmax_set_(1), kind_("Default"), flag_radtransf_(0),
-  critical_value_(DBL_MIN)
+  gg_(NULL), rmax_(radmax), rmax_set_(1), kind_("Default"), flag_radtransf_(0)
 {
   if (debug()) cerr << "Astrobj Construction" << endl;
 }
+
 Generic::Generic(const Generic& orig) :
   SmartPointee(orig), gg_(NULL),
   rmax_(orig.rmax_), rmax_set_(orig.rmax_set_), kind_(orig.kind_),
-  flag_radtransf_(orig.flag_radtransf_), critical_value_(orig.critical_value_),
-  safety_value_(orig.safety_value_)
+  flag_radtransf_(orig.flag_radtransf_)
 {
     if (debug()) cerr << "DEBUG: in Astrobj::Generic (Copy)" << endl;
     if (orig.gg_()) {
@@ -77,13 +74,6 @@ Generic::Generic(const Generic& orig) :
       gg_=orig.gg_->clone();
     }
     if (debug()) cerr << "DEBUG: out of Astrobj::Generic (Copy)" << endl;
-}
-Generic * Generic::clone() const {
-  string msg = "Generic::clone() called: cloning not supported "
-    "for astrobj kind ";
-  msg += getKind();
-  throwError (msg);
-  return const_cast<Generic*>(this); // to avoid warning
 }
 
 Generic::~Generic() {
@@ -110,92 +100,64 @@ void Generic::unsetRmax() {
   rmax_set_=0;
 }
 
-double Generic::operator()(double const * const) {
-  stringstream ss;
-  ss << getKind() << "::operator()() is unimplemented";
-  throwError(ss.str());
-  return 0.;
-}
-
-void Generic::getVelocity(double const * const, double *) {
-  stringstream ss;
-  ss << getKind() << "::getVelocity() is unimplemented";
-  throwError(ss.str());
-}
-
-int Generic::Impact(Photon* ph, size_t index, Properties *data){
-  double p1[8], p2[8];
-  ph->getCoord(index, p1);
-  ph->getCoord(index+1, p2);
-  double tmin, minval;
-
-  double t1 = p1[0], t2=p2[0];
-  double val1=(*this)(p1), val2=(*this)(p2);
-
-  if (val1 > critical_value_) {
-    if (val2 > critical_value_) {
-      if ( val1 > safety_value_ && val2 > safety_value_) {
-	if (val1 < val2) {
-	  minval = val1; tmin = t1;
-	} else {
-	  minval = val2; tmin = t2;
-	}
-      } else
-	minval = ph -> findMin(this, p1[0], p2[0], tmin, critical_value_) ;
-      if (minval>critical_value_) {
-	if (data) {
-	  /* EmissionTime */
-	  if (data->time) *data->time=tmin;
-	  /* MinDistance */
-	  if ((data->distance) && (*(data->distance)>minval) )
-	    *data->distance=minval;
-	  /* FirstMinDist */
-	  if (data->first_dmin) { 
-	    if (!data->first_dmin_found) {
-	      if (*(data->first_dmin)>minval) *(data->first_dmin)=minval;
-	      else data->first_dmin_found=1;
-	    }
-	  }
-	}
-	return 0;
-      }
-      ph -> findValue(this, critical_value_, tmin, t2);
+void Generic::checkPhiTheta(double coord[8]) const{
+  switch (gg_ -> getCoordKind()) {
+  case GYOTO_COORDKIND_SPHERICAL:
+    {
+    /* Transforms theta and phi in coord so that 
+       theta is in [0,pi] and phi in [0,2pi] */
+    double thetatmp=coord[2], phitmp=coord[3];
+    while (thetatmp>M_PI) thetatmp-=2.*M_PI;
+    while (thetatmp<-M_PI) thetatmp+=2.*M_PI;//then theta in [-pi,pi]
+    if (thetatmp<0.) {
+      thetatmp=-thetatmp;//then theta in [0,pi]
+      phitmp+=M_PI;//thus, same point x,y,z
     }
-    ph -> findValue(this, critical_value_, t2, t1);
-  } else if (val2 > critical_value_)
-    ph -> findValue(this, critical_value_, t1, t2);
-
-  double cph[8] = { t2 };
-  ph -> getCoord(&t2, 1, cph+1, cph+2, cph+3,
-		 cph+4, cph+5, cph+6, cph+7);
-
-  double coh[8] = { t2 , cph[1], cph[2], cph[3] };
-  getVelocity(coh, coh+4);
-
-  processHitQuantities(ph, cph, coh, t2-t1, data);
-
-  return 1;
+    while (phitmp>2.*M_PI) phitmp-=2.*M_PI;
+    while (phitmp<0.) phitmp+=2.*M_PI;//then phi in [0,2pi]
+    coord[2]=thetatmp;
+    coord[3]=phitmp;
+    }
+    break;
+  case GYOTO_COORDKIND_CARTESIAN:
+    throwError("Astrobj::checkPhiTheta(): should not be called "
+	       "with cartesian-like coordinates");
+  default:
+    throwError("Astrobj::checkPhiTheta(): unknown COORDKIND");
+  }
 
 }
 
+
+#ifdef GYOTO_USE_XERCES
 void Generic::fillElement(FactoryMessenger *fmp) const {
+  fmp -> setMetric(gg_);
   fmp -> setSelfAttribute("kind", kind_);
-  //  fmp -> setParameter ("Flag_radtransf", flag_radtransf_);
   fmp -> setParameter ( flag_radtransf_? "OpticallyThin" : "OpticallyThick");
 }
+
+void Generic::setParameters(FactoryMessenger *fmp) {
+  string name="", content="";
+  setMetric(fmp->getMetric());
+  while (fmp->getNextParameter(&name, &content)) setParameter(name, content);
+}
+#endif
+
 
 void Generic::setFlag_radtransf(int flag) {flag_radtransf_=flag;}
 int Generic::getFlag_radtransf() const {return flag_radtransf_;}
 
-void Generic::setGenericParameter(string name, string content)  {
+int Generic::setParameter(string name, string content)  {
   char* tc = const_cast<char*>(content.c_str());
   if (name=="Flag_radtransf")  flag_radtransf_= atoi(tc);
   else if (name=="OpticallyThin")  flag_radtransf_= 1;
   else if (name=="OpticallyThick")  flag_radtransf_= 0;
   else if (name=="RMax")  {
     rmax_ = atof(tc); rmax_set_=1;
-  }
+  } else return 1;
+  return 0;
 }
+
 void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
 				     double* coord_obj_hit, double dt,
 				     Properties* data) const {
@@ -242,6 +204,10 @@ void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
 	cerr << "DEBUG: Generic::processHitQuantities(): "
 	     << "time=" << *data->time << endl;
     }
+    if (data->impactcoords) {
+      memcpy(data->impactcoords, coord_obj_hit, 8 * sizeof(double));
+      memcpy(data->impactcoords+8, coord_ph_hit, 8 * sizeof(double));
+    }
     if (debug())
       cerr << "DEBUG: Generic::processHitQuantities: "
 	   << "dlambda = (dt="<< dt << ")/(tdot="<< coord_ph_hit[4]
@@ -268,8 +234,9 @@ void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
 	dlambda(nuobs)*nu_em = dlambda(freqObs)*freqObs*ggredm1
 
 	Then, j_nu_em is computed by the emission() function of the
-	Astrobj [NB: so far, with rad. transfer emission() computes
-	j_nu, without rad. transfer it computes I_nu] Finally:
+	Astrobj [NB: with rad. transfer emission() computes
+	j_nu*dsem, without rad. transfer it computes I_nu, thus
+	the result is always homogenous to intensity] Finally:
 	I_nu_obs = I_nu_em*(nu_obs/nu_em)^3
       */
 
@@ -327,15 +294,15 @@ void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
 	       << ", redshift=" << ggred << ")\n";
       }
     }
+    /* update photon's transmission */
+    ph -> transmit(size_t(-1),
+		   transmission(freqObs*ggredm1, dsem,coord_ph_hit));
+    for (size_t ii=0; ii<nbnuobs; ++ii)
+      ph -> transmit(ii,transmission(nuobs[ii]*ggredm1,dsem,coord_ph_hit));
   } else {
     if (debug())
       cerr << "DEBUG: Generic::processHitQuantities: NO data requested!\n";
   }
-  /* update photon's transmission */
-  ph -> transmit(size_t(-1),
-		 transmission(freqObs*ggredm1, dsem,coord_ph_hit));
-  for (size_t ii=0; ii<nbnuobs; ++ii)
-    ph -> transmit(ii,transmission(nuobs[ii]*ggredm1,dsem,coord_ph_hit));
 }
 
 double Generic::transmission(double, double, double*) const {
@@ -343,6 +310,15 @@ double Generic::transmission(double, double, double*) const {
     cerr << "DEBUG: Generic::transmission(): flag_radtransf_="
 	 << flag_radtransf_ << endl;
   return double(flag_radtransf_);
+}
+
+double Generic::emission(double , double dsem, double *, double *) const
+{
+  if (debug())
+    cerr << "DEBUG: Generic::emission(): flag_radtransf_="
+	 << flag_radtransf_ << endl;
+  if (flag_radtransf_) return dsem;
+  return 1.;
 }
 
 double Generic::integrateEmission (double nu1, double nu2, double dsem,
@@ -404,16 +380,16 @@ Gyoto::Astrobj::Subcontractor_t* Astrobj::getSubcontractor(std::string name) {
 Astrobj::Properties::Properties() :
   intensity(NULL), time(NULL), distance(NULL),
   first_dmin(NULL), first_dmin_found(0),
-  redshift(NULL), rimpact(NULL),
-  spectrum(NULL), binspectrum(NULL), offset(1), x(NULL), y(NULL), z(NULL),
+  redshift(NULL),
+  spectrum(NULL), binspectrum(NULL), offset(1), impactcoords(NULL),
   user1(NULL), user2(NULL), user3(NULL), user4(NULL), user5(NULL)
 {}
 
 Astrobj::Properties::Properties( double * I, double * t) :
   intensity(I), time(t), distance(NULL),
   first_dmin(NULL), first_dmin_found(0),
-  redshift(NULL), rimpact(NULL),
-  spectrum(NULL), binspectrum(NULL), offset(1), x(NULL), y(NULL), z(NULL),
+  redshift(NULL),
+  spectrum(NULL), binspectrum(NULL), offset(1), impactcoords(NULL),
   user1(NULL), user2(NULL), user3(NULL), user4(NULL), user5(NULL)
 {}
 
@@ -423,13 +399,10 @@ void Astrobj::Properties::init(size_t nbnuobs) {
   if (distance)   *distance   = DBL_MAX;
   if (first_dmin){*first_dmin = DBL_MAX; first_dmin_found=0;}
   if (redshift)   *redshift   = 0.;
-  if (rimpact)    *rimpact    = 0.;
   if (spectrum) for (size_t ii=0; ii<nbnuobs; ++ii) spectrum[ii*offset]=0.; 
   if (binspectrum) for (size_t ii=0; ii<nbnuobs; ++ii)
 		     binspectrum[ii*offset]=0.; 
-  if (x)          *x=0.;
-  if (y)          *y=0.;
-  if (z)          *z=0.;
+  if (impactcoords) for (size_t ii=0; ii<16; ++ii) impactcoords[ii]=DBL_MAX;
   if (user1)      *user1=0.;
   if (user2)      *user2=0.;
   if (user3)      *user3=0.;
@@ -443,12 +416,9 @@ Astrobj::Properties Astrobj::Properties::operator++() {
   if (distance)   ++distance;
   if (first_dmin) ++first_dmin;
   if (redshift)   ++redshift;
-  if (rimpact)    ++rimpact;
   if (spectrum)   ++spectrum;
   if (binspectrum)++binspectrum;
-  if (x)          ++x;
-  if (y)          ++y;
-  if (z)          ++z;
+  if (impactcoords) impactcoords += 16;
   if (user1)      ++user1;
   if (user2)      ++user2;
   if (user3)      ++user3;

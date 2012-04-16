@@ -20,23 +20,32 @@
 /**
  * \file Gyoto.h
  * \brief All of Gyoto
- * Gyoto.h #includes all of the other Gyoto C++ header files.
+ *
+ * Gyoto.h #includes all of the other Gyoto C++ header files. Beware
+ * that some symbols are resolved only in the plugins
+ * (libgyoto-stdplug.so, libgyoto-lorene.so).
  */
 
 #include<GyotoUtils.h>
-#include<GyotoAstrobj.h>
 #include<GyotoError.h>
-#include<GyotoFocalPlane.h>
-#include<GyotoMetric.h>
 #include<GyotoSmartPointer.h>
-#include<GyotoThinInfiniteDisk.h>
-#include<GyotoWorldlineTime.h>
-#include<GyotoCoord.h>
-#include<GyotoFixedStar.h>
-#include<GyotoKerr.h>
-#include<GyotoPhoton.h>
-#include<GyotoStar.h>
+#include<GyotoFocalPlane.h>
 #include<GyotoWorldline.h>
+#include<GyotoPhoton.h>
+
+#include<GyotoMetric.h>
+#include<GyotoKerrBL.h>
+#include<GyotoKerrKS.h>
+
+#include<GyotoAstrobj.h>
+#include<GyotoThinDisk.h>
+#include<GyotoPageThorneDisk.h>
+#include<GyotoPatternDisk.h>
+#include<GyotoPatternDiskBB.h>
+#include<GyotoDynamicalDisk.h>
+#include<GyotoDisk3D.h>
+#include<GyotoFixedStar.h>
+#include<GyotoStar.h>
 
 /**
  * \mainpage Gyoto
@@ -71,10 +80,11 @@
  * We request that use of Gyoto in scientific publications be properly
  * acknowledged. Please cite:
  *
- *  GYOTO: a new general relativistic ray-tracing code, F. H. Vincent,
- *  T. Paumard, E. Gourgoulhon & G. Perrin 2011, Classical and Quantum
- *  Gravity, accepted.
- *  [<A HREF="http://arxiv.org/abs/1109.4769">arXiv:1109.4769</A>]
+ *  F. H. Vincent, T. Paumard, E. Gourgoulhon & G. Perrin: 
+ *  <EM>GYOTO: a new general relativistic ray-tracing code</EM>, 
+ *  Classical and Quantum Gravity <STRONG>28</STRONG>, 225011 (2011)
+ *  [<A HREF="http://dx.doi.org/10.1088/0264-9381/28/22/225011">published version</A>]
+ *  [<A HREF="http://arxiv.org/abs/1109.4769">preprint: arXiv:1109.4769</A>]
  *
  * We also request that Gyoto modifications, extensions or plug-ins
  * leading to a scientific publication be made public as free software

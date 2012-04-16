@@ -55,6 +55,7 @@ extern "C" {
     } else printf("Freeing unattached Scenery object\n");
   }
   void gyoto_Scenery_print(void *obj) {
+    GYOTO_DEBUG << endl;
 #ifdef GYOTO_USE_XERCES
     if (debug()) {
       cerr << "DEBUG: Printing Gyoto Scenery"<<endl;
@@ -79,6 +80,8 @@ extern "C" {
   void gyoto_Scenery_eval(void *obj, int n) {
     int rvset[1]={0}, paUsed[1]={0}, builder=0;
     gyoto_Scenery *s_obj = (gyoto_Scenery*)obj;
+    double * impactcoords = NULL;
+    bool precompute = 0;
 
     if (!s_obj) {
       builder=1;
@@ -92,10 +95,11 @@ extern "C" {
       "get_pointer",
       "metric", "screen", "astrobj", "delta", "quantities",
       "xmlwrite", "clone",
+      "impactcoords",
       0
     };
-    static long kglobs[9];
-    int kiargs[8], piargs[]={-1, -1, -1};
+    static long kglobs[10];
+    int kiargs[9], piargs[]={-1, -1, -1};
     yarg_kw_init(const_cast<char**>(knames), kglobs, kiargs);
 
     int iarg=n, parg=0;
@@ -228,16 +232,31 @@ extern "C" {
       *ypush_Scenery() = sc->clone();
     }
 
+    /* IMPACTCOORDS */
+    if ((iarg=kiargs[++k])>=0) {
+      iarg+=*rvset;
+      if (yarg_nil(iarg)) { // impactcoords=  :   Getting
+	precompute = 1;
+      } else {              // impaccoords=double(16,res,res): Setting
+	long ntot;
+	long dims[Y_DIMSIZE];
+	size_t res=sc->getScreen()->getResolution();
+	impactcoords = ygeta_d(iarg, &ntot, dims);
+	if (dims[0] != 3 || dims[1] != 16 || dims[2] != res || dims[3] != res)
+	  y_error("dimsof(impactcoords) != [3,16,res,res]");
+      }
+    }
+
     // Get ray-traced image if there is a supplementary positional argument
     if (!builder && // don't ray-trace on construction...
 	!*rvset && // has a return value already been set?
-	((n<=3 && piargs[n-1]>=0) || (piargs[1]>=0)) // positional argument?
+	(((n<=3 && piargs[n-1]>=0) || (piargs[1]>=0)) // positional argument?
+	 || precompute || impactcoords)
 	) { 
       size_t res=sc->getScreen()->getResolution();
       if ((*rvset)++) y_error("Only one return value possible");
       if ((*paUsed)++) y_error("Only one keyword may use positional arguments");
-      if (debug()) cout << "DEBUG: gyoto_Scenery: rank: "
-			<< yarg_rank(piargs[0]) << endl;
+      GYOTO_DEBUG << "rank: " << yarg_rank(piargs[0]) << endl;
 
       SmartPointer<Spectrometer> spr = sc->getScreen()->getSpectrometer();
       size_t nbnuobs = spr()? spr->getNSamples() : 0;
@@ -270,19 +289,18 @@ extern "C" {
 	  tk = strtok(NULL, " \n\t");
 	}
       } else {
-	if (debug()) cerr << "DEBUG: gyoto_Scenery(): "
-			  << "quantities provided online"<<endl;
+	GYOTO_DEBUG << "quantities provided online"<<endl;
 	rquant = yarg_rank(piargs[2]);
 	squant = ygeta_q(piargs[2], &nk, NULL);
-	if (debug()) cerr << "DEBUG: gyoto_Scenery(): nk="<<nk<<endl;
+	GYOTO_DEBUG << "nk="<<nk<<endl;
 
       }
 
       size_t k; int has_sp=0, has_bsp=0;
       if (nbnuobs)
 	for (k=0; k<nk; ++k) {
-	  cerr << "k=" << k<<", nk="<<nk;
-	  cerr << ", squant[k]="<<squant[k]<<endl;
+	  GYOTO_DEBUG << "k=" << k<<", nk="<<nk
+		      << ", squant[k]="<<squant[k]<<endl;
 	  if (!strcmp(squant[k], "Spectrum"))
 	    has_sp=1;
 	  if (!strcmp(squant[k], "BinSpectrum"))
@@ -293,96 +311,84 @@ extern "C" {
       if (!has_sp && !has_bsp) nbnuobs=0;
 
       long ndims=i_idx.getNDims()+j_idx.getNDims()
-	+((rquant>=1)||has_sp||has_bsp);
+	+ (precompute ? 1 : (((rquant>=1)||has_sp||has_bsp)));
+      GYOTO_DEBUG << "i_idx.getNDims()=" << i_idx.getNDims()
+		  << ", j_idx.getNDims()" << j_idx.getNDims()
+		  << ", precompute ? 1 : (((rquant>=1)||has_sp||has_bsp))"
+		  << (precompute ? 1 : (((rquant>=1)||has_sp||has_bsp))) <<endl;
       long dims[4]={ndims};
       size_t offset=0;
+      if (precompute)       dims[++offset]=16;
       if (i_idx.getNDims()) dims[++offset]=ni;
       if (j_idx.getNDims()) dims[++offset]=nj;
-      if ((rquant>=1)||has_sp||has_bsp) dims[++offset]=nk;
+      if ( !precompute && ((rquant>=1)||has_sp||has_bsp) ) dims[++offset]=nk;
+      GYOTO_DEBUG << "precompute=" << precompute << ", nk=" << nk
+		  << ", nbnuobs="<<nbnuobs << ", data=ypush_d({"<< dims[0]
+		  << ", " << dims[1] << ", " << dims[2] << ", " << dims[3]
+		  << "})\n";
       double * data=ypush_d(dims);
-      if (debug()) {
-	cerr << "DEBUG: gyoto_Scenery(): nbnuobs="<<nbnuobs;
-	cerr <<" nk="<<nk<<" dims=["<<dims[0]<<","<<dims[1];
-	cerr <<","<<dims[2]<<","<<dims[3]<<"]"<<endl;
-      }
 
       Astrobj::Properties prop;
       size_t i, j;
-      for ( k=0; k<nk-nbnuobs+has_sp+has_bsp; ++k ) {
-	if (debug()) cerr << "DEBUG: gyoto_Scenery(i,j,\"quantity\"): "
-			  << "new quantity '"
-			  << squant[k] <<"'"<<endl;
-	if (!strcmp(squant[k], "Intensity")) {
-	  if (prop.intensity) y_error("can retrieve property only once");
-	  prop.intensity=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "EmissionTime")) {
-	  if (prop.time) y_error("can retrieve property only once");
-	  prop.time=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "MinDistance")) {
-	  if (prop.distance) y_error("can retrieve property only once");
-	  prop.distance=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "FirstDistMin")) {
-	  if (prop.first_dmin) y_error("can retrieve property only once");
-	  prop.first_dmin=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "Redshift")) {
-	  if (prop.redshift) y_error("can retrieve property only once");
-	  prop.redshift=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "ImpactR")) {
-	  if (prop.rimpact) y_error("can retrieve property only once");
-	  prop.rimpact=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "ImpactX")) {
-	  if (prop.x) y_error("can retrieve property only once");
-	  prop.x=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "ImpactY")) {
-	  if (prop.y) y_error("can retrieve property only once");
-	  prop.y=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "ImpactZ")) {
-	  if (prop.z) y_error("can retrieve property only once");
-	  prop.z=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "Spectrum")) {
-	  if (prop.spectrum) y_error("can retrieve property only once");
-	  prop.spectrum=data;
-	  prop.offset=nelem;
-	  data+=nelem*nbnuobs;
-	} else if (!strcmp(squant[k], "BinSpectrum")) {
-	  if (prop.binspectrum) y_error("can retrieve property only once");
-	  prop.binspectrum=data;
-	  prop.offset=nelem;
-	  data+=nelem*nbnuobs;
-	} else if (!strcmp(squant[k], "User1")) {
-	  if (prop.user1) y_error("can retrieve property only once");
-	  prop.user1=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "User2")) {
-	  if (prop.user2) y_error("can retrieve property only once");
-	  prop.user2=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "User3")) {
-	  if (prop.user3) y_error("can retrieve property only once");
-	  prop.user3=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "User4")) {
-	  if (prop.user4) y_error("can retrieve property only once");
-	  prop.user4=data;
-	  data+=nelem;
-	} else if (!strcmp(squant[k], "User5")) {
-	  if (prop.user5) y_error("can retrieve property only once");
-	  prop.user5=data;
-	  data+=nelem;
-	} else y_errorq("unknown quantity: %s", squant[k]);
+      if (precompute) prop.impactcoords=data;
+      else {
+	for ( k=0; k<nk-nbnuobs+has_sp+has_bsp; ++k ) {
+	  GYOTO_DEBUG << "new quantity '" << squant[k] <<"'"<<endl;
+	  if (!strcmp(squant[k], "Intensity")) {
+	    if (prop.intensity) y_error("can retrieve property only once");
+	    prop.intensity=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "EmissionTime")) {
+	    if (prop.time) y_error("can retrieve property only once");
+	    prop.time=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "MinDistance")) {
+	    if (prop.distance) y_error("can retrieve property only once");
+	    prop.distance=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "FirstDistMin")) {
+	    if (prop.first_dmin) y_error("can retrieve property only once");
+	    prop.first_dmin=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "Redshift")) {
+	    if (prop.redshift) y_error("can retrieve property only once");
+	    prop.redshift=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "Spectrum")) {
+	    if (prop.spectrum) y_error("can retrieve property only once");
+	    prop.spectrum=data;
+	    prop.offset=nelem;
+	    data+=nelem*nbnuobs;
+	  } else if (!strcmp(squant[k], "BinSpectrum")) {
+	    if (prop.binspectrum) y_error("can retrieve property only once");
+	    prop.binspectrum=data;
+	    prop.offset=nelem;
+	    data+=nelem*nbnuobs;
+	  } else if (!strcmp(squant[k], "User1")) {
+	    if (prop.user1) y_error("can retrieve property only once");
+	    prop.user1=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "User2")) {
+	    if (prop.user2) y_error("can retrieve property only once");
+	    prop.user2=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "User3")) {
+	    if (prop.user3) y_error("can retrieve property only once");
+	    prop.user3=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "User4")) {
+	    if (prop.user4) y_error("can retrieve property only once");
+	    prop.user4=data;
+	    data+=nelem;
+	  } else if (!strcmp(squant[k], "User5")) {
+	    if (prop.user5) y_error("can retrieve property only once");
+	    prop.user5=data;
+	    data+=nelem;
+	  } else y_errorq("unknown quantity: %s", squant[k]);
+	}
       }
-
       if (i_idx.isDouble() ||j_idx.isDouble()) {
-	prop.init();
+	prop.init(nbnuobs);
 	Photon ph(sc->getMetric(), sc->getAstrobj(), sc->getScreen(),
 		  i_idx.getDVal(), j_idx.getDVal());
 	ph.hit(&prop);
@@ -390,16 +396,23 @@ extern "C" {
 	for (j=j_idx.first() ;
 	     j_idx.valid() ;
 	     j=j_idx.next()  ) {
-	  cout << "\rRay-tracing scenery: j = " << j << flush ;
+	  if (impactcoords==NULL)
+	    cout << "\rRay-tracing scenery: j = " << j << flush ;
 	  for (i=i_idx.first();
 	       i_idx.valid();
 	       i=i_idx.next() ) {
-	    prop.init();
-	    (*sc)(i, j, &prop);
+	    GYOTO_DEBUG << "j="<<j<<", i="<<i<<endl;
+	    prop.init(nbnuobs);
+	    GYOTO_DEBUG << "DEBUG: gyoto_Scenery.C: "
+		"calling (*sc)(i, j, &prop, ((impactcoords=="<<impactcoords<<
+		") ? impactcoords+(j*res+i)*16 : NULL)=="
+		   <<impactcoords+(j*res+i)*16
+		   <<");" << endl;
+	    (*sc)(i, j, &prop, impactcoords ? impactcoords+((j-1)*res+i-1)*16 : NULL);
 	    ++prop;
 	  }
 	}
-	cout << endl;
+	if (impactcoords==NULL) cout << endl;
       }
     }
   }

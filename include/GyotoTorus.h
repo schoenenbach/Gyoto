@@ -35,7 +35,7 @@ namespace Gyoto{
   namespace Astrobj { class Torus; }
 }
 
-#include <GyotoAstrobj.h>
+#include <GyotoStandardAstrobj.h>
 #include <GyotoSpectrum.h>
 #include <GyotoUtils.h>
 
@@ -46,7 +46,7 @@ namespace Gyoto{
  * Any Metric::Generic is acceptable as long as it implements
  * Metric::Generic::circularVelocity().
  */
-class Gyoto::Astrobj::Torus : public Gyoto::Astrobj::Generic {
+class Gyoto::Astrobj::Torus : public Gyoto::Astrobj::Standard {
   friend class Gyoto::SmartPointer<Gyoto::Astrobj::Torus>;
   
   
@@ -100,11 +100,12 @@ class Gyoto::Astrobj::Torus : public Gyoto::Astrobj::Generic {
 
   //XML I/O
  public:
+  virtual int setParameter(std::string name, std::string content) ;
+
 #ifdef GYOTO_USE_XERCES
   virtual void fillElement(FactoryMessenger *fmp) const ;
-                                             /// < called from Factory
-  static Astrobj::Subcontractor_t Subcontractor;
-  static void Init();
+                                             ///< called from Factory
+  virtual void setParameters(FactoryMessenger *fmp) ;
 #endif
   
   // Outputs

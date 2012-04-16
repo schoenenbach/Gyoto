@@ -67,12 +67,9 @@ namespace Gyoto {
    * - GYOTO_QUANTITY_MIN_DISTANCE: MinDistance
    * - GYOTO_QUANTITY_FIRST_DMIN  : FirstDmin
    * - GYOTO_QUANTITY_REDSHIFT    : RedShift
-   * - GYOTO_QUANTITY_IMPACT_R    : ImpactR
-   * - GYOTO_QUANTITY_IMPACT_X    : ImpactX
-   * - GYOTO_QUANTITY_IMPACT_Y    : ImpactY
-   * - GYOTO_QUANTITY_IMPACT_Z    : ImpactZ
    * - GYOTO_QUANTITY_SPECTRUM    : Spectrum
    * - GYOTO_QUANTITY_BINSPECTRUM : BinSpectrum
+   * - GYOTO_QUANTITY_IMPACTCOORDS: ImpactCoords
    * - GYOTO_QUANTITY_USER1       : User1
    * - GYOTO_QUANTITY_USER2       : User2
    * - GYOTO_QUANTITY_USER3       : User3
@@ -86,10 +83,7 @@ namespace Gyoto {
 #define GYOTO_QUANTITY_MIN_DISTANCE   4
 #define GYOTO_QUANTITY_FIRST_DMIN     8
 #define GYOTO_QUANTITY_REDSHIFT      16
-#define GYOTO_QUANTITY_IMPACT_R      32
-#define GYOTO_QUANTITY_IMPACT_X      64
-#define GYOTO_QUANTITY_IMPACT_Y     128
-#define GYOTO_QUANTITY_IMPACT_Z     256
+#define GYOTO_QUANTITY_IMPACTCOORDS  32
 #define GYOTO_QUANTITY_SPECTRUM     512
 #define GYOTO_QUANTITY_BINSPECTRUM 1024
 /* Astrobj-specific */
@@ -105,11 +99,18 @@ namespace Gyoto {
   typedef unsigned int Verbosity_t;
 #define GYOTO_DEFAULT_DEBUG_MODE 0
 #define GYOTO_QUIET_VERBOSITY   1
-#define GYOTO_DEFAULT_VERBOSITY 5
 #define GYOTO_SEVERE_VERBOSITY  3
+#define GYOTO_DEFAULT_VERBOSITY 5
 #define GYOTO_INFO_VERBOSITY   10
 #define GYOTO_DEBUG_VERBOSITY 3000
 
+#define GYOTO_QUIET  if (Gyoto::verbose() >= GYOTO_QUIET_VERBOSITY) cout 
+#define GYOTO_SEVERE if(Gyoto::verbose()>=GYOTO_SEVERE_VERBOSITY)cerr<<"SEVERE: "
+#define GYOTO_WARNING if(Gyoto::verbose()>=GYOTO_SEVERE_VERBOSITY)cerr<<"WARNING: "
+#define GYOTO_MSG    if (Gyoto::verbose() >= GYOTO_DEFAULT_VERBOSITY) cout 
+#define GYOTO_INFO   if (Gyoto::verbose() >= GYOTO_INFO_VERBOSITY) cerr<<"INFO: "
+#define GYOTO_DEBUG  if (Gyoto::debug()) cerr << "DEBUG: " \
+					      << __PRETTY_FUNCTION__ << ": "
 
   /**
    * \brief Coordinate system kinds
@@ -157,8 +158,12 @@ namespace Gyoto {
 
 /// \brief Celerity of light (m/s)
 #define GYOTO_C          299792458.
+/// \brief Celerity of light (cm/s)
+#define GYOTO_C_CGS 2.99792458e10
 /// \Brief Gravitational constant (SI = m^3 * kg^-1 * s-2)
 #define GYOTO_G 6.67428e-11
+/// \Brief Gravitational constant (cgs: cm^3 * g^-1 * s-2)
+#define GYOTO_G_CGS 6.67428e-8
 /// \brief G/c^2=6.67428e-11/299792458.^2
 #define GYOTO_G_OVER_C_SQUARE 7.426138e-28
 /// \brief Planck's constant (h) in SI (J.s=kg.m^2/s) 
@@ -168,11 +173,39 @@ namespace Gyoto {
 #define GYOTO_PLANCK_OVER_C_SQUARE 7.372496e-51
 /// \brief Boltzmann's constant (k) in SI (J/K)
 #define GYOTO_BOLTZMANN 1.3806504e-23
+/// \brief Boltzmann's constant (k) in cgs (erg/K)
+#define GYOTO_BOLTZMANN_CGS 1.3806504e-16
 /// \brief h/k (K.s = K/Hz)
 #define GYOTO_PLANCK_OVER_BOLTZMANN 4.7992373e-11
+/// \brief ideal gas constant R in SI
+#define GYOTO_GAS_CST 8.3144621
+/// \brief ideal gas constant R in erg/(K mol)
+#define GYOTO_GAS_CST_CGS 8.3144621e7
+/// \brief Avogadro constant
+#define GYOTO_AVOGADRO 6.0221413e23
+/// \brief Thomson cross-section in cgs
+#define GYOTO_THOMSON_CGS 6.6524e-25
+/// \brief Fine structure constant (=1/137)
+#define GYOTO_ALPHA_F 0.00729927
+/// \brief proton mass in cgs
+#define GYOTO_PROTON_MASS_CGS 1.67262158e-24
+/// \brief electron mass in cgs
+#define GYOTO_ELECTRON_MASS_CGS 9.10938188e-28
+/// \brief electron classical radius in cgs
+#define GYOTO_ELECTRON_CLASSICAL_RADIUS_CGS 2.8179e-13
+/// \brief elementary charge in cgs (erg^{1/2} cm^{1/2})
+#define GYOTO_ELEMENTARY_CHARGE_CGS 4.80320427e-10
+/// \brief Euler-Mascheroni constant
+#define GYOTO_EULER_MASCHERONI  0.577216
+/// \brief atomic mass unit in cgs
+#define GYOTO_ATOMIC_MASS_UNIT_CGS 1.660537781e-24
+
+
 
 /// \brief Sun mass (kg)
 #define GYOTO_SUN_MASS    1.98843e30
+/// \brief Sun mass (g)
+#define GYOTO_SUN_MASS_CGS    1.98843e33
 /// \brief Sun radius (m)
 #define GYOTO_SUN_RADIUS     6.955e8
 /// \brief Kiloparsec (m)

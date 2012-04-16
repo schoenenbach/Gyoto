@@ -21,25 +21,52 @@
 #include "GyotoKerrBL.h"
 #include "GyotoKerrKS.h"
 // include Astrobj headers
+#include "GyotoComplexAstrobj.h"
 #include "GyotoStar.h"
 #include "GyotoFixedStar.h"
-#include "GyotoThinInfiniteDiskBL.h"
-#include "GyotoThinInfiniteDiskKS.h"
 #include "GyotoTorus.h"
+#include "GyotoThinDisk.h"
+#include "GyotoPageThorneDisk.h"
+#include "GyotoThinDiskPL.h"
+#ifdef GYOTO_USE_CFITSIO
+#include "GyotoPatternDisk.h"
+#include "GyotoPatternDiskBB.h"
+#include "GyotoDynamicalDisk.h"
+#include "GyotoDisk3D.h"
+#include "GyotoDisk3D_BB.h"
+#endif
 // include Spectrum headers
 #include "GyotoPowerLawSpectrum.h"
 #include "GyotoBlackBodySpectrum.h"
+
+using namespace Gyoto;
 
 extern "C" void __GyotostdplugInit() {
   // Register Metrics
   Gyoto::Metric::KerrBL::Init();
   Gyoto::Metric::KerrKS::Init();
   // Register Astrobjs
-  Gyoto::Astrobj::Star::Init();
-  Gyoto::Astrobj::FixedStar::Init();
-  Gyoto::Astrobj::ThinInfiniteDiskBL::Init();
-  Gyoto::Astrobj::ThinInfiniteDiskKS::Init();
-  Gyoto::Astrobj::Torus::Init();
+  Astrobj::Register("Complex",   &(Astrobj::Subcontractor<Astrobj::Complex>));
+  Astrobj::Register("Star",      &(Astrobj::Subcontractor<Astrobj::Star>));
+  Astrobj::Register("FixedStar", &(Astrobj::Subcontractor<Astrobj::FixedStar>));
+  Astrobj::Register("Torus",     &(Astrobj::Subcontractor<Astrobj::Torus>));
+  Astrobj::Register("ThinDisk",  &(Astrobj::Subcontractor<Astrobj::ThinDisk>));
+  Astrobj::Register("PageThorneDisk",
+		    &(Astrobj::Subcontractor<Astrobj::PageThorneDisk>));
+  Astrobj::Register("ThinDiskPL",  
+		    &(Astrobj::Subcontractor<Astrobj::ThinDiskPL>));
+#ifdef GYOTO_USE_CFITSIO
+  Astrobj::Register("PatternDisk",
+		    &(Astrobj::Subcontractor<Astrobj::PatternDisk>));
+  Astrobj::Register("PatternDiskBB",
+		    &(Astrobj::Subcontractor<Astrobj::PatternDiskBB>));
+  Astrobj::Register("DynamicalDisk",
+		    &(Astrobj::Subcontractor<Astrobj::DynamicalDisk>));
+  Astrobj::Register("Disk3D",
+		    &(Astrobj::Subcontractor<Astrobj::Disk3D>));
+  Astrobj::Register("Disk3D_BB",
+		    &(Astrobj::Subcontractor<Astrobj::Disk3D_BB>));
+#endif
   // Register Spectra
   Gyoto::Spectrum::PowerLawInit();
   Gyoto::Spectrum::BlackBodyInit();

@@ -35,7 +35,7 @@ namespace Gyoto{
 }
 
 #include <GyotoMetric.h>
-#include <GyotoAstrobj.h>
+#include <GyotoUniformSphere.h>
 #include <GyotoSpectrum.h>
 
 #ifdef GYOTO_USE_XERCES
@@ -87,16 +87,15 @@ namespace Gyoto{
  *
  */
 class Gyoto::Astrobj::Star :
-  public Gyoto::Astrobj::Generic,
+  public Gyoto::Astrobj::UniformSphere,
   public Gyoto::Worldline {
   friend class Gyoto::SmartPointer<Gyoto::Astrobj::Star>;
   
   // Data : 
   // -----
- protected:
-  double radius_ ; ///< star radius
-  SmartPointer<Spectrum::Generic> spectrum_; ///< star emission law
-  SmartPointer<Spectrum::Generic> opacity_; ///< if optically thin, opacity law
+  private:
+  int wait_pos_; ///< Hack in setParameters()
+  double * init_vel_; ///< Hack in setParameters()
 
   // Constructors - Destructor
   // -------------------------
@@ -132,10 +131,6 @@ class Gyoto::Astrobj::Star :
 
   virtual void setMetric(SmartPointer<Metric::Generic>);
   virtual SmartPointer<Metric::Generic> getMetric() const;
-  virtual void setSpectrum(SmartPointer<Spectrum::Generic>);
-  virtual SmartPointer<Spectrum::Generic> getSpectrum() const;
-  virtual void setOpacity(SmartPointer<Spectrum::Generic>);
-  virtual SmartPointer<Spectrum::Generic> getOpacity() const;
 
   /**
    * The mass of a Star is always 1. Stars do not perturb the
@@ -147,40 +142,34 @@ class Gyoto::Astrobj::Star :
  public:
   virtual double getRmax();
   virtual void unsetRmax();
-  double getRadius() const ; ///< Get radius_
-  void   setRadius(double); ///< Set radius_
   //  void setCoordSys(int); ///< Get coordinate system for integration
   //  int  getCoordSys(); ///< Set coordinate system for integration
   void setInitialCondition(double coord[8]); ///< Same as Worldline::setInitialCondition(gg, coord, sys,1)
 
+  using Worldline::setInitCoord;
+  virtual void setInitCoord(double pos[4], double vel[3], int dir=1);
+  virtual void setPosition(double pos[4]);
+  virtual void setVelocity(double vel[3]);
+
+  virtual int setParameter(std::string name, std::string content);
+
  public:
 #ifdef GYOTO_USE_XERCES
-  virtual void fillElement(FactoryMessenger *fmp) const ; /// < called from Factory
-  static Astrobj::Subcontractor_t Subcontractor;
-  static void Init();
+  /**
+   * This implementation of UniformSphere::setParameters() uses
+   * wait_pos_ and init_vel_ to make sure setVelocity() is called
+   * after setPosition().
+   */
+  virtual void setParameters(FactoryMessenger *fmp) ;
+  virtual void fillElement(FactoryMessenger *fmp) const ; ///< called from Factory
 #endif
 
-  virtual double operator()(double const coord[4]) ;
-
-  /**
-   * Star::Impact() computes the distance of closest approach between
-   * the Photon and the Astrobj (if data->distance is non-NULL). The
-   * value stored is quadratic, it is not exactly the distance.
-   *
-   * There is a (false) assumption that the star's trajectory is
-   * linear and uniform in Cartesian coordinates between to
-   * integration points. Since the integration happens in spherical
-   * coordinates, this is not true.
-   */
-  virtual int Impact_(Photon *ph, size_t index, Astrobj::Properties* data=NULL);
- protected:
+ public:
+  virtual void getCartesian(double const * const dates, size_t const n_dates,
+		double * const x, double * const y,
+		double * const z, double * const xprime=NULL,
+		double * const yprime=NULL,  double * const zprime=NULL) ;
   virtual void getVelocity(double const pos[4], double vel[4]) ;
-
-  virtual double emission(double nu_em, double dsem,
-			  double cp[8], double co[8]=NULL) const;
-  virtual double integrateEmission(double nu1, double nu2, double dsem,
-				   double c_ph[8], double c_obj[8]=NULL) const;
-  virtual double transmission(double nuem, double dsem, double*) const ;
 
 };
 

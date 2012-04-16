@@ -23,12 +23,12 @@ GYOTO_H = $(shell ls ../include/*.h)
 
 PKG_NAME=gyoto
 PKG_I=gyoto.i \
-	gyoto_Metric.i gyoto_Photon.i gyoto_Scenery.i
+	gyoto_Photon.i gyoto_Scenery.i
 #gyoto_Kerr.i gyoto_Star.i gyoto_FixedStar.i gyoto_PolishDoughnut.i
 
 OBJS=gyoto_utils.o gyoto_Metric.o gyoto_Astrobj.o gyoto_Photon.o \
 	gyoto_Scenery.o gyoto_Screen.o gyoto_Idx.o gyoto_Spectrum.o \
-	gyoto_Spectrometer.o
+	gyoto_Spectrometer.o gyoto_ThinDisk.o
 
 # gyoto_KerrBL.o gyoto_KerrKS.o gyoto_Star.o gyoto_FixedStar.o gyoto_PolishDoughnut.o gyoto_ThinInfiniteDiskBL.o gyoto_ThinInfiniteDiskKS.o 
 
@@ -38,7 +38,7 @@ PKG_EXENAME=yorick
 # PKG_DEPLIBS=-Lsomedir -lsomelib   for dependencies of this package
 PKG_DEPLIBS=-L../lib -lgyoto $(LIB_CXX)
 # set compiler (or rarely loader) flags specific to this package
-PKG_CFLAGS= -I../include
+PKG_CFLAGS= -I../include $(GYOTO_INC)
 PKG_LDFLAGS=
 
 # list of additional package names you want in PKG_EXENAME
@@ -125,7 +125,7 @@ uninstall::
 
 clean::
 	cd stdplug; yorick -batch make.i; make clean
-	rm -f gyoto_std.so
+	rm -f gyoto_std.so example-patterndisk.fits.gz example-patterndisk.xml
 
 distclean::
 	cd stdplug; yorick -batch make.i; make distclean

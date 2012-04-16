@@ -87,8 +87,8 @@ class Gyoto::Spectrum::Generic : protected Gyoto::SmartPointee {
    */
 
   virtual void fillElement(FactoryMessenger *fmp) const ;
-                                             /// < called from Factory
-  void setGenericParameter(std::string name, std::string content) ;
+                                             ///< called from Factory
+  virtual void setParameter(std::string name, std::string content) ;
   ///< To be called by fillElement()
 
 #endif

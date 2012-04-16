@@ -120,8 +120,11 @@ double Metric::Generic::SysPrimeToTdot(const double pos[4], const double v[3]) c
     }
   }
   if (sum>=0) {
-    cerr << "ERROR: Metric::Generic::SysPrimeToTdot: tdot2= " << -1./sum << endl;
-    throwError("In Metric.C: Impossible condition (v>c)");
+    stringstream ss;
+    ss << "In Metric.C: Impossible condition (v>c): tdot^2="<< -1/sum
+       << " at pos=["<<pos[0] << ", " << pos[1] <<", "<<pos[2] <<", "<< pos[3]
+       << "], vel=[" << v[0] << ", " << v[1] <<", "<<v[2]<<"]";
+    throwError(ss.str());
 
   }
   return sqrt(-1./sum);
@@ -211,7 +214,7 @@ diff is such as : Y_dot=diff(Y)
 The general equation of geodesics is used.
  */
 int Metric::Generic::diff(const double coord[8], double res[8]) const{
- 
+  if (debug()) cerr << "DEBUG: Metric::Generic::diff()" << endl;
   res[0]=coord[4];
   res[1]=coord[5];
   res[2]=coord[6];
@@ -288,6 +291,43 @@ void Metric::Generic::circularVelocity(double const * , double*, double) const {
   stringstream ss;
   ss << kind_ << "::circularVelocity() is not implemented";
   throwError(ss.str());
+}
+
+
+void Metric::Generic::cartesianVelocity(double const coord[8], double vel[3]) {
+  double tauprime;
+  switch(coordkind_) {
+  case GYOTO_COORDKIND_SPHERICAL:
+    {
+      double r = coord[1];
+      double costheta = cos(coord[2]), sintheta = sin(coord[2]); 
+      double cosphi   = cos(coord[3]), sinphi   = sin(coord[3]);
+
+      tauprime   = 1./coord[4];
+      double rprime     = coord[5]*tauprime;
+      double thetaprime = coord[6]*tauprime;
+      double phiprime   = coord[7]*tauprime;
+      vel[0] = rprime * sintheta * cosphi
+	+ r * thetaprime * costheta * cosphi
+	- r * phiprime * sintheta * sinphi;
+      vel[1] = rprime * sintheta * sinphi
+	+ r * thetaprime * costheta * sinphi
+	+ r * phiprime * cosphi;
+      vel[2] = rprime * costheta
+	- r * thetaprime * sintheta
+	;
+    }
+    break;
+  case GYOTO_COORDKIND_CARTESIAN:
+	tauprime = 1./coord[4];
+	vel[0] = coord[5]*tauprime;
+	vel[1] = coord[6]*tauprime;
+	vel[2] = coord[7]*tauprime;
+	break;
+  default:
+    Gyoto::throwError
+      ("Metric::Generic::cartesianVelocity: unknown coordinate kind");
+  }
 }
 
 int Metric::Generic::myrk4_adaptive(Worldline* line, const double * coord, double lastnorm , double normref, double* coordnew , double h0, double& h1) const{ 

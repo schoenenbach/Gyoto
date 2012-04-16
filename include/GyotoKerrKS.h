@@ -92,11 +92,13 @@ class Gyoto::Metric::KerrKS : public Metric::Generic {
 
   void nullifyCoord(double coord[8], double &tdot2) const;
   void nullifyCoord(double coord[8]) const;
+  virtual void circularVelocity(double const pos[4], double vel [4],
+				double dir=1.) const ;
 
   //  friend std::ostream& operator<<(std::ostream& , const KerrKS& ) ;
   //  std::ostream& print(std::ostream&) const ;
 #ifdef GYOTO_USE_XERCES
-  virtual void fillElement(FactoryMessenger *fmp); /// < called from Factory
+  virtual void fillElement(FactoryMessenger *fmp); ///< called from Factory
   static Metric::Subcontractor_t Subcontractor;
   static void Init();
 #endif

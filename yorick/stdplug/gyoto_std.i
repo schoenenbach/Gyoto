@@ -28,18 +28,6 @@ __set_GyotoStdPlugSupplier, __gyoto_exportSupplier();
 #include "gyoto_Kerr.i"
 #include "gyoto_Star.i"
 
-extern gyoto_ThinInfiniteDiskBL;
-extern gyoto_ThinInfiniteDiskKS;
-/* DOCUMENT disk=gyoto_ThinInfiniteDiskBL(metric)
-         or disk=gyoto_ThinInfiniteDiskKS(metric)
-
-   An astronomical object (Astrobj) for GYOTO: geometrically thin,
-   optically thick, infinitely extended disk in Kerr metric.
-         
-   SEE ALSO: gyoto, gyoto_Astrobj, gyoto_KerrBL, gyoto_KerrKS
-   
- */
-
 ///////// FIXEDSTAR
 
 extern _gyoto_FixedStar_register_as_Astrobj;
@@ -96,6 +84,180 @@ extern gyoto_Torus;
        largeradius, smallradius, spectrum, opacity
 
     SEE ALSO: gyoto, gyoto_Astrobj, gyoto_Star, gyoto_Spectrum
+*/
+
+//// PAGETHORNEDISK
+extern _gyoto_PageThorneDisk_register_as_Astrobj;
+_gyoto_PageThorneDisk_register_as_Astrobj;
+extern gyoto_PageThorneDisk;
+/* DOCUMENT disk = gyotoPageThorneDisk(...)
+            disk, member=value...
+
+    This is a subkind of gyoto_ThinDisk with an emission law based on
+    Page & Thorne 1974. Works only in Kerr metric (KerrBL or
+    KerrKS). The spin is cached when the metric is set: if you later
+    change the spin in the metric, use the UPDATESPIN keyword to
+    update it, i.e.:
+
+      disk, metric=gyoto_KerrBL();
+      noop, disk(metric=)(spin=0.5);
+      disk, updatespin=
+
+   KEYWORDS:
+
+    updatespin= [] updated cached value of spin parameter.
+
+   SEE ALSO:
+    gyoto_Astrobj, gyoto_ThinDisk, gyoto_KerrBL, gyoto_KerrKS
+*/
+
+//// PATTERNDISK
+extern _gyoto_PatternDisk_register_as_Astrobj;
+_gyoto_PatternDisk_register_as_Astrobj;
+extern gyoto_PatternDisk;
+/* DOCUMENT disk = gyotoPatternDisk(...)
+            disk, member=value...
+
+    This is a subkind of gyoto_ThinDisk. The disk is "painted" with a
+    pattern, hence the name. The grid for the pattern is set by three
+    numbers: NPHI (number of grid points in the azimuthal direction),
+    REPEATPHI if the pattern must be repeated several times in the
+    azimuthal direction (i.e. if the angular periodicity of the
+    pattern is a fraction of 2*pi), and NR (number of grid points in
+    the radial direction). The disk extends from INNERRADIUS to
+    OUTERRADIUS (see gyoto_ThinDisk) with a regular spacing along the
+    radial direction, unless RADIUS is specified.
+
+    The pattern is specified by the surface brightness EMISSION==Jnu
+    at NNU frequencies going from NU0 to NU0*DNU*(NNU-1). The cube
+    EMISSION is an array(double, NNU, NPHI, NR).
+
+    An optional OPACITY cube with the same dimensions as EMISSION can
+    be provided. This allows using PatternDisk for any solid object
+    confined in the equatorial plane and orbiting the central object
+    in circular motion.
+
+    By default, the fluid is supposed to be corotating at the local
+    circular velocity, but the fluid velocity field can be specified
+    with VELOCITY==array(double, 2, NPHI, NR).
+    VELOCITY(1,..)==dphi/dt; VELOCITY(2,..)==dr/dt.
+
+    The fluid VELOCITY field must not be mistaken by the apparent
+    pattern velocity. The pattern is is solid (apparent) rotation at
+    angular velocity PATTERNVELOCITY.
+
+   KEYWORDS:
+
+    fitsread="filename.fits"  read pattern from FITS file.
+    
+    fitswrite="filename.fits" write pattern to FITS file.
+
+    patternvelocity=double(value) set (or get) pattern angular
+                       velocity.
+
+    repeatphi=N the pattern angular periodicity is 2*pi/N.
+
+    nu0=        first frequency (Hz)
+
+    dnu=        frequencty spacing (Hz)
+
+    copyintensity=EMISSION
+                * if EMISSION is nil, retrieve the surface brightness
+                  cube;
+                * if EMISSION==0, free the cube;
+                * if EMISSION is an array of NNU x NPHI x NR doubles,
+                  attach (copy) this array into DISK as the surface
+                  brightness cube. If this cube doesn't have the same
+                  dimensions as the previously set one, the velocity
+                  and radius arrays will also be freed (as they have
+                  inconsistent dimensions).
+
+     copyopacity=OPACITY
+                same as above for the opacity cube.
+
+     copyvelocity=VELOCITY
+                same as COPYINTENSITY but to attach the fluid velocity
+                field, a 2 x NPHI x NR array where
+                VELOCITY(1,..)==dphi/dt and VELOCITY(2,..)==dr/dt.
+
+     copygridradius=RADIUS
+                same as above, but RADIUS is a NR element vector
+                specifying the R coordinate of the grid points. If
+                RADIUS is not attached (if set, it can be detached
+                with copygridradius=0), the grid points are regularly
+                spaced between INNERRADIUS and OUTERRADIUS (see
+                gyoto_ThinDisk).
+
+   SEE ALSO:
+    gyoto_Astrobj, gyoto_ThinDisk, gyotoPageThorneDisk
+*/
+
+//// DISK3D
+extern _gyoto_Disk3D_register_as_Astrobj;
+_gyoto_Disk3D_register_as_Astrobj;
+extern gyoto_Disk3D;
+/* DOCUMENT disk = gyoto_Disk3D(...)
+            disk, member=value...
+
+    Geometrically thick disk. The grid for the pattern is set by 4
+    numbers: NPHI (number of grid points in the azimuthal direction),
+    REPEATPHI if the pattern must be repeated several times in the
+    azimuthal direction (i.e. if the angular periodicity of the
+    pattern is a fraction of 2*pi), NZ (number of grid points in
+    the vertical direction), and NR (number of grid points in
+    the radial direction). The disk extends from RIN to
+    ROUT with a regular spacing along all directions.
+
+    The pattern is specified by the surface brightness which can be
+    computed from EMISSQUANT which is typically the temperature
+    at NNU frequencies going from NU0 to NU0*DNU*(NNU-1). The cube
+    EMISSQUANT is an array(double, NNU, NPHI, NZ, NR).
+
+    The fluid velocity field must be specified
+    with VELOCITY==array(double, 3, NPHI, NZ, NR).
+    VELOCITY(1,..)==dphi/dt; VELOCITY(2,..)==dz/dt;
+    VELOCITY(3,..)==dr/dt.
+
+   KEYWORDS:
+
+    fitsread="filename.fits"  read pattern from FITS file.
+    
+    fitswrite="filename.fits" write pattern to FITS file.
+
+    repeatphi=N the pattern angular periodicity is 2*pi/N.
+
+    nu0=        first frequency (Hz)
+
+    dnu=        frequencty spacing (Hz)
+
+    rin=        inner radius
+
+    rout=       outer radius
+
+    zmin=       smallest z value (if >=0 then the disk is assumed to be
+                symmetric by z->-z transformation) 
+
+    zmax=       biggest z value
+
+    copyemissquant=EMISSQUANT
+                * if EMISSQUANT is nil, retrieve the
+                  cube;
+                * if EMISSQUANT==0, free the cube;
+                * if EMISSQUANT is an array of NNU x NPHI x NZ x NR doubles,
+                  attach (copy) this array into DISK.
+                  If this cube doesn't have the same
+                  dimensions as the previously set one, the velocity
+                  array will also be freed (as it has
+                  inconsistent dimensions).
+
+     copyvelocity=VELOCITY
+                same as COPYEMISSQUANT but to attach the fluid velocity
+                field, a 3 x NPHI x NZ x NR array where
+                VELOCITY(1,..)==dphi/dt, VELOCITY(2,..)==dz/dt
+                and VELOCITY(3,..)==dr/dt
+
+   SEE ALSO:
+    gyoto_Astrobj, gyoto_PatternDisk
 */
 
 /////// SPECTRUM KIND ///////

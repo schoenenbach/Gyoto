@@ -46,17 +46,30 @@ namespace Gyoto{
     class Properties;
 
     /**
-     * This is a more specific version of the SmartPointee::Subcontractor_t
-     * type. An Astrobj::Subcontrator_t is called by the
-     * Gyoto::Factory to build an instance of the kind of astronomical
-     * object specified in an XML file (see Register()). The Factory
-     * and Subcontractor_t function communicate through a
-     * Gyoto::FactoryMessenger.
+     * This is a more specific version of the
+     * SmartPointee::Subcontractor_t type. An Astrobj::Subcontrator_t
+     * is called by the Gyoto::Factory to build an instance of the
+     * kind of astronomical object specified in an XML file (see
+     * Register()). The Factory and Subcontractor_t function
+     * communicate through a Gyoto::FactoryMessenger. A template is
+     * provided so that you may not have to code anything.
      */
     typedef SmartPointer<Gyoto::Astrobj::Generic>
       Subcontractor_t(Gyoto::FactoryMessenger*);
     ///< A function to build instances of a specific Astrobj::Generic sub-class
  
+    /**
+     * Instead of reimplementing the wheel, your subcobtractor can simply be
+     * Gyoto::Astrobj::Subcontractor<MyKind>
+     */
+    template<typename T> SmartPointer<Astrobj::Generic> Subcontractor
+      (FactoryMessenger* fmp) {
+      SmartPointer<T> ao = new T();
+      ao -> setParameters(fmp);
+      return ao;
+    }
+    ///< A template for Subcontractor_t functions
+
    /**
      * Query the Astrobj register to get the Astrobj::Subcontractor_t
      * correspondig to a given kind name. This function is normally
@@ -119,27 +132,37 @@ namespace Gyoto{
  *    - implement the fillElement method, used for printing and saving to
  *      XML.
  *
- *  There are basically two ways of making Generic::Impact() work: either by
- *  providing your own Generic::Impact() function, or by implementing a bunch
- *  of lower level, simpler functions which are used by the generic
- *  Generic::Impact(). Those lower functions are not pure virtual, but
- *  the default throws a runtime error:
- *    - Generic::operator()() yields a distance or potential defining the interior
- *      of the object;
- *    - Generic::getVelocity() yields the velocity field of the fluid ;
- *    - Generic::processHitQuantities() fills the Spectrum etc. quantities in the
- *      data parameter of Generic::Impact().
+ *  There are basically two ways of making Generic::Impact() work:
+ *  either by making the Astrobj a sub-class of the low-level
+ *  Gyoto::Astrobj::Generic class ans providing your own
+ *  Generic::Impact() function (which, in principle, should rely on
+ *  Generic::processHitQuantities()), or by making the Astrobj a
+ *  sub-class of the higher-level Gyoto::Astrobj::Standard class and
+ *  implementing two lower level, simpler functions which are
+ *  used by the Standard::Impact():
+ *    - Standard::operator()() yields a distance or potential defining
+ *      the interior of the object;
+ *    - Standard::getVelocity() yields the velocity field of the fluid.
  *
- *  Generic::processHitQuantities() itself is like Generic::Impact() in that you have
- *  two choices: either reimplement it or implement a second lot of
- *  small, low-level functions:
+ *  Generic::processHitQuantities() itself is an intermediate-level
+ *  function which you may choose to reimplement. It uses three
+ *  low-level, easy to implement functions:
  *    - Generic::emission();
  *    - Generic::integrateEmission();
  *    - Generic::transmission().
+ *  Default implementations of these three functions exist, they have
+ *  little physical relevance but allow quick 0-th order vizualisation
+ *  of your object.
  *
- * To be usable, a Astrobj::Generic sub-classes should register an
- * Astrobj::Subcontractor_t function using the Astrobj::Register()
- * function. See also \ref writing_plugins_page .
+ * To be usable, a Astrobj::Generic (or Astrobj::Standard) sub-classe
+ * should register an Astrobj::Subcontractor_t function using the
+ * Astrobj::Register() function. See also \ref writing_plugins_page
+ * . If your clas implements setParameter() and/or, if necessary,
+ * setParameters(), registering it is normally done using the provided
+ * template:
+\code
+Astrobj::Register("MyKind", &(Astrobj::Subcontractor<Astrobj::MyKind>));
+\endcode
  */
 /**
  * \class Gyoto::Astrobj::Generic
@@ -189,12 +212,9 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    * The kind should match the name of the class, e.g. "Star" for a
    * Gyoto::Star.
    */
-  std::string kind_; ///< Kind of object (e.g. "Star"...)
+  const std::string kind_; ///< Kind of object (e.g. "Star"...)
 
   int flag_radtransf_; ///< 1 if radiative transfer inside Astrobj, else 0
-
-  double critical_value_; ///< see operator()(double const coord[4]) const
-  double safety_value_; ///< see operator()(double const coord[4]) const
 
   // Constructors - Destructor
   // -------------------------
@@ -214,8 +234,25 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    */
   Generic(std::string kind); ///< Set kind in constructor.
 
+  /**
+   * Make a deep copy of an Astrobj::Generic instance
+   */
   Generic(const Generic& ) ; ///< Copy constructor.
-  virtual Generic* clone() const; ///< "Virtual" copy constructor
+
+  /**
+   * This method must be implemented by the various Astrobj::Generic
+   * subclasses in order to support cloning:
+\code
+SmartPointer<Astrobj> deep_copy = original->clone();
+\endcode
+   *
+   * Implementing it is very straightforward, as long as the copy
+   * constructor Generic(const Generic& ) has been implemented:
+\code
+MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
+\endcode
+   */
+  virtual Generic* clone() const = 0 ; ///< "Virtual" copy constructor
   
   virtual ~Generic() ; ///< Destructor: does nothing.
 
@@ -260,8 +297,18 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    */
   virtual void unsetRmax() ; ///< Set rmax_set_ to 0.
 
+  /**
+   * Set flag indicating that radiative transfer should be integrated,
+   * i.e. the object is to be considered optically thin.
+   * \param flag: 1 if optically thin, 0 if optically thick.
+   */
   void setFlag_radtransf(int flag);
+  ///< Set whether the object is optically thin.
+  /**
+   * See setFlag_radtransf(int flag).
+   */
   int getFlag_radtransf() const ;
+  ///< Query whether object is optically thin.
 
   /**
    * Return a Gyoto::Quantity_t suitable as input to
@@ -273,6 +320,29 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
 
   //XML I/O
  public:
+  /**
+   * Assume MyKind is a sublcass of Astrobj::Generic which has towo
+   * members (a string StringMember and a double DoubleMember):
+\code
+int MyKind::setParameter(std::string name, std::string content) {
+ if      (name=="StringMember") setStringMember(content);
+ else if (name=="DoubleMember") setDoubleMemeber(atof(content.c_str()));
+ else return Generic::setParameter(name, content);
+ return 0;
+}
+\endcode
+   * If MyKind is not a direct subclass of Generic but is a subclass
+   * of e.g. Standard, UniformSphere of ThinDisk, it should call the
+   * corresponding setParameter() implementation instead of
+   * Generic::setParameter().
+   *
+   * \param name XML name of the parameter
+   * \param content string representation of the value
+   * \return 0 if this parameter is known, 1 if it is not.
+   */
+  virtual int setParameter(std::string name, std::string content) ;
+  ///< Called from setParameters()
+
 #ifdef GYOTO_USE_XERCES
   /**
    * Astrobj implementations should impement fillElement to save their
@@ -281,9 +351,29 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    */
 
   virtual void fillElement(FactoryMessenger *fmp) const ;
-                                             /// < called from Factory
-  void setGenericParameter(std::string name, std::string content) ;
-  ///< To be called by fillElement()
+                                             ///< called from Factory
+
+  /**
+   * The Subcontractor_t function for each Astrobj kind should look
+   * somewhat like this:
+\code
+SmartPointer<Astrobj::Generic>
+Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
+  SmartPointer<MyKind> ao = new MyKind();
+  ao -> setParameters(fmp);
+  return ao;
+}
+\endcode
+   *
+   * Each object kind should implement setParameter(string name,
+   * string content) to interpret the individual XML
+   * elements. setParameters() can be overloaded in case the specific
+   * Astrobj class needs low level access to the FactoryMessenger. See
+   * UniformSphere::setParameters().
+   */
+  virtual void setParameters(FactoryMessenger *fmp);
+  ///< Main loop in Subcontractor_t function
+
 
 #endif
   
@@ -295,15 +385,25 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    * integration steps of the photon's trajectory (those two steps are
    * photon->getCoord(index, coord1) and photon->getCoord(index+1,
    * coord2)). Impact returns 1 if the photon impacts the object
-   * between these two steps, else 0.
+   * between these two steps, else 0. In many cases of geometrically
+   * thick obects, the implementation Astrobj::Standard::Impact() will
+   * be fine.
    *
-   * Impact will compute observable properties on demand: if the data
-   * pointer is non-NULL, the object will look in it for pointers to
-   * properties which apply to its kind. If a pointer to a property
-   * known to this object is present, then the property is computed
-   * and store at the pointed-to adress. For instance, all objects
-   * know the "intensity" property. If data->intensity != NULL, the
-   * instensity is computed and stored in *data->intensity.
+   * Impact will call Generic::processHitQuantities() (which is
+   * virtual and may be re-implemented) to compute observable
+   * properties on demand: if the data pointer is non-NULL, the object
+   * will look in it for pointers to properties which apply to its
+   * kind. If a pointer to a property known to this object is present,
+   * then the property is computed and store at the pointed-to
+   * adress. For instance, all objects know the "intensity"
+   * property. If data->intensity != NULL, the instensity is computed
+   * and stored in *data->intensity.
+   *
+   * If data is non-NULL and only in this case, processHitQuantities()
+   * will also call ph->transmit() to update the transmissions of the
+   * Photon (see Photon::transmit(size_t, double)). This must not be
+   * done if data is NULL (see Astrobj::Complex::Impact() for an
+   * explanation).
    *
    * \param ph   Gyoto::Photon aimed at the object;
    * \param index    Index of the last photon step;
@@ -312,59 +412,25 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    * \return 1 if impact, 0 if not.
    */
   virtual int Impact(Gyoto::Photon* ph, size_t index,
-		     Astrobj::Properties *data=NULL)  ;
+		     Astrobj::Properties *data=NULL) = 0 ;
   ///< does a photon at these coordinates impact the object?
-
-
-  /**
-   * A potential, distance, or whatever function such that
-   * operator()(double coord[4]) < critical_value_ if and only if
-   * coord is inside the object. This function is used by the default
-   * implmenetation of Impact(). If Impact() is overloaded, it is not
-   * necessary to overload operator()(double coord[4]). The default
-   * implementation throws an error.
-   */
-  virtual double operator()(double const coord[4]) ;
   
- protected:
-  /*
-    THOSE ARE NOT PART OF THE API.
-
-    THEY _MAY_ BE OVERLOADED AND CALLED BY IMPACT OR CALL ONE-ANOTHER
-   */
-
   /**
-   * Not part of the API. This function is not pure virtual since it
-   * doesn't need to be implemented if Impact() is overloaded. The
-   * generic implementation throws a runtime error.
-   *
-   * Used by the generic Impact().
-   *
-   * Fill vel with the 4-vector velocity of the fluid at 4-position pos.
-   *
-   * \param pos input, 4-position at which to compute velocity;
-   * \param vel output, 4-velocity at pos.
-   */
-  virtual void getVelocity(double const pos[4], double vel[4]) ;
-
-  /**
-   * Not part of the API.
-   *
    * processHitQuantities fills the requested data in Impact. To use
-   * it, you need to call it in the Impact() method for you object in
+   * it, you need to call it in the Impact() method for your object in
    * case of hit. It will fill Redshift, Intensity, Spectrum,
-   * BinSpectrum.
+   * BinSpectrum and update the Photon's transmission by calling
+   * Photon::transmi(), only if data==NULL.
    *
    * You can overload it for your Astrobj. The generic implementation
-   * calls emission() below.
+   * calls emission(), integrateEmission() and transmission() below.
    */
   virtual void processHitQuantities(Photon* ph, double* coord_ph_hit,
-				    double* coord_obj_hit, double dt,
-				    Astrobj::Properties* data) const;
+                                   double* coord_obj_hit, double dt,
+                                   Astrobj::Properties* data) const;
 
   /**
-   * Not part of the API, called by the default implementation for
-   * processHitQuantities().
+   * Called by the default implementation for processHitQuantities().
    *
    * emission() computes the intensity I_nu emitted by the small
    * volume of length dsem. It should take self-absorption along dsem
@@ -392,6 +458,10 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    *                          dlambda = ds/nu
    *          This shows that Eq. [*] is homogeneous.
    *
+   * The default implementation returns 1. if optically thick and dsem
+   * if optically thin. It allows for a quick implementation of your
+   * object for visualization purposes.
+   *
    * \param nu_em Frequency at emission
    * \param dsem length over which to integrate inside the object
    * \param coord_ph Photon coordinate
@@ -399,18 +469,26 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    */
   virtual double emission(double nu_em, double dsem, double coord_ph[8],
 			  double coord_obj[8]=NULL)
-    const =0; ///< INVARIANT emission j_{\nu}/\nu^{2}
+    const ; ///< INVARIANT emission j_{\nu}/\nu^{2}
 
+  /**
+   * Compute the integral of emission() from nu1 to nu2. The default
+   * implementation is a numerical integrator which works well enough
+   * and is reasonably fast if emission() is a smooth function
+   * (i.e. no emission or absorption lines). If possible, it is wise
+   * to implement an analytical solution. It is used by
+   * processHitQuantities to compute the "BinSpectrum" quantity which
+   * is the most physical: it is the only quantity that can be
+   * actually measured directly by a real-life instrument.
+   */
   virtual double integrateEmission(double nu1, double nu2, double dsem,
-				   double c_ph[8], double c_obj[8]=NULL) const;
+                                  double c_ph[8], double c_obj[8]=NULL) const;
     ///< \sum_nu1^nu2 I_nu dnu (or j_nu)
 
   /**
-   * Not part of the API, called by the default implementation for
-   * processHitQuantities().
-   *
    * transmission() computes the transmission of this fluid element or
-   * 0 if optically thick.
+   * 0 if optically thick. The default implementation returns 1. (no
+   * attenuation) if optically thin, 0. if optically thick.
    *
    * \param nuem frequency in the fluid's frame
    * \param coord Photon coordinate
@@ -418,9 +496,15 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    */
   virtual double transmission(double nuem, double dsem, double coord[8]) const ;
      ///< Transmission: exp( \alpha_{\nu} * dsem )
-  
-  // Display
-  //friend std::ostream& operator<<(std::ostream& , const Astrobj& ) ;
+
+  /**
+   * checkPhiTheta() Modifies coord if the corrdinates are spherical-like
+   * so that coord[2]=theta is in [0,pi] and coord[3]=phi is in [0,2pi].
+   * Important to use in all astrobj in spherical coordinates
+   * to prevent "z-axis problems".
+   */
+  void checkPhiTheta(double coord[8]) const;
+
 
 };
 
@@ -440,11 +524,10 @@ class Gyoto::Astrobj::Properties : protected Gyoto::SmartPointee {
   double * first_dmin; ///< first local minimum in distance from object
   int first_dmin_found; ///< first_dmin will be set to the first local minimum and first_dmin_found will be set to 1 if a local minimum in distance is found. Initialize it to 0.
   double *redshift; ///< redshift factor nuobs/nuem (necessary for emission lines computation)
-  double *rimpact; ///< radial coordinate at impact (necessary for emission lines computation)
   double *spectrum; ///< I_nu (nu) (observed specific intensity)
   double *binspectrum; ///< I_nu1^nu2, the integral of I_nu over each spectral channel (i.e. what a spectrometer would measure)
   int offset; ///< spectra elements are separated by offset doubles in memory. In other words, the ith spectral element is a spectrum[i*offset].
-  double *x, *y, *z; ///< Cartesian coordinates of the Photon at impact;
+  double * impactcoords; ///< Coordinates of the object and photon at impact
   double *user1, *user2, *user3, *user4, *user5; ///< Quantities specific to Astrobj
  public:
   Properties(); ///< Default constructor (everything is set to NULL);

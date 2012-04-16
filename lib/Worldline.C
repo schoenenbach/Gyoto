@@ -21,6 +21,7 @@
 #include <GyotoUtils.h>
 //#include <GyotoKerrBL.h>
 #include <iostream>
+#include <sstream>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -43,17 +44,14 @@ Worldline::Worldline(const Worldline& orig) :
   x_size_(orig.x_size_), imin_(orig.imin_), i0_(orig.i0_), imax_(orig.imax_),
   delta_(orig.delta_), tlim_(orig.tlim_), cst_n_(orig.cst_n_)
 {
-  if (debug())
-    cerr << "DEBUG: in Worldline::Worldline(const Worldline& orig)\n";
+  GYOTO_DEBUG << endl;
   if (orig.metric_()) {
-    if (debug())
-      cerr << "DEBUG: Worldline::Worldline(): cloning metric\n";
+    GYOTO_DEBUG << "cloning metric\n";
     metric_=orig.metric_->clone();
   }
   xAllocate(x_size_);
   size_t sz = get_nelements()*sizeof(double);
-  if (debug())
-    cerr << "DEBUG: Worldline::Worldline(): sz="<<sz<<", imin_="<<imin_<<endl;
+  GYOTO_DEBUG << "sz="<<sz<<", imin_="<<imin_<<endl;
   memcpy(x0_+imin_, orig.x0_+imin_, sz);
   memcpy(x1_+imin_, orig.x1_+imin_, sz);
   memcpy(x2_+imin_, orig.x2_+imin_, sz);
@@ -63,17 +61,53 @@ Worldline::Worldline(const Worldline& orig) :
   memcpy(x2dot_+imin_, orig.x2dot_+imin_, sz);
   memcpy(x3dot_+imin_, orig.x3dot_+imin_, sz);
   if (orig.cst_ && cst_n_) {
-   if (debug())
-    cerr << "DEBUG: Worldline::Worldline(): cloning constants of motion\n";
+    GYOTO_DEBUG << "cloning constants of motion\n";
    cst_ = new double [cst_n_];
    memcpy(cst_, orig.cst_, cst_n_*sizeof(double));
   }
+  GYOTO_DEBUG << "out\n";
+}
+
+Worldline::Worldline(Worldline *orig, size_t i0, int dir, double step_max) :
+  metric_(orig->metric_),
+//  x_size_(orig.x_size_), imin_(orig.imin_), i0_(orig.i0_), imax_(orig.imax_),
+  delta_(orig->delta_), tlim_(orig->tlim_), cst_n_(orig->cst_n_)
+{
+  GYOTO_DEBUG << endl;
+
+  double d1 = orig->x0_[i0], d2 = orig->x0_[i0+dir];
+  x_size_= size_t(fabs(d1-d2)/step_max)+2;
+  double step = (d2-d1)/(x_size_-1);
+  xAllocate(x_size_);
+  imin_=0; imax_=x_size_-1; i0_=(dir==1?imin_:imax_);
+  x0_[i0_]=d1;
+  size_t i=i0_;
+  for (i=i0_+dir; i>imin_ && i<imax_; i+=dir) x0_[i] = x0_[i-dir]+step;
+  x0_[i]=d2;
+
+  orig->getCoord(x0_, x_size_, x1_, x2_, x3_, x0dot_, x1dot_, x2dot_, x3dot_);
+
   if (debug())
-    cerr << "DEBUG: out Worldline::Worldline(const Worldline& orig)\n";
+    {
+      cerr << "DEBUG: Worldline::Worldline(Worldline*, "
+	   <<i0<<", "<<dir<<", "<<step_max<<")"<<endl;
+      cerr << "       d1="<<d1<<", d2="<<d2<<endl;
+      for (i=0; i<x_size_; ++i)
+	cerr << "       " << i << " "
+	     << x0_[i] << " " << x1_[i] << " " << x2_[i] << " " << x3_[i] << " "
+	     <<x0dot_[i]<<" "<<x1dot_[i]<<" "<<x2dot_[i]<<" "<<x3dot_[i]<<endl;
+    }
+
+  if (orig->cst_ && cst_n_) {
+    GYOTO_DEBUG << "cloning constants of motion\n";
+    cst_ = new double [cst_n_];
+    memcpy(cst_, orig->cst_, cst_n_*sizeof(double));
+  }
+  GYOTO_DEBUG << "out\n";
 }
 
 Worldline::~Worldline(){
-  if (debug()) cerr << "DEBUG: Worldline::~Worldline()\n";
+  GYOTO_DEBUG << endl;
   delete[] x0_;
   delete[] x1_;
   delete[] x2_;
@@ -88,8 +122,7 @@ void Worldline::xAllocate() {xAllocate(GYOTO_DEFAULT_X_SIZE);}
 
 void Worldline::xAllocate(size_t sz)
 {
-  if (debug())
-    cerr << "DEBUG:  Worldline::xAllocate(" << sz << ")\n";
+  GYOTO_DEBUG << "sz=" << sz << endl;
   x_size_ = sz ;
   x0_ = new double[x_size_];
   x1_ = new double[x_size_];
@@ -99,12 +132,10 @@ void Worldline::xAllocate(size_t sz)
   x1dot_ = new double[x_size_];
   x2dot_ = new double[x_size_];
   x3dot_ = new double[x_size_];
-  if (debug())
-    cerr << "DEBUG:  out Worldline::xAllocate()\n";
 }
 
 size_t Worldline::xExpand(int dir) {
-  if (debug()) cerr << "Wl: Expand in dir " << dir ;
+  GYOTO_DEBUG<< "Wl: Expand in dir " << dir ;
   double * old;
   size_t offset=(dir==1)?0:x_size_;
   size_t retval=(dir==1)?(x_size_-1):x_size_;
@@ -113,12 +144,12 @@ size_t Worldline::xExpand(int dir) {
   x_size_*=2;
 
   old = x0_;
-  //if (debug()) cout << "In Wl x0_[0]= " << x0_[0] << endl;
+  //GYOTO_DEBUG<< "In Wl x0_[0]= " << x0_[0] << endl;
   x0_ = new double[x_size_];
   for (i=imin_;i<=imax_;++i) x0_[i+offset]=old[i];
   delete[] old;
-  //if (debug()) cout << "In Wl imin= " << imin_ << " " << imax_ << endl;
-  //if (debug()) cout << " In Wl x0_[offset], old[0]= " << x0_[1024] << " " << old[0] << endl;
+  //GYOTO_DEBUG<< "In Wl imin= " << imin_ << " " << imax_ << endl;
+  //GYOTO_DEBUG<< " In Wl x0_[offset], old[0]= " << x0_[1024] << " " << old[0] << endl;
   
   old = x1_;
   x1_ = new double[x_size_];
@@ -159,7 +190,7 @@ size_t Worldline::xExpand(int dir) {
   i0_+=offset;
   imax_+=offset;
 
-  if (debug()) cerr << ", xsize_=" << x_size_
+  GYOTO_DEBUG<< ", xsize_=" << x_size_
 		    << ", imin_=" << imin_
 		    << ", i0_=" << i0_
 		    << ", imax_=" << imax_;
@@ -170,10 +201,8 @@ size_t Worldline::xExpand(int dir) {
 void Worldline::setMetric(SmartPointer<Metric::Generic> gg) {
   // Set the Metric
   metric_=gg;
-  if (debug())
-    cerr << "DEBUG: Worldline::setMetric(gg): "
-	 << "imin_=" << imin_ << ", i0_=" << i0_
-	 << ", imax_=" << imax_ << endl;
+  GYOTO_DEBUG << "imin_=" << imin_ << ", i0_=" << i0_
+	      << ", imax_=" << imax_ << endl;
   if (imin_ <= imax_) {
     // Initial condition has been set previously
     // Forget integration
@@ -181,6 +210,12 @@ void Worldline::setMetric(SmartPointer<Metric::Generic> gg) {
 
     double coord[8];
     getInitialCoord(coord);
+    if ( metric_() -> getCoordKind() == GYOTO_COORDKIND_SPHERICAL 
+	 && x2_[i0_]==0. ) {
+      if (verbose() >= GYOTO_SEVERE_VERBOSITY)
+	cerr << "SEVERE: Worldline::setMetric(): Kicking particle off z axis\n";
+      x2_[i0_]=coord[2]=1e-10;
+    }
     metric_ -> setParticleProperties(this,coord);
   }
 
@@ -191,9 +226,9 @@ SmartPointer<Metric::Generic> Worldline::getMetric() const { return metric_; }
 string Worldline::className() const { return  string("Worldline"); }
 string Worldline::className_l() const { return  string("worldline"); }
 
-void Worldline::setInitCoord(const double coord[8], const int dir) {
+void Worldline::setInitCoord(const double coord[8], int dir) {
+  if (dir==0) dir = getMass() ? 1 : -1;
   imin_=imax_=i0_=(dir==1?0:x_size_-1);
-  imin_=i0_=imax_=(dir==1?0:x_size_-1);
   x0_[i0_]=coord[0];
   x1_[i0_]=coord[1];
   x2_[i0_]=coord[2];
@@ -202,45 +237,36 @@ void Worldline::setInitCoord(const double coord[8], const int dir) {
   x1dot_[i0_]=coord[5];
   x2dot_[i0_]=coord[6];
   x3dot_[i0_]=coord[7];
-  if (metric_())   metric_ -> setParticleProperties(this,coord);
+  if (metric_())  {
+    double coo[8];
+    memcpy(coo, coord, 8*sizeof(double));
+    if ( metric_() -> getCoordKind() == GYOTO_COORDKIND_SPHERICAL 
+	 && x2_[i0_]==0. ) {
+      if (verbose() >= GYOTO_SEVERE_VERBOSITY) {
+	cerr << "SEVERE: Worldline::setInitialCondition("<<metric_->getKind()
+	     <<", ["<<coo[0];
+	for (size_t ii=1; ii<8; ++ii) cerr << ", "<<coo[ii];
+	cerr<<"], "<<dir<<"): Kicking particle off z axis" << endl;
+      }
+      x2_[i0_]=coo[2]=1e-10;
+    }
+    metric_ -> setParticleProperties(this,coord);
+  }
 }
 
 void Worldline::setInitialCondition(SmartPointer<Metric::Generic> met,
 				    const double coord[8],
 				    const int dir)
-/*void Worldline::setInitialCondition(SmartPointer<Metric::Generic> met,
-				    const double coord[8],
-				    const SmartPointer<GetGmunu> orig, const int dir)*/
 {
   metric_=met;
-  double coo[8] ;
-  memcpy(coo, coord, 8*sizeof(double));
-  imin_=i0_=imax_=(dir==1?0:x_size_-1);
-  x0_[i0_]=coord[0];
-  x1_[i0_]=coord[1];
-  x2_[i0_]=coord[2];
-  if ( met -> getCoordKind() == GYOTO_COORDKIND_SPHERICAL 
-       && x2_[i0_]==0. ) {
-    if (verbose() >= GYOTO_SEVERE_VERBOSITY)
-      cerr << "SEVERE: Kicking particle off z axis" << endl;
-    x2_[i0_]=coo[2]=1e-10;
-  }
-  x3_[i0_]=coord[3];
-  x0dot_[i0_]=coord[4];
-  x1dot_[i0_]=coord[5];
-  x2dot_[i0_]=coord[6];
-  x3dot_[i0_]=coord[7];
-  metric_ -> setParticleProperties(this,coo);
-
-
-  //if (debug()) if (debug()) cout << "wl.C rdot_i= " << coord[4] << endl;
+  setInitCoord(coord, dir);
 }
 
 void Worldline::reset() { imin_=imax_=i0_; }
 
 void Worldline::xFill(double tlim) {
 
-  //if (debug()) cout << "In xFill" << endl;
+  //GYOTO_DEBUG<< "In xFill" << endl;
   int dir, stopcond=0;
   size_t ind;
 
@@ -257,17 +283,17 @@ void Worldline::xFill(double tlim) {
     ind = (imin_==0)?xExpand(-1):imin_;
   } else return ; // nothing to do
 
-  if (debug()) cout << "Worldline.C: Integrating worldline " ;
+  GYOTO_DEBUG<< "Worldline.C: Integrating worldline " ;
   
   // Set up integration
   double MassPart=getMass();
   if (MassPart==1.) {
-    if (debug()) cout << "of massive particule ....." << endl;
+    GYOTO_DEBUG<< "of massive particule ....." << endl;
   }else if(MassPart==0.){
-    if (debug()) cout << "of 0-mass particule ....." << endl;
+    GYOTO_DEBUG<< "of 0-mass particule ....." << endl;
   }else{
     throwError("In Worldline.C Unrecognized mass.");
-    //if (debug()) cout << "of unrecognized mass (!!) particule ....." << endl;
+    //GYOTO_DEBUG<< "of unrecognized mass (!!) particule ....." << endl;
     //equations of geodesics written for a mass=1 star
   }
  
@@ -455,7 +481,7 @@ void Worldline::getCoord(double const * const dates, size_t const n_dates,
   double tausecond, dtaul, dtauh, dtl, dth, Dt, Dtm1, tauprimel, tauprimeh;
   double second, primel, primeh, pos[4], vel[3], tdot;
   int i;
-
+  stringstream ss;
 
 
   for (di=0; di<n_dates; ++di) {
@@ -473,15 +499,19 @@ void Worldline::getCoord(double const * const dates, size_t const n_dates,
       curl=imax_;    // current imax_
       xFill(date);   // integrate, that changes imax_
       curh=imax_;    // new imax_
-      if (curl == curh || date > x0_[imax_])
-	throwError("Worldline::getCoord: can't get coordinates for that time");
+      if (curl == curh || date > x0_[imax_]) {
+	ss<<"Worldline::getCoord: can't get coordinates for date="<<date;
+	throwError(ss.str());
+      }
     } else if (date < x0_[imin_]) {
       curh=x_size_-imin_; // trick if line is expanded during xFill()
       xFill(date);   // integrate, that changes imin_
       curh=x_size_-curh;
       curl=imin_;    // new imin_
-      if (curl == curh || date < x0_[imin_])
-	throwError("Worldline::getCoord: can't get coordinates for that time");
+      if (curl == curh || date < x0_[imin_]) {
+	ss<<"Worldline::getCoord: can't get coordinates for date="<<date;
+	throwError(ss.str());
+      }
     } else if (date >= x0_[curh]) {
       curl=curh;
       curh=imax_;
@@ -517,8 +547,7 @@ void Worldline::getCoord(double const * const dates, size_t const n_dates,
     dtaul=tauprimel*dtl+0.5*tausecond*dtl*dtl;
     dtauh=tauprimeh*dth+0.5*tausecond*dth*dth;
 
-    if (debug())
-      cerr << "DEBUG: Worldline::getCoord(): "
+    GYOTO_DEBUG
 	   << "curl=" << curl << ", x0_[curl]=" << x0_[curl]
 	   << ", curh=" << curh << ", x0_[curh]=" << x0_[curh]
 	   <<endl;
@@ -572,8 +601,7 @@ void Worldline::getCoord(double const * const dates, size_t const n_dates,
       if (resh[0] < besth[0]) memcpy(besth, resh, 8*sizeof(double));
     }
 
-    if (debug())
-      cerr << "DEBUG: Worldline::getCoord(): "
+    GYOTO_DEBUG
 	   << "x0_[curl]=" << x0_[curl]
 	   << ", bestl[0]=" << bestl[0]
 	   << ", date=" << date
@@ -606,9 +634,7 @@ void Worldline::getCoord(double const * const dates, size_t const n_dates,
     dtl=date-bestl[0]; Dt=besth[0]-bestl[0]; Dtm1=1./Dt;
     facth=dtl*Dtm1; factl=1.-facth;
     if (getMass()) {
-      if (debug()) 
-	cerr << "DEBUG: Worldline::getCoord(): "
-	     << "massive particle, interpolating\n";
+      GYOTO_DEBUG << "massive particle, interpolating\n";
       // Star (massive particle)
       tauprimel=1./bestl[4]; tauprimeh=1./besth[4];
 
@@ -642,6 +668,26 @@ void Worldline::getCoord(double const * const dates, size_t const n_dates,
       if (x3dot) x3dot[di] = bestl[7]*factl + besth[7]*facth;
     }
 
+    /* For spherical-like coordinates,
+       transforms theta and phi in coord1,2 so that 
+       theta is in [0,pi] and phi in [0,2pi] 
+       Important for e.g. circular velocity computation for thin disk
+    */
+    if (metric_->getCoordKind() == GYOTO_COORDKIND_SPHERICAL
+	&& x2 && x3){
+      double thetatmp=x2[di], phitmp=x3[di];
+      while (thetatmp>M_PI) thetatmp-=2.*M_PI;
+      while (thetatmp<-M_PI) thetatmp+=2.*M_PI;//then theta in [-pi,pi]
+      if (thetatmp<0.) {
+	thetatmp=-thetatmp;//then theta in [0,pi]
+	phitmp+=M_PI;//thus, same point x,y,z
+      }
+      while (phitmp>2.*M_PI) phitmp-=2.*M_PI;
+      while (phitmp<0.) phitmp+=2.*M_PI;//then phi in [0,2pi]
+      x2[di]=thetatmp;
+      x3[di]=phitmp;
+    }
+    
   }
 
 }
@@ -703,7 +749,7 @@ void Worldline::save_txyz(char * filename) const {
   switch(coordkind) {
   case GYOTO_COORDKIND_SPHERICAL:
     for (n=imin_;n<=imax_;++n) {
-      //      if (debug()) cout << "dans save imin, coord= " << imin_ << " " << x0_[n] << " " << x1_[n] << " "  << x2_[n] << " " << x3_[n] << endl;
+      //      GYOTO_DEBUG<< "dans save imin, coord= " << imin_ << " " << x0_[n] << " " << x1_[n] << " "  << x2_[n] << " " << x3_[n] << endl;
       //fichierxyz << setprecision(prec) << setw(width) << x1_[n] << "  ";
       //fichierxyz << setprecision(prec) << setw(width) << x0[n] << "  ";
       fichierxyz << setprecision(prec) << setw(width) << x0_[n] << "  ";//saving r distance
@@ -800,7 +846,7 @@ void Worldline::save_txyz(char * filename, const double t1, const double mass_su
 
 void Worldline::setDelta(const double del) { delta_=del; }
 
-double Worldline::getTlim() { return tlim_; }
+double Worldline::getTlim() const { return tlim_; }
 void Worldline::setTlim(double tlim) { tlim_ = tlim; }
 
 double const * Worldline::getCst() const {
@@ -815,6 +861,8 @@ void Worldline::setCst(double const * const cst, const size_t n) {
 }
 
 void Worldline::getInitialCoord(double coord[8]) const {
+  if (imax_<imin_)
+    throwError("Worldline::getInitialCoord(): initial coordinate not set yet");
   coord[0] = x0_[i0_];
   coord[1] = x1_[i0_];
   coord[2] = x2_[i0_];
@@ -825,9 +873,9 @@ void Worldline::getInitialCoord(double coord[8]) const {
   coord[7] = x3dot_[i0_];
 }
 void Worldline::getCoord(size_t index, double coord[8]) const {
-  //if (debug()) cout << "index=" << index << endl;
-  //if (debug()) cout << "x0[index]= " << x1dot_[index] << endl;
-  //if (debug()) cout << "index == " << index << endl;
+  //GYOTO_DEBUG<< "index=" << index << endl;
+  //GYOTO_DEBUG<< "x0[index]= " << x1dot_[index] << endl;
+  //GYOTO_DEBUG<< "index == " << index << endl;
   if (index<imin_ || index>imax_) {
     cerr << "Indices min curr max= " << imin_ << " " << index << " " << imax_ << endl;
     throwError("Worldline::getCoord: bad index");
