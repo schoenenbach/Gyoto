@@ -208,19 +208,11 @@ class Gyoto::FactoryMessenger {
    * correct subcontractor:
 \code
 SmartPointer<Spectrum::Generic> spectrum = NULL;
-<<<<<<< HEAD
-while (getNextParameter(name, content) {
- if (name=="Spectrum") {
-  content = getAttribute("kind");
-  FactoryMessenger* child = getChild();
-  spectrum = (*Spectrum::getSubcontractor(content))(child);
-=======
 while (messenger->getNextParameter(name, content) {
  if (name=="Spectrum") {
   content = messenger->getAttribute("kind");
   FactoryMessenger* child = messenger->getChild();
   deliverable->setSpectrum( (*Spectrum::getSubcontractor(content))(child) );
->>>>>>> master
   delete child;
  }
 }
@@ -296,13 +288,9 @@ messenger->setAstrobj(Scenery::obj_);
 <name/>
 \endcode
    * for instance when "name" is boolean (present or absent), or only
-<<<<<<< HEAD
-   * takes attributes (see FactoryMessenger::setAttribute()).
-=======
    * takes attributes (see FactoryMessenger::setAttribute()). As an
    * example, Astrobj::Generic::fillElement() uses
    * setParameter() to set either Opticallythin or OpticallyThick.
->>>>>>> master
    */
   void setParameter(std::string name);
   ///< Output parameter
