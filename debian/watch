@@ -1,0 +1,2 @@
+version=3
+https://github.com/gyoto/Gyoto/tags .*/tarball/(\d[\d\.]+)
