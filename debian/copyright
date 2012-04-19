@@ -1,10 +1,10 @@
-Format: http://dep.debian.net/deps/dep5
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: gyoto
 Source: https://github.com/gyoto/Gyoto
 
 Files: *
-Copyright: 2011 Thibaut Paumard -- thibaut.paumard at obspm.fr
-           2011 Frédéric Vincent -- frederic.vincent at obspm.fr
+Copyright: 2011-2012 Thibaut Paumard -- thibaut.paumard at obspm.fr
+           2011-2012 Frédéric Vincent -- frederic.vincent at obspm.fr
 License: GPL-3.0+
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by

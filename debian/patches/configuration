@@ -5,8 +5,8 @@ Origin: vendor
 Forwarded: not-needed
 Last-Update: 2011-09-05
 
---- gyoto-0.0.0~git20110831.orig/local_settings
-+++ gyoto-0.0.0~git20110831/local_settings
+--- a/local_settings
++++ b/local_settings
 @@ -2,7 +2,7 @@
  # ------------
  # Header wil go to $(PREFIX)/include, libraries to $(PREFIX)/lib,
@@ -16,3 +16,26 @@ Last-Update: 2011-09-05
  
  # C++ compiler:
  # ------------
+@@ -28,9 +28,9 @@
+ # Comment next line to disable Xerces:
+ GYOTO_FLAGS += -DGYOTO_USE_XERCES
+ #           Where are Xerces include files:
+-XERCES_INC = -I/opt/local/include
++XERCES_INC =
+ #           Where is libxercesc.so/.dylib/.a:
+-XERCES_LIB = -L/opt/local/lib -lxerces-c
++XERCES_LIB = -lxerces-c
+ 
+ # Options for using cfisio:
+ # -------------------------
+@@ -38,8 +38,8 @@
+ # It is required for building the gyoto executable.
+ # Parts of the library will not be built if GYOTO_USE_CFITSIO is not set.
+ GYOTO_FLAGS += -DGYOTO_USE_CFITSIO
+-CFITSIO_INC = -I/opt/local/include
+-CFITSIO_LIB = -L/opt/local/lib -lcfitsio
++CFITSIO_INC =
++CFITSIO_LIB = -lcfitsio
+ 
+ # ________________________________________________________________
+ # It shouldn't be necessary to change anything below this line

@@ -4,10 +4,8 @@ Priority: extra
 Maintainer: Thibaut Paumard <paumard@users.sourceforge.net>
 Build-Depends: debhelper (>= 7.0.50~), yorick-dev, yorick-yutils, doxygen,
 	       libxerces-c-dev, libcfitsio3-dev
-Standards-Version: 3.9.1
+Standards-Version: 3.9.3
 Homepage: http://gyoto.obspm.fr
-#Vcs-Git: git://git.debian.org/collab-maint/gyoto.git
-#Vcs-Browser: http://git.debian.org/?p=collab-maint/gyoto.git;a=summary
 
 Package: gyoto
 Architecture: any
@@ -22,7 +20,8 @@ Description: General relativistic ray-tracing
  result in FITS format.
  .
  More complex uses of the Gyoto framework can be achieved using the
- yorick-gyoto package.
+ yorick-gyoto package. Gyoto can be extended with plug-ins (see
+ libgyoto0-dev).
 
 Package: libgyoto0
 Architecture: any
@@ -31,7 +30,8 @@ Description: General relativistic geodesic integration and ray-tracing
  Gyoto aims at providing a framework for computing orbits and
  ray-traced images in General relativity. It consists in a shared
  library (this package), utility programs (in the gyoto package), and
- a plug-in for the Yorick programing language (in yorick-gyoto).
+ a plug-in for the Yorick programing language (in yorick-gyoto). Gyoto
+ can be extended with plug-ins (see libgyoto0-dev).
 
 Package: gyoto-dbg
 Architecture: any
@@ -40,7 +40,7 @@ Depends: libgyoto0 (= ${binary:Version}),
 	 gyoto (= ${binary:Version}),
 	 yorick-gyoto (= ${binary:Version}),
 	 ${misc:Depends}
-Description: debugging symbols for giblib1
+Description: debugging symbols for gyoto, libgyoto0 and yorick-gyoto
  Gyoto aims at providing a framework for computing orbits and
  ray-traced images in General relativity. It consists in a shared
  library (this package), utility programs (in the gyoto package), and
