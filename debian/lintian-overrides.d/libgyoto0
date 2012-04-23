@@ -1,0 +1,3 @@
+libgyoto0: no-symbols-control-file usr/lib/libgyoto.so.0.0.0
+# Yep, maintaining a symbols file would be unsustainable. See e.g.:
+# http://www.eyrie.org/~eagle/journal/2012-02/001.html
