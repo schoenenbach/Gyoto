@@ -1,5 +1,5 @@
-gyoto (0.0.2-1) unstable; urgency=low
+gyoto (0.0.3-1) unstable; urgency=low
 
   * Initial release (Closes: #640809)
 
- -- Thibaut Paumard <paumard@users.sourceforge.net>  Thu, 19 Apr 2012 10:50:32 +0200
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Wed, 09 May 2012 15:26:40 +0200

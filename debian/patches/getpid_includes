@@ -1,0 +1,20 @@
+Subject: add headers for getpid() to gyoto.C
+Author: Thibaut Paumard <paumard@users.sourceforge.net>
+Origin: vendor
+Date: 2012-05-09
+
+As upstream, I'm aware of this patch and will include it ASAP in
+git. I don't see the point in doing a point release just for that
+though.
+
+--- a/bin/gyoto.C
++++ b/bin/gyoto.C
+@@ -23,6 +23,8 @@
+ #include "GyotoDefs.h"
+ #include <fitsio.h>
+ #include <csignal>
++#include <sys/types.h>
++#include <unistd.h>
+ 
+ using namespace std;
+ using namespace Gyoto;

@@ -3,7 +3,7 @@ Description: Configuration
 Author: Thibaut Paumard <paumard@users.sourceforge.net>
 Origin: vendor
 Forwarded: not-needed
-Last-Update: 2011-09-05
+Last-Update: 2012-05-09
 
 --- a/local_settings
 +++ b/local_settings
@@ -23,8 +23,8 @@ Last-Update: 2011-09-05
 -XERCES_INC = -I/opt/local/include
 +XERCES_INC =
  #           Where is libxercesc.so/.dylib/.a:
--XERCES_LIB = -L/opt/local/lib -lxerces-c
-+XERCES_LIB = -lxerces-c
+-XERCES_LDFLAGS = -L/opt/local/lib
++XERCES_LDFLAGS = -lxerces-c
  
  # Options for using cfisio:
  # -------------------------
@@ -33,9 +33,9 @@ Last-Update: 2011-09-05
  # Parts of the library will not be built if GYOTO_USE_CFITSIO is not set.
  GYOTO_FLAGS += -DGYOTO_USE_CFITSIO
 -CFITSIO_INC = -I/opt/local/include
--CFITSIO_LIB = -L/opt/local/lib -lcfitsio
+-CFITSIO_PATH = -L/opt/local/lib
 +CFITSIO_INC =
-+CFITSIO_LIB = -lcfitsio
++CFITSIO_PATH =
  
  # ________________________________________________________________
  # It shouldn't be necessary to change anything below this line
