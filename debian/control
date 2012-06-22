@@ -1,10 +1,14 @@
 Source: gyoto
 Section: science
 Priority: extra
-Maintainer: Thibaut Paumard <paumard@users.sourceforge.net>
+Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
+Uploaders: Thibaut Paumard <paumard@users.sourceforge.net>
 Build-Depends: debhelper (>= 7.0.50~), yorick-dev, yorick-yutils, doxygen,
 	       libxerces-c-dev, libcfitsio3-dev
 Standards-Version: 3.9.3
+DM-Upload-Allowed: yes
+Vcs-Git: git://git.debian.org/git/debian-science/packages/gyoto.git
+Vcs-Browser: http://git.debian.org/?p=debian-science/packages/gyoto.git
 Homepage: http://gyoto.obspm.fr
 
 Package: gyoto
