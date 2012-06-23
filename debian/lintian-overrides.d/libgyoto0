@@ -1,3 +1,6 @@
-libgyoto0: no-symbols-control-file usr/lib/libgyoto.so.0.0.0
-# Yep, maintaining a symbols file would be unsustainable. See e.g.:
+# Maintaining a symbols file would be unsustainable. See e.g.:
 # http://www.eyrie.org/~eagle/journal/2012-02/001.html
+libgyoto0: no-symbols-control-file usr/lib/libgyoto.so.0.0.0
+
+# The fortifiable functions are all in the main library libgyoto.so.
+libgyoto0: hardening-no-fortify-functions usr/lib/gyoto/0.0.0/libgyoto-stdplug.so

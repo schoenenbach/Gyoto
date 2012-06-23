@@ -1,3 +1,3 @@
-yorick-gyoto: script-not-executable usr/share/yorick/i/gyotoy.i
-yorick-gyoto: wrong-path-for-interpreter usr/share/yorick/i/gyotoy.i (#!/usr/local/bin/yorick != /usr/bin/yorick)
-# This "script" is actually called through a wrapper /usr/bin/gyotoy
+# This is glue code between yorick and libgyoto: those two binaries hold the
+# fortified functions.
+yorick-gyoto: hardening-no-fortify-functions usr/lib/yorick/lib/gyoto.so

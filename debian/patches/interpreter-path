@@ -1,0 +1,14 @@
+Description: Change script interpreter path in gyotoy.i
+Author: Thibaut Paumard <paumard@users.sourceforge.net>
+Origin: vendor
+Forwarded: not-needed
+Last-Update: 2012-06-23
+
+--- a/yorick/gyotoy.i
++++ b/yorick/gyotoy.i
+@@ -1,4 +1,4 @@
+-#!/usr/local/bin/yorick -i
++#!/usr/bin/yorick -i
+ /*
+     Copyright 2007 F. Rigaut
+     Copyright 2011 Thibaut Paumard

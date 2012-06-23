@@ -1,0 +1,19 @@
+Subject: rm bin/gyoto.o on cleanfix buffer overflow in Factory.C
+Author: Thibaut Paumard <paumard@users.sourceforge.net>
+Origin: vendor
+Date: 2012-06-22
+Forwarded: yes (I will include it in the next release.)
+
+--- a/lib/Factory.C
++++ b/lib/Factory.C
+@@ -41,8 +41,8 @@
+ using namespace xercesc;
+ using namespace std;
+ 
+-#define dvalLength 21
+-#define dfmt " %20.16g "
++#define dvalLength 25
++#define dfmt " %.16g "
+ #define d2txt(txt, val) sprintf( txt , dfmt, val)
+ #define ifmt " %li "
+ #define i2txt(txt, val) sprintf( txt, ifmt, val);

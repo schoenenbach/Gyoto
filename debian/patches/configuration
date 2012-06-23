@@ -39,3 +39,27 @@ Last-Update: 2012-05-09
  
  # ________________________________________________________________
  # It shouldn't be necessary to change anything below this line
+@@ -47,10 +47,12 @@
+ 
+ # Options for the C++ compiler
+ # ----------------------------
++ifndef CXXFLAGS
+ CXXFLAGS = -g -pedantic -Wall -W -Wundef -Wshadow -Wcast-qual \
+   -Wcast-align -Wconversion -Winline \
+-  -Wabi -Woverloaded-virtual  -Wno-long-long -fPIC
+-
++  -Wabi -Woverloaded-virtual  -Wno-long-long
++endif
++CXXFLAGS += -fPIC
+ 
+ # Path for the include files 
+ # --------------------------------------------
+@@ -93,6 +95,6 @@
+ GYOTO_FLAGS += -DGYOTO_PREFIX=\"$(PREFIX)\"
+ GYOTO_FLAGS += -DGYOTO_SOVERS=\"$(SOVERS)\"
+ 
+-CPPFLAGS = $(CFITSIO_INC) $(XERCES_INC)
+-LDFLAGS  = $(GYOTO_LDFLAGS)
++CPPFLAGS += $(CFITSIO_INC) $(XERCES_INC)
++LDFLAGS  += $(GYOTO_LDFLAGS)
+ LDLIBS   = $(LIB_CXX)

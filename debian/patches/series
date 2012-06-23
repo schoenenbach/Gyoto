@@ -1,3 +1,6 @@
 configuration
 getpid_includes
 clean-gyoto
+buffer-overflow
+interpreter-path
+paper-ref

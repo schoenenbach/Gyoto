@@ -1,5 +1,5 @@
-debian/tmp/usr/lib/yorick/bin/gyotoy                 bin     usr/bin/gyotoy
 debian/tmp/usr/lib/yorick/glade/gyotoy.glade
+debian/tmp/usr/lib/yorick/i/gyotoy.i                 i       usr/bin/gyotoy
 debian/tmp/usr/lib/yorick/i/*.i
 debian/tmp/usr/lib/yorick/i0/*.i                     i0
 debian/tmp/usr/lib/yorick/include/ygyoto.h           include
