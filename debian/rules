@@ -33,17 +33,25 @@ install-indep: doc-stamp
 	dh_compress -i
 	dh_fixperms -i
 
-build-arch build-stamp:
+build: build-arch build-indep
+build-arch: build-stamp
+build-indep: doc-stamp
+
+override_dh_auto_build:
+
+build-stamp:
 	dh_testdir -a
-	dh_auto_build -a
+	make COPT_DEFAULT="" \
+	     Y_CFLAGS="$(CFLAGS) $(CPPFLAGS)" \
+	     Y_LDFLAGS="$(LDFLAGS)"
 ifeq (,$(filter nocheck, $(DEB_BUILD_OPTIONS)))
 	make check
 endif
 	touch build-stamp
 
-build-indep doc-stamp:
+doc-stamp:
 	dh_testdir -i
-	dh_auto_build -i -- doc
+	make doc
 	touch doc-stamp
 
 binary: binary-indep binary-arch
@@ -55,9 +63,9 @@ binary-arch: install-arch
 	dh $@
 
 clean:
-	dh_testdir
+	dh_rules
 	make distclean
-	dh_clean doc-stamp build-stamp
+	dh_clean doc-stamp build-stamp bin/gyoto.o
 
 override_dh_auto_test:
 

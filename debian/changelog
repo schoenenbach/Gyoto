@@ -1,3 +1,12 @@
+gyoto (0.0.3-2) UNRELEASED; urgency=low
+
+  * Important: fortify Yorick plug-in (don't rely on Yorick to pass the
+    right flags)
+  * Minor: always remove bin/gyoto.o on clean (otherwise it is cleaned
+    only if the source are patched)
+
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Wed, 04 Jul 2012 17:00:57 +0200
+
 gyoto (0.0.3-1) unstable; urgency=low
 
   * Initial release (Closes: #640809)
