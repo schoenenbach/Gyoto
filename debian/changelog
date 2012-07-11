@@ -1,3 +1,10 @@
+gyoto (0.0.3-3) unstable; urgency=low
+
+  * debian/control Architectures fields should not be folded: previous
+    upload led to missing binary packages for some archs.
+
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Wed, 11 Jul 2012 13:02:34 +0200
+
 gyoto (0.0.3-2) unstable; urgency=low
 
   * Bug fix: "FTBFS on kfreebsd-i386 and kfreebsd-amd64 (test suite)",
