@@ -12,7 +12,7 @@ Vcs-Browser: http://git.debian.org/?p=debian-science/packages/gyoto.git
 Homepage: http://gyoto.obspm.fr
 
 Package: gyoto
-Architecture: amd64 armel armhf hurd-i386 i386 ia64 mips mipsel powerpc s390 s390x sparc alpha avr32 hppa m68k powerpcspe ppc64 sh4 sparc64
+Architecture: linux-any hurd-any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: General relativistic ray-tracing
  Gyoto is a framework for computing geodesics in curved
@@ -41,7 +41,7 @@ Package: gyoto-dbg
 Architecture: any
 Section: debug
 Depends: libgyoto0 (= ${binary:Version}),
-	 gyoto (= ${binary:Version}),
+	 gyoto (= ${binary:Version}) [!kfreebsd-any],
 	 yorick-gyoto (= ${binary:Version}),
 	 ${misc:Depends}
 Description: debugging symbols for gyoto, libgyoto0 and yorick-gyoto

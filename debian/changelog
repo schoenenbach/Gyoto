@@ -1,3 +1,10 @@
+gyoto (0.0.3-4) unstable; urgency=low
+
+  * gyoto-dbg must not depend on gyoto on kfreebsd-*, else it is
+    uninstallable on these archs.
+
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Wed, 11 Jul 2012 14:30:02 +0200
+
 gyoto (0.0.3-3) unstable; urgency=low
 
   * debian/control Architectures fields should not be folded: previous
