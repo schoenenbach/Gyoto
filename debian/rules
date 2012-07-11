@@ -5,6 +5,8 @@
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
 
+DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
 # Hardened flags
 DPKG_EXPORT_BUILDFLAGS = 1
 -include /usr/share/dpkg/buildflags.mk
@@ -45,7 +47,9 @@ build-stamp:
 	     Y_CFLAGS="$(CFLAGS) $(CPPFLAGS)" \
 	     Y_LDFLAGS="$(LDFLAGS)"
 ifeq (,$(filter nocheck, $(DEB_BUILD_OPTIONS)))
+ifeq (,$(filter $(DEB_HOST_ARCH), kfreebsd-i386 kfreebsd-amd64))
 	make check
+endif
 endif
 	touch build-stamp
 

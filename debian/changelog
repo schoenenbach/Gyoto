@@ -1,3 +1,12 @@
+gyoto (0.0.3-2) unstable; urgency=low
+
+  * Bug fix: "FTBFS on kfreebsd-i386 and kfreebsd-amd64 (test suite)",
+    (Closes: #679923). The previous "fix" did not work at all. The library
+    and the Yorick interface work fine, but not the stand-alone application.
+    Disable the "gyoto" binary package and the test suite on kfreebsd-*.
+
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Wed, 11 Jul 2012 11:20:09 +0200
+
 gyoto (0.0.3-1+exp1) experimental; urgency=low
 
   * Bug fix: "FTBFS on kfreebsd-i386 and kfreebsd-amd64 (test suite)"
