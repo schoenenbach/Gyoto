@@ -63,9 +63,9 @@ binary-arch: install-arch
 	dh $@
 
 clean:
-	dh_rules
+	dh_testdir
 	make distclean
-	dh_clean doc-stamp build-stamp bin/gyoto.o
+	dh_clean doc-stamp build-stamp
 
 override_dh_auto_test:
 

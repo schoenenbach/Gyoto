@@ -1,11 +1,11 @@
-gyoto (0.0.3-2) UNRELEASED; urgency=low
+gyoto (0.0.3-1+exp1) experimental; urgency=low
 
-  * Important: fortify Yorick plug-in (don't rely on Yorick to pass the
-    right flags)
-  * Minor: always remove bin/gyoto.o on clean (otherwise it is cleaned
-    only if the source are patched)
+  * Bug fix: "FTBFS on kfreebsd-i386 and kfreebsd-amd64 (test suite)"
+    (Closes: #679923).
+  * Tentative bug fix: "don't rely on yorick to pass the fortified build
+    flags" using patch fix_679923_kfreebsd_FTBFS (Closes: #680242).
 
- -- Thibaut Paumard <paumard@users.sourceforge.net>  Wed, 04 Jul 2012 17:00:57 +0200
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Tue, 10 Jul 2012 10:50:50 +0200
 
 gyoto (0.0.3-1) unstable; urgency=low
 

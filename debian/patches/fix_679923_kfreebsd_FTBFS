@@ -1,0 +1,20 @@
+Description: fix FTBFS on kfreebsd
+ It looks like the syntax of LD_LIBRARY_PATH is slightly different on kfreebsd
+Author: Thibaut Paumard <paumard@users.sourceforge.net>
+Origin: vendor
+Bug-Debian: http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=679923
+Forwarded: yes
+Last-Update: 2012-07-10
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/Makefile
++++ b/Makefile
+@@ -32,7 +32,7 @@
+ lib/$(LIBGYOTO_FILE): lib/*.C
+ 	make lib
+ 
+-CHECK_CMD:=$(DYLIB_VAR)=lib:$$$(DYLIB_VAR) bin/gyoto
++CHECK_CMD:=$(DYLIB_VAR)=./lib:$$$(DYLIB_VAR) bin/gyoto
+ check: lib/$(LIBGYOTO_FILE) bin/gyoto check-yorick
+ 	$(CHECK_CMD) doc/examples/example-thin-disk.xml \
+ 	   \!example-thin-disk.fits

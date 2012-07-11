@@ -4,3 +4,4 @@ clean-gyoto
 buffer-overflow
 interpreter-path
 paper-ref
+fix_679923_kfreebsd_FTBFS
