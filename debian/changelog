@@ -1,3 +1,10 @@
+gyoto (0.0.3-5) unstable; urgency=low
+
+  * skip test suite on mips as lucatelli fails on it (but it runs fine on
+    other boxes). (Closes: 681452)
+
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Fri, 13 Jul 2012 11:36:16 +0200
+
 gyoto (0.0.3-4) unstable; urgency=low
 
   * gyoto-dbg must not depend on gyoto on kfreebsd-*, else it is
