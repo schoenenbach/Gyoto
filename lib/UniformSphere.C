@@ -23,6 +23,7 @@
 #include "GyotoPowerLawSpectrum.h"
 #include "GyotoBlackBodySpectrum.h"
 #include "GyotoFactoryMessenger.h"
+#include "GyotoConverters.h"
 
 #include <iostream>
 #include <cmath>
@@ -41,8 +42,10 @@ UniformSphere::UniformSphere(string kind) :
   spectrum_(NULL),
   opacity_(NULL)
 {
-  if (debug())
-    cerr << "DEBUG: in UniformSphere::UniformSphere()" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
+
   setRadius(0.);
 
   spectrum_ = new Spectrum::BlackBody(); 
@@ -69,13 +72,17 @@ UniformSphere::UniformSphere(const UniformSphere& orig) :
   radius_(orig.radius_),
   spectrum_(NULL), opacity_(NULL)
 {
-  if (debug()) cerr << "UniformSphere copy" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
   if (orig.spectrum_()) spectrum_=orig.spectrum_->clone();
   if (orig.opacity_()) opacity_=orig.opacity_->clone();
 }
 
 UniformSphere::~UniformSphere() {
-  if (debug()) cerr << "DEBUG: UniformSphere::~UniformSphere()\n";
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 string UniformSphere::className() const { return  string("UniformSphere"); }
@@ -121,9 +128,13 @@ double UniformSphere::emission(double nu_em, double dsem, double *, double *) co
 double UniformSphere::transmission(double nuem, double dsem, double*) const {
   if (!flag_radtransf_) return 0.;
   double opacity = (*opacity_)(nuem);
-  if (debug())
-    cerr << "DEBUG: UniformSphere::transmission(nuem="<<nuem<<", dsem="<<dsem<<"), "
-	 << "opacity=" << opacity << "\n";
+
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG <<  "(nuem="    << nuem
+	      << ", dsem="    << dsem
+	      << "), opacity=" << opacity << endl;
+# endif
+
   if (!opacity) return 1.;
   return exp(-opacity*dsem);
 }
@@ -146,9 +157,17 @@ void UniformSphere::setRadius(double r) {
   safety_value_ = critical_value_*1.1+0.1;
 }
 
-int UniformSphere::setParameter(string name, string content) {
-  if (name=="Radius") setRadius(atof(content.c_str()));
-  else return Standard::setParameter(name, content);
+double UniformSphere::getRadius(std::string unit) const {
+  return Units::FromGeometrical(getRadius(), unit, gg_);
+}
+
+void UniformSphere::setRadius(double r, std::string unit) {
+  setRadius(Units::ToGeometrical(r, unit, gg_));
+}
+
+int UniformSphere::setParameter(string name, string content, string unit) {
+  if (name=="Radius") setRadius(atof(content.c_str()), unit);
+  else return Standard::setParameter(name, content, unit);
   return 0;
 }
 
@@ -171,36 +190,41 @@ void UniformSphere::fillElement(FactoryMessenger *fmp) const {
 }
 
 void Gyoto::Astrobj::UniformSphere::setParameters(FactoryMessenger* fmp){
+  setFlag_radtransf(0);
+  if (!fmp) return;
 
-  string name="", content="";
+  string name="", content="", unit="";
   FactoryMessenger * child = NULL;
 
-  if (debug()) cerr << "DEBUG: UniformSphere::setParameters(): setMetric()\n";
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << "setMetric()" << endl;
+# endif
   setMetric(fmp->getMetric());
-  setFlag_radtransf(0);
 
-  while (fmp->getNextParameter(&name, &content)) {
+  while (fmp->getNextParameter(&name, &content, &unit)) {
     if (name=="Spectrum") {
       content = fmp -> getAttribute("kind");
       child = fmp -> getChild();
-      if (debug())
-	cerr << "DEBUG: UniformSphere::setParameters(): setSpectrum()\n";
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "setSpectrum()" << endl;
+#     endif
       setSpectrum((*Spectrum::getSubcontractor(content))(child));
       delete child;
     }
     else if (name=="Opacity") {
       content = fmp -> getAttribute("kind");
       child = fmp -> getChild();
-      if (debug())
-	cerr << "DEBUG: UniformSphere::setParameters(): setOpacity()\n";
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "setOpacity()" << endl;
+#     endif
       setOpacity((*Spectrum::getSubcontractor(content))(child));
       setFlag_radtransf(1);
       delete child;
     } else {
-      if (debug())
-	cerr << "DEBUG: UniformSphere::setParameters(): setParameter("
-	     <<name<<", "<<content<<")\n";
-      setParameter(name, content);
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "setParameter("<<name<<", "<<content<<")\n";
+#     endif
+      setParameter(name, content, unit);
     }
   }
 

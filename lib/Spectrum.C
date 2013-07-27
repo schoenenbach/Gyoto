@@ -37,6 +37,7 @@ Spectrum::Generic * Spectrum::Generic::clone() const
   return const_cast<Spectrum::Generic*>(this);
               // avoid warning, we won't get to that point
 }
+Spectrum::Generic::~Generic() { GYOTO_DEBUG << endl; }
 const string Spectrum::Generic::getKind() const { return kind_; }
 
 double Spectrum::Generic::integrate(double nu1, double nu2) {
@@ -124,7 +125,14 @@ double Spectrum::Generic::operator()(double nu, double opacity, double ds)
 void Spectrum::Generic::fillElement(FactoryMessenger *fmp ) const {
   fmp->setSelfAttribute("kind", kind_);
 }
-void Spectrum::Generic::setParameter(std::string, std::string) {}
+void Spectrum::Generic::setParameter(std::string, std::string, std::string) {}
+
+void Spectrum::Generic::setParameters(FactoryMessenger *fmp) {
+  string name="", content="", unit="";
+  if (fmp)
+    while (fmp->getNextParameter(&name, &content, &unit))
+      setParameter(name, content, unit);
+}
 
 Register::Entry* Gyoto::Spectrum::Register_ = NULL;
 
@@ -138,10 +146,11 @@ void Gyoto::Spectrum::Register(std::string name,
   Gyoto::Spectrum::Register_ = ne;
 }
 
-Spectrum::Subcontractor_t* Spectrum::getSubcontractor(std::string name) {
+Spectrum::Subcontractor_t*
+Spectrum::getSubcontractor(std::string name, int errmode) {
   if (!Gyoto::Spectrum::Register_) throwError("No Spectrum kind registered!");
   return (Spectrum::Subcontractor_t*)Gyoto::Spectrum::Register_
-    -> getSubcontractor(name);
+    -> getSubcontractor(name, errmode);
 }
 
 void Gyoto::Spectrum::initRegister() {

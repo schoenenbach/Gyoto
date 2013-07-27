@@ -17,18 +17,21 @@
     along with Gyoto.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "GyotoConfig.h"
 #ifdef GYOTO_USE_XERCES
 
-#include <GyotoFactory.h>
-#include <GyotoFactoryMessenger.h>
-#include <GyotoUtils.h>
+#include "GyotoFactory.h"
+#include "GyotoFactoryMessenger.h"
+#include "GyotoUtils.h"
+
 #include <string>
 #include <libgen.h>
 #include <unistd.h>
-#include <GyotoMetric.h>
-#include <GyotoAstrobj.h>
-#include <GyotoSpectrum.h>
-#include <GyotoSpectrometer.h>
+
+#include "GyotoMetric.h"
+#include "GyotoAstrobj.h"
+#include "GyotoSpectrum.h"
+#include "GyotoSpectrometer.h"
 
 #include <xercesc/sax/ErrorHandler.hpp>
 #include <xercesc/dom/DOMErrorHandler.hpp>
@@ -41,8 +44,8 @@ using namespace Gyoto;
 using namespace xercesc;
 using namespace std;
 
-#define dvalLength 21
-#define dfmt " %20.16g "
+#define dvalLength 25
+#define dfmt " %.16g "
 #define d2txt(txt, val) sprintf( txt , dfmt, val)
 #define ifmt " %li "
 #define i2txt(txt, val) sprintf( txt, ifmt, val);
@@ -241,6 +244,8 @@ SmartPointer<Gyoto::Metric::Generic> Factory::getMetric() {
       delete result;
     } else MetricDOM = root_;
 
+    string Plugin = C(MetricDOM->getAttribute(X("plugin")));
+    if (Plugin != "") loadPlugin(Plugin.c_str());
     string Kind =
       C(MetricDOM->getAttribute(X("kind")));
     FactoryMessenger fm(this, MetricDOM);
@@ -273,6 +278,8 @@ SmartPointer<Gyoto::Astrobj::Generic> Factory::getAstrobj(){
       tmpEl = static_cast< xercesc::DOMElement* >(result -> getNodeValue());
       delete result;
     }
+    string Plugin = C(tmpEl->getAttribute(X("plugin")));
+    if (Plugin != "") loadPlugin(Plugin.c_str());
     string AstrobjKind =
       Cs(tmpEl->getAttribute(X("kind")));
     if (debug()) cout << "Astrobj kind : " << AstrobjKind << endl ;
@@ -307,7 +314,7 @@ SmartPointer<Gyoto::Photon> Factory::getPhoton(){
     }
 
     FactoryMessenger fm(this, tmpEl);
-    photon_ = PhotonSubcontractor(&fm);
+    photon_ = Photon::Subcontractor(&fm);
 
   }
   return photon_;
@@ -332,12 +339,44 @@ SmartPointer<Gyoto::Spectrum::Generic> Factory::getSpectrum(){
       tmpEl = static_cast< xercesc::DOMElement* >(result -> getNodeValue());
       delete result;
     }
+    string Plugin = C(tmpEl->getAttribute(X("plugin")));
+    if (Plugin != "") loadPlugin(Plugin.c_str());
     string Kind =
       Cs(tmpEl->getAttribute(X("kind")));
     if (debug()) cout << "Spectrum kind : " << Kind << endl ;
 
     FactoryMessenger fm(this, tmpEl);
     return (*Spectrum::getSubcontractor(Kind))(&fm);
+
+}
+
+SmartPointer<Gyoto::Spectrometer::Generic> Factory::getSpectrometer(){
+    
+    DOMXPathResult* result;
+    DOMElement *tmpEl;
+
+    if (kind_=="Spectrometer") {
+      tmpEl = root_;
+    } else {
+      result=doc_->evaluate(
+			  X(("/"+kind_+"/Spectrometer").c_str()),
+			  root_,
+			  resolver_,
+			  DOMXPathResult::ORDERED_NODE_SNAPSHOT_TYPE,
+			  NULL);
+      if (!result->getSnapshotLength())
+	throwError("GYOTO error: an Spectrometer MUST be specified");
+      tmpEl = static_cast< xercesc::DOMElement* >(result -> getNodeValue());
+      delete result;
+    }
+    string Plugin = C(tmpEl->getAttribute(X("plugin")));
+    if (Plugin != "") loadPlugin(Plugin.c_str());
+    string Kind =
+      Cs(tmpEl->getAttribute(X("kind")));
+    if (debug()) cout << "Spectrometer kind : " << Kind << endl ;
+
+    FactoryMessenger fm(this, tmpEl);
+    return (*Spectrometer::getSubcontractor(Kind))(&fm);
 
 }
 
@@ -358,7 +397,7 @@ SmartPointer<Scenery> Factory::getScenery () {
     tmpEl = static_cast< xercesc::DOMElement* >(result -> getNodeValue());
   
     FactoryMessenger fm(this, tmpEl);
-    scenery_ = ScenerySubcontractor(&fm);
+    scenery_ = Scenery::Subcontractor(&fm);
   
     delete result;
   }
@@ -512,7 +551,7 @@ Factory::Factory(SmartPointer<Photon> ph)
 
 }
 
-Factory::Factory(SmartPointer<Spectrometer> sp)
+Factory::Factory(SmartPointer<Spectrometer::Generic> sp)
   : reporter_(NULL), parser_(NULL), resolver_(NULL), 
     gg_el_(NULL), obj_el_(NULL), ph_el_(NULL),
     scenery_(NULL), gg_(NULL), obj_(NULL),
@@ -727,7 +766,9 @@ void FactoryMessenger::reset() {
   curNodeIndex_=0;
 }
 
-int FactoryMessenger::getNextParameter(std::string* namep, std::string* contp)
+int FactoryMessenger::getNextParameter(std::string* namep,
+				       std::string* contp,
+				       std::string* unitp)
 {
 
   if (debug()) {
@@ -749,9 +790,10 @@ int FactoryMessenger::getNextParameter(std::string* namep, std::string* contp)
 	= static_cast< xercesc::DOMElement* >( currentNode );
       *namep = C(currentElement->getTagName());
       *contp = C(currentElement->getTextContent());
+      if (unitp) *unitp = C(currentElement->getAttribute(X("unit")));
       return 1;
     }
-  return getNextParameter(namep, contp);
+  return getNextParameter(namep, contp, unitp);
 }
 
 FactoryMessenger* FactoryMessenger::makeChild(std::string name) {

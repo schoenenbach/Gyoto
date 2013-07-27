@@ -18,6 +18,7 @@
  */
 
 #include <GyotoKerrKS.h>
+#include <GyotoFactory.h>
 #include "ygyoto.h"
 #include "yapi.h"
 
@@ -27,52 +28,22 @@ using namespace std;
 using namespace Gyoto;
 using namespace Gyoto::Metric;
 
-// on_eval worker
-void ygyoto_KerrKS_eval(Gyoto::SmartPointer<Gyoto::Metric::Generic> *gg_, int argc) {
-  int rvset[1]={0}, paUsed[1]={0};
-  if (!gg_) { // Constructor mode
-    gg_ = ypush_Metric();
-    *gg_ = new KerrKS();
-  } else  *ypush_Metric()=*gg_;
+#define OBJ gg
 
-  SmartPointer<KerrKS> *gg = (SmartPointer<KerrKS> *)gg_;
+void ygyoto_KerrKS_eval(SmartPointer<Metric::Generic> *gg_, int argc) {
+
   static char const * knames[]={
-    "spin",
+    "unit", "spin",
     YGYOTO_METRIC_GENERIC_KW,
     0
   };
-  static long kglobs[YGYOTO_METRIC_GENERIC_KW_N+3];
-  int kiargs[YGYOTO_METRIC_GENERIC_KW_N+2];
-  int piargs[]={-1,-1,-1,-1};
-  
-  yarg_kw_init(const_cast<char**>(knames), kglobs, kiargs);
-  
-  int iarg=argc, parg=0;
-  while (iarg>=1) {
-    iarg = yarg_kw(iarg, kglobs, kiargs);
-    if (iarg>=1) {
-      if (parg<4) piargs[parg++]=iarg--;
-      else y_error("gyoto_Metric takes at most 4 positional arguments");
-    }
-  }
-  
-  // Process specific GET keywords
-  char const * rmsg="Cannot set return value more than once";
-  char const * pmsg="Cannot use positional argument more than once";
-  int k=-1;
 
-  // SPIN
-  if ((iarg=kiargs[++k])>=0) {
-    iarg+=*rvset;
-    if (yarg_nil(iarg)) {
-      if ((*rvset)++) y_error(rmsg);
-      yarg_drop(1);
-      ypush_double((*gg)->getSpin());
-    } else
-      (*gg)->setSpin(ygets_d(iarg)) ;
-  }
+  YGYOTO_WORKER_INIT(Metric, KerrKS, knames, YGYOTO_METRIC_GENERIC_KW_N+2);
 
-  ygyoto_Metric_generic_eval(gg_, kiargs+k+1, piargs, rvset, paUsed);
+  YGYOTO_WORKER_SET_UNIT;
+  YGYOTO_WORKER_GETSET_DOUBLE(Spin);
+
+  YGYOTO_WORKER_CALL_GENERIC(Metric);
   
 }
 
@@ -82,20 +53,12 @@ extern "C" {
     ygyoto_Metric_register("KerrKS",&ygyoto_KerrKS_eval);
   }
 
-  // KERR CLASS
-  // Constructor
-
   void
   Y_gyoto_KerrKS(int argc)
   {
-    SmartPointer<Metric::Generic> *gg = NULL;
-    try {
-      if (yarg_Metric(argc-1)) {
-	gg = yget_Metric(--argc);
-	if ((*gg)->getKind() != "KerrKS")
-	  y_error("Expecting Metric of kind KerrKS");
-      }
-    } YGYOTO_STD_CATCH;
+    YGYOTO_CONSTRUCTOR_INIT(Metric, KerrKS);
+    if ((*OBJ)->getKind() != "KerrKS")
+      y_error("Expecting Metric of kind KerrKS");
     ygyoto_KerrKS_eval(gg, argc);
   }
 

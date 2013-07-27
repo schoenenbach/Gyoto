@@ -72,11 +72,11 @@ namespace Gyoto{
  *  Gyoto::Astrobj::UniformSphere::setParameters() take care of
  *  interpreting the XML elements describing the parameters of the
  *  sphere:
-\code
-   <Radius> value </Radius>
-   <Spectrum kind="..."> parameters for this spectrum kind </Spectrum>
-   <Opacity kind="..."> parameters for this spectrum kind </Opacity>
-\endcode
+ *  \code
+ *     <Radius> value </Radius>
+ *     <Spectrum kind="..."> parameters for this spectrum kind </Spectrum>
+ *     <Opacity kind="..."> parameters for this spectrum kind </Opacity>
+ *  \endcode
  * setGenericParameters() also takes care of calling
  * setParameter().
  */
@@ -87,7 +87,7 @@ class Gyoto::Astrobj::UniformSphere :
   // Data : 
   // -----
  protected:
-  double radius_ ; ///< sphere radius
+  double radius_ ; ///< sphere radius [geometrical units]
   SmartPointer<Spectrum::Generic> spectrum_; ///< sphere emission law
   SmartPointer<Spectrum::Generic> opacity_; ///< if optically thin, opacity law
 
@@ -130,11 +130,15 @@ class Gyoto::Astrobj::UniformSphere :
   ///< Set opacity_
   virtual SmartPointer<Spectrum::Generic> getOpacity() const;
   ///< Get opacity_
-  double getRadius() const ; ///< Get radius_
-  void   setRadius(double); ///< Set radius_
+  double getRadius() const ; ///< Get radius_ in geometrical units
+  void   setRadius(double); ///< Set radius_ in geometrical units
+  double getRadius(std::string) const ; ///< Get radius_ in specified unit
+  void   setRadius(double, std::string); ///< Set radius_ in specified unit
 
  public:
-  virtual int setParameter(std::string name, std::string content) ;
+  virtual int setParameter(std::string name,
+			   std::string content,
+			   std::string unit) ;
 
 #ifdef GYOTO_USE_XERCES
   /**
@@ -175,9 +179,11 @@ class Gyoto::Astrobj::UniformSphere :
   virtual void getVelocity(double const pos[4], double vel[4]) = 0;
   ///< Yield velocity of the center of the sphere.
 
+  using Standard::emission;
   virtual double emission(double nu_em, double dsem,
 			  double cp[8], double co[8]=NULL) const;
   ///< Emission is determined by spectrum_ and opacity_
+  using Standard::integrateEmission;
   virtual double integrateEmission(double nu1, double nu2, double dsem,
 				   double c_ph[8], double c_obj[8]=NULL) const;
   virtual double transmission(double nuem, double dsem, double*) const ;

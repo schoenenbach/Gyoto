@@ -22,15 +22,18 @@
 #include "GyotoDefs.h"
 #include "ygyoto.h"
 #include "yapi.h"
+#include "pstdlib.h"
+
+#define OBJ ph
 
 using namespace Gyoto;
 using namespace std;
 
-#define YGYOTO_PHOTON_GENERIC_KW "metric", "initcoord", "astrobj",	\
-    "spectro",								\
-    "xfill", "save_txyz", "xmlwrite", "is_hit",				\
+#define YGYOTO_PHOTON_GENERIC_KW "unit", "metric", "initcoord", "astrobj", \
+    "spectro", "tmin",	"delta", "adaptive", "maxiter", "setparameter",	\
+    "reset", "xfill", "save_txyz", "xmlwrite", "is_hit",		\
     "get_txyz", "get_coord", "get_cartesian", "clone"
-#define YGYOTO_PHOTON_GENERIC_KW_N 12
+#define YGYOTO_PHOTON_GENERIC_KW_N 19
 
 void ygyoto_Photon_generic_eval(Gyoto::SmartPointer<Gyoto::Photon>* ph,
 				 int *kiargs, int *piargs, int *rvset, int *paUsed) {
@@ -38,19 +41,10 @@ void ygyoto_Photon_generic_eval(Gyoto::SmartPointer<Gyoto::Photon>* ph,
   int k=-1, iarg;
   char const * rmsg="Cannot set return value more than once";
   char const * pmsg="Cannot use positional argument more than once";
+  char * unit = NULL;
 
-  //// MEMBERS ////
-  /* METRIC */
-  if ((iarg=kiargs[++k])>=0) {
-    iarg+=*rvset;
-    if (debug()) cerr << "metric=";
-    if (yarg_nil(iarg)) {
-      if ((*rvset)++) y_error(rmsg);
-      *ypush_Metric()=(*ph)->getMetric();
-    } else
-      (*ph)->setMetric(*yget_Metric(iarg)) ;
-    if (debug()) cerr << "... ";
-  }
+  YGYOTO_WORKER_SET_UNIT;
+  YGYOTO_WORKER_GETSET_OBJECT(Metric);
 
   /* INITCOORD */
   if ((iarg=kiargs[++k])>=0) {
@@ -116,42 +110,15 @@ void ygyoto_Photon_generic_eval(Gyoto::SmartPointer<Gyoto::Photon>* ph,
     if (debug()) cerr << "... " << endl;
   }
 
-  /* ASTROBJ */
-  if ((iarg=kiargs[++k])>=0) {
-    iarg+=*rvset;
-    if (debug()) cerr << "astrobj=";
-    if (yarg_nil(iarg)) {
-      if ((*rvset)++) y_error(rmsg);
-      *ypush_Astrobj() = (*ph)->getAstrobj();
-    } else
-      (*ph) -> setAstrobj( *yget_Astrobj(iarg) ) ;
-    if (debug()) cerr << "... " << endl;
-  }
-
-  /* SPECTRO */
-  if ((iarg=kiargs[++k])>=0) {
-    iarg+=*rvset;
-    if (yarg_nil(iarg)) {
-      if ((*rvset)++) y_error(rmsg);
-      *ypush_Spectrometer() = (*ph) -> getSpectrometer();
-    } else {
-      (*ph) -> setSpectrometer(*yget_Spectrometer(iarg));
-    }
-  }
-
-
-
-  //// METHODS ////
-  // SUBROUTINE-LIKE //
-  // xfill=tlim: integrate geodesic
-  if ((iarg=kiargs[++k])>=0) {
-    iarg+=*rvset;
-    if (debug()) cerr << "xfill=";
-    double tlim = ygets_d(iarg);
-    if (debug()) cerr << tlim;
-    (*ph)->xFill(tlim);
-    if (debug()) cerr << "... " << endl;
-  }
+  YGYOTO_WORKER_GETSET_OBJECT(Astrobj);
+  YGYOTO_WORKER_GETSET_OBJECT(Spectrometer);
+  YGYOTO_WORKER_GETSET_DOUBLE(Tmin);
+  YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Delta);
+  YGYOTO_WORKER_GETSET_LONG2(adaptive);
+  YGYOTO_WORKER_GETSET_LONG2( maxiter );
+  YGYOTO_WORKER_SETPARAMETER;
+  YGYOTO_WORKER_RUN( reset() );
+  YGYOTO_WORKER_RUN( xFill(ygets_d(iarg)) );
 
   // save_txyz=filename, t1, mass_sun, distance_kpc, unit, screen
   if ((iarg=kiargs[++k])>=0) {
@@ -186,22 +153,11 @@ void ygyoto_Photon_generic_eval(Gyoto::SmartPointer<Gyoto::Photon>* ph,
     if (debug()) cerr << filename << endl ;
   }
 
-  // Save to file
-  if ((iarg=kiargs[++k])>=0) { // xmlwrite
-    iarg+=*rvset;
-    if (debug()) cerr << "     xmlwrite=";
-#ifdef GYOTO_USE_XERCES
-    char *filename=ygets_q(iarg);
-    Factory(*ph).write(filename);
-    if (debug()) cerr << filename << endl;
-#else
-    y_error("This GYOTO was compiled without XERCES: no xml i/o");
-#endif
-  }
+  YGYOTO_WORKER_XMLWRITE;
 
   // FUNCTION-LIKE //
 
-  /* is_hit= */
+  /* IS_HIT= */
   if ((iarg=kiargs[++k])>=0) { // is_hit=whatever
     if (debug()) cerr << "     is_hit=" << endl;
     if ((*rvset)++) y_error(rmsg);
@@ -222,7 +178,8 @@ void ygyoto_Photon_generic_eval(Gyoto::SmartPointer<Gyoto::Photon>* ph,
     (*ph)->get_xyz(data+nel, data+2*nel, data+3*nel);
   }
 
-  if ((iarg=kiargs[++k])>=0) { // get_coord
+  /* GET_COORD */
+  if ((iarg=kiargs[++k])>=0) {
     if (debug()) cerr << "     get_coord=dates" << endl;
     if ((*rvset)++) y_error(rmsg);
     // Two cases : get_coord=1 or get_coord=dates. 
@@ -293,53 +250,22 @@ void ygyoto_Photon_generic_eval(Gyoto::SmartPointer<Gyoto::Photon>* ph,
     
   }
 
-  /* CLONE */
-  if ((iarg=kiargs[++k])>=0) {
-    if ((*rvset)++) y_error(rmsg);
-    *ypush_Photon() = (*ph)->clone();
-  } 
+  YGYOTO_WORKER_CLONE(Photon);
 
   if (debug()) cerr << endl;
 }
 
+YGYOTO_YUSEROBJ(Photon, Photon)
 
 extern "C" {
-
-// PHOTON CLASS
-
-// Photon()
-// setInitialCondition(Metric*, Astrobj*, coord[8], sys);
-// setDelta(double)
-// hit(double)
-  typedef struct gyoto_Photon { SmartPointer<Photon> photon; } gyoto_Photon;
-  void gyoto_Photon_free(void *obj) {
-    if (((gyoto_Photon*)obj)->photon) {
-      ((gyoto_Photon*)obj)->photon=NULL;
-    } else printf("null pointer\n");
-  }
-  void gyoto_Photon_print(void *obj) {
-#ifdef GYOTO_USE_XERCES
-    string rest="", sub="";
-    size_t pos=0, len=0;
-    try {rest = Factory(((gyoto_Photon*)obj)->photon).format();}
-    YGYOTO_STD_CATCH;
-    while (len=rest.length())  {
-      sub=rest.substr(0, pos=rest.find_first_of("\n",0));
-      rest=rest.substr(pos+1, len-1);
-      y_print( sub.c_str(),1 );
-    }
-#else
-    y_print("GYOTO photon",0);
-#endif
-  }
   void gyoto_Photon_eval(void *obj, int argc) {
     // If no parameters, return pointer
     if (argc==1 && yarg_nil(0)) {
-      ypush_long((long)((gyoto_Photon*)obj)->photon());
+      ypush_long((long)((gyoto_Photon*)obj)->smptr());
       return;
     }
 
-    SmartPointer<Photon> *ph = &(((gyoto_Photon*)obj)->photon);
+    SmartPointer<Photon> *ph = &(((gyoto_Photon*)obj)->smptr);
 
     static char const * knames[]={
       YGYOTO_PHOTON_GENERIC_KW, 0
@@ -363,122 +289,16 @@ extern "C" {
     int rvset[1]={0}, paUsed[1]={0};
     ygyoto_Photon_generic_eval(ph, kiargs, piargs, rvset, paUsed);
 
-
   }
-  static y_userobj_t gyoto_Photon_obj =
-    {const_cast<char*>("gyoto_Photon"), &gyoto_Photon_free, &gyoto_Photon_print, &gyoto_Photon_eval, 0, 0};
-  
+
   // Generic constructor/accessor
   void
   Y_gyoto_Photon(int argc)
   {
-    int rvset[1]={0}, paUsed[1]={0}, builder=0;
-    SmartPointer<Photon> *ph = NULL;
-    if (yarg_Photon(argc-1)) { // photon on the stack
-      ph = yget_Photon(--argc);
-      *ypush_Photon() = *ph; // push back photon on the stack
-    } else { // constructor mode
-      ph = ypush_Photon();
-      builder=1;
-    }
-
-    static char const * knames[]={
-      YGYOTO_PHOTON_GENERIC_KW, 0
-    };
-    static long kglobs[YGYOTO_PHOTON_GENERIC_KW_N+1];
-    int kiargs[YGYOTO_PHOTON_GENERIC_KW_N];
-    int piargs[]={-1,-1,-1,-1};
-    // push default return value: need to drop before pushing another one
-    yarg_kw_init(const_cast<char**>(knames), kglobs, kiargs);
-   
-    int iarg=argc, parg=0;
-    while (iarg>=1) {
-      iarg = yarg_kw(iarg, kglobs, kiargs);
-      if (iarg>=1) {
-	if (parg<4) piargs[parg++]=iarg--;
-	else y_error("gyoto_Photon takes at most 4 positional arguments");
-      }
-    }
-    
-    // if rvset==1, constructor mode:
-    if (builder) {
-      if (yarg_string(piargs[0])) {
-#ifdef GYOTO_USE_XERCES
-	// 	try { *ao_ = Factory(ygets_q(piargs[0])).getAstrobj(); } 
-	// 	YGYOTO_STD_CATCH;
-	*paUsed=1;
-#else
-	y_error("This GYOTO was compiled without XERCES: no xml i/o");
-#endif
-      } else *ph = new Photon();
-    }
-
-    ygyoto_Photon_generic_eval(ph, kiargs, piargs, rvset, paUsed);
-
+    YGYOTO_CONSTRUCTOR_INIT1(Photon, Photon, Photon);
+    gyoto_Photon_eval(OBJ, argc);
   }
 
-  void
-  Y_gyoto_Photon_new(int n)
-  {
-    gyoto_Photon * obj=(gyoto_Photon*)ypush_obj(&gyoto_Photon_obj, sizeof(gyoto_Photon));
-    try { obj->photon = new Photon(); }
-    YGYOTO_STD_CATCH ;
-  }
-
-  void
-  Y_gyoto_Photon_setInitialCondition(int n)
-  {  //(Metric*, Astrobj*, coord[8], sys);
-    gyoto_Photon  *phobj =(gyoto_Photon*) yget_obj(n-1, &gyoto_Photon_obj);
-    SmartPointer<Metric::Generic> *gg = yget_Metric(n-2);
-    SmartPointer<Astrobj::Generic> *astrobj = yget_Astrobj(n-3);
-
-    if (n==4) {
-      long ntot=1;
-      double * coord = ygeta_d(n-4, &ntot, NULL);
-      if (ntot < 4) y_error("coord must have at least 4 elements");
-      try {
-	(phobj->photon)->setInitialCondition(*gg, *astrobj, coord);
-      } YGYOTO_STD_CATCH ;
-    } else if (n==6) {
-      SmartPointer<Screen> *screen = yget_Screen(n-4);
-      double d_alpha = ygets_d(n-5);
-      double d_delta = ygets_d(n-6);
-      try {
-	(phobj->photon)->setInitialCondition(*gg, *astrobj, *screen, d_alpha, d_delta);
-      } YGYOTO_STD_CATCH ;
-    } else y_error("gyoto_Photon_setInitialCondition takes either 4 or 7 arguments");
-  }
-
-  void
-  Y_gyoto_Photon_setDelta(int n)
-  {  //(Metric*, Astrobj*, coord[8], sys);
-    gyoto_Photon * phobj =(gyoto_Photon*)yget_obj(n-1, &gyoto_Photon_obj);
-    double delta=ygets_d(n-2);
-    try {
-      (phobj->photon)->setDelta(delta);
-    } YGYOTO_STD_CATCH ;
-  }
-
-  void
-  Y_gyoto_Photon_hit(int n)
-  {  //(Metric*, Astrobj*, coord[8], sys);
-    gyoto_Photon * phobj =(gyoto_Photon*)yget_obj(n-1, &gyoto_Photon_obj);
-    double tlim=ygets_d(n-2);
-    ypush_int((phobj->photon)->hit(NULL));
-  }
-
-}
-
-SmartPointer<Photon>* yget_Photon(int iarg) {
-  return &(((gyoto_Photon*)yget_obj(iarg, &gyoto_Photon_obj))->photon);
-}
-
-SmartPointer<Photon>* ypush_Photon() {
-  return &(((gyoto_Photon*)ypush_obj(&gyoto_Photon_obj, sizeof(gyoto_Photon)))->photon);
-}
-
-int yarg_Photon(int iarg) {
-  return yget_obj(iarg,0)==gyoto_Photon_obj.type_name;
 }
 
 

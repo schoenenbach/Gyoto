@@ -73,7 +73,10 @@ std::ostream& KerrKS::print( std::ostream& o) const {
 */
 
 // Mutators
-void KerrKS::setSpin(const double spin) { spin_=spin; }
+void KerrKS::setSpin(const double spin) {
+  spin_=spin;
+  tellListeners();
+}
 
 // Accessors
 double KerrKS::getSpin() const { return spin_ ; }
@@ -245,7 +248,7 @@ int KerrKS::myrk4_adaptive(Worldline* line, const double * coord, double , doubl
   double err;
   int count=0;
 
-  double newnorm;
+  //  double newnorm;
   
   while (1){
     count++;
@@ -292,7 +295,7 @@ int KerrKS::myrk4_adaptive(Worldline* line, const double * coord, double , doubl
       /* !!! Don't remove the line below !!!*/
       /* Although it should be useless, removing it renders the Metric
 	 useless under Linux! Further investigation is needed...*/
-      newnorm=ScalarProd(coord1, coord1+4, coord1+4);
+      //      newnorm=ScalarProd(coord1, coord1+4, coord1+4);
 
       //This "norm check" is trash, it's of no use, except to slow down drastically the computation (even with it, the norm can be very bad)
       /*if (fabs(newnorm-normref) > factnorm*fabs(lastnorm-normref)) {      
@@ -398,7 +401,7 @@ void KerrKS::circularVelocity(double const coor[4], double vel[4],
 			      double dir) const {
 
   double rcross=sqrt ( coor[1]*coor[1] + coor[2]*coor[2] - spin_*spin_);
-  double Omega=dir*sqrt(1./(rcross*rcross*rcross));//angular Keplerian velocity
+  double Omega=dir*pow(rcross*rcross*rcross, -0.5);//angular Keplerian velocity
   
   vel[1] = -coor[2]*Omega;
   vel[2] =  coor[1]*Omega;
@@ -498,27 +501,14 @@ int KerrKS::isStopCondition(double const * const coord) const {
   return 0;
 }
 
+void KerrKS::setParameter(string name, string content, string unit) {
+  if (name=="Spin") setSpin(atof(content.c_str()));
+  else Generic::setParameter(name, content, unit);
+}
+
 #ifdef GYOTO_USE_XERCES
 void KerrKS::fillElement(Gyoto::FactoryMessenger *fmp) {
   fmp -> setParameter("Spin", spin_);
   Metric::Generic::fillElement(fmp);
-}
-
-SmartPointer<Metric::Generic>
-Gyoto::Metric::KerrKS::Subcontractor(FactoryMessenger* fmp) {
-
-  double spin=0., mass=1.; //default values
-  string name="", content="";
-
-  while (fmp->getNextParameter(&name, &content)) {
-    if(name=="Spin") spin=atof(content.c_str());
-  }
-  SmartPointer<KerrKS> gg = new KerrKS(spin, mass);
-  gg -> processGenericParameters(fmp);
-  return gg;
-}
-
-void Gyoto::Metric::KerrKS::Init() {
-  Gyoto::Metric::Register("KerrKS", &Subcontractor);
 }
 #endif

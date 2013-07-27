@@ -49,6 +49,7 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   // -----
  protected:
   double spin_ ;  ///< Angular momentum parameter
+  int modifkerr_CS_; ///< Chern-Simons modification
   
   // Constructors - Destructor
   // -------------------------
@@ -57,7 +58,7 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   KerrBL(double spin, double mass) ; ///< Constructor with spin and mass specification
 
   // Default is _not_ fine
-  //KerrBL(const KerrBL& ) ;                ///< Copy constructor
+  KerrBL(const KerrBL& ) ;                ///< Copy constructor
   
   
   virtual ~KerrBL() ;                        ///< Destructor
@@ -80,12 +81,12 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
 
   double getRmb() const; ///< Returns prograde marginally bound orbit
   
-  /** Value of metric coefficient $g_{\alpha\beta}$ at point $(x_{1},x_{2},x_{3})$
-      in Boyer-Lindquist coordinates
-   */
-  double gmunu(const double * const x,
-		       int alpha, int beta) const ;
+  double gmunu(const double * const x, int mu, int nu) const ;
 
+  /** 
+   * \brief g<SUP>&mu;,&nu;</SUP>
+   */
+  double gmunu_up(const double * const x, int mu, int nu) const ;
  
   /*
    it's necessary to define christoffel even if it's not used. KerrBL derives from Metric where christoffel is virtual pure. If the function is not defined in KerrBL,  it's considered virtual pure here too. Then KerrBL is considered an abstract class, and it's forbidden to declare any object of type KerrBL....
@@ -95,8 +96,8 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   double christoffel(const double[8],
 		     const int, const int, const int) const;
   
-  double ScalarProd(const double* pos,
-		    const double* u1, const double* u2) const ;
+  double ScalarProd(const double pos[4],
+		    const double u1[4], const double u2[4]) const ;
 
   void nullifyCoord(double coord[8], double & tdot2) const;
   void nullifyCoord(double coord[8]) const;
@@ -108,7 +109,7 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
 				double dir=1.) const ;
 
  public:
-  void MakeCoord(const double coordin[8], const double cst[5], double coordout[8]) const ;
+  virtual void MakeCoord(const double coordin[8], const double cst[5], double coordout[8]) const ;
   ///< Inverse function of MakeMomentumAndCst
 
    ///< Computes pr, ptheta, E and L from rdot, thetadot, phidot, tdot
@@ -116,10 +117,9 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   ///< Transforms from Boyer-Lindquist coordinates [t,r,th,phi,tdot,rdot,thdot,phidot] to [t,r,th,phi,pt,pr,pth,pphi] where pt,pr... are generalized momenta.
  
 
+  virtual void setParameter(std::string, std::string, std::string);
 #ifdef GYOTO_USE_XERCES
   virtual void fillElement(FactoryMessenger *fmp); ///< called from Factory
-  static Metric::Subcontractor_t Subcontractor;
-  static void Init();
 #endif
 
  protected:
@@ -128,18 +128,35 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   /* RK4 : y=[r,theta,phi,t,pr,ptheta], cst=[a,E,L,Q,1/Q],dy/dtau=F(y,cst), h=proper time step. For KerrBL geodesic computation.
    */
   int myrk4(Worldline * line, const double coordin[8], double h, double res[8]) const; //external-use RK4
-  int myrk4(const double coor[8], const double cst[5], double h, double res[8]) const;//internal-use RK4
-  int myrk4_adaptive(Gyoto::Worldline* line, const double coor[8], double lastnorm, double normref, double coor1[8], double h0, double& h1) const;
+ private:
+  int myrk4(const double coor[8], const double cst[5], double h, double res[8]) const;///< Internal-use RK4 proxy
+  int myrk4_adaptive(Gyoto::Worldline* line, const double coor[8], double lastnorm, double normref, double coor1[8], double h0, double& h1) const; ///< Interal-use adaptive RK4 proxy
+  /**
+   * \brief Ensure conservation of the constants of motion
+   *
+   * Tweak thetadot if necessary.
+   */
   int CheckCons(const double coor_init[8], const double cst[5], double coor_fin[8]) const;
+
+  /**
+   * \brief Normalize 4-velocity
+   *
+   * To 0 or -1. Changes rdot to allow norm conservation.
+   */
   void Normalize4v(double coord[8], const double part_mass) const;
 
   /** F function such as dy/dtau=F(y,cst)
    */
   using Metric::Generic::diff;
-  int diff(const double y[8], const double cst[5], double res[8]) const ;
+  /** 
+   * \brief Used in RK4 proxies.
+   */
+  virtual int diff(const double y[8], const double cst[5], 
+		   double res[8]) const ;
   /** Integrator. Computes the evolution of y (initcond=y(0)).
    */
-  void computeCst(const double coord[8], double cst[5]) const;
+  virtual void computeCst(const double coord[8], double cst[5]) const;
+ public:
   void setParticleProperties(Worldline* line, const double* coord) const;
   
 };

@@ -1,15 +1,17 @@
 .\" Process this file with
 .\" groff -man -Tascii foo.1
 .\"
-.TH GYOTO 1 "AUGUST 2011" Science "User Manuals"
+.TH GYOTO 1 "AUGUST 2013" Science "User Manuals"
 .SH NAME
 Gyoto \- the General relativitY Orbit Tracer of Observatoire de Paris
 .SH SYNOPSIS
 gyoto [\fB\-\-silent\fR|\fB\-\-quiet\fR|\fB\-\-verbose\fR[=\fIN\fR]|\fB\-\-debug\fR]
       [\fB\-\-imin\fR=\fIi0\fR] [\fB\-\-imax\fR=\fIi1\fR] [\fB\-\-jmin\fR=\fIj0\fR] [\fB\-\-jmax\fR=\fIj1\fR]
-      [\fB\-\-time\fR=\fItobs\fR] 
+      [\fB\-\-time\fR=\fItobs\fR] [\fB\-\-tmin\fR=\fItmin\fR]
       [\fB\-\-fov\fR=\fIangle\fR] [\fB\-\-resolution\fR=\fInpix\fR] [\fB\-\-distance\fR=\fIdist\fR]
       [\fB\-\-paln\fR=\fIOmega\fR] [\fB\-\-inclination\fR=\fIi\fR] [\fB\-\-argument\fR=\fItheta\fR]
+      [\fB\-\-nthreads\fR=\fInth\fR] [\fB\-\-plugins\fR=\fIpluglist\fR]
+      [\fB\-\-impact-coords\fR[=\fIfname.fits\fR]]
       [\fB\-\-\fR] \fIinput.xml \fIoutput.fits
 .SH DESCRIPTION
 Gyoto is a framework for computing geodesics in curved
@@ -23,8 +25,8 @@ gravitational lensing.
 ray-tracing, and saves the result in FITS format.
 
 A companion program, \fBgyotoy\fR(1), can be used to interactively
-visualize a single geodesic in Kerr metric (the trajectory of a single
-photon or massive particle.
+visualize a single geodesic in any Gyoto metric (the trajectory of a
+single photon or massive particle).
 
 Ray-tracing can be very time consuming. It is possible to interrupt
 the process at any time by hitting ^C, which will save the
@@ -46,6 +48,11 @@ Verbose mode. Verbosity level \fIN\fR may be specified.
 .IP \fB\-\-debug\fR
 Insanely verbose.
 
+.SS Choosing plug-ins
+.IP \fB\-\-plugins\fR=\fI[nofail:]plug1[,[nofail:]plug2][...]
+Comma-separated list of Gyoto plugins to load. Overwrites GYOTO_PLUGINS
+environment variable below.
+
 .SS Selecting a region
 It's possible to ray-trace only part of the scenery by providing the
 pixel coordinates of the bottom-left (\fIi0\fR, \fIj0\fR) and
@@ -63,7 +70,7 @@ Default value: \fInpix\fR (see option \fB\-\-resolution\fR below).
 .SS Setting the camera position
 The following parameters are normally provided in the Screen section
 of \fIinput.xml\fR but can be overridden on the command line for
-instance to make a movie (by calling \fBgyoto\fB for each movie frame,
+instance to make a movie (by calling \fBgyoto\fR for each movie frame,
 changing only the option \fB\-\-time\fR).
 .IP \fB\-\-time\fR=\fItobs
 The observing time in geometrical units.
@@ -87,6 +94,14 @@ main axes of the coordinate system.
 
 .SS Miscellaneous
 Unsorted option(s):
+.IP \fB\-\-nthreads\fR=\fInth\fR
+Number of parallel threads to use. For instance, on a dual-core
+machine, \fB\-\-nthreads\fR=2 should yield the fastest
+computation. This option is silently ignored if Gyoto was compiled
+without POSIX threads support. Note that the metric and object are
+replicated for each thread which can lead to a decrease in performance
+if either is memory-intensive. Setting this option to 0 is equivalent
+to setting it to 1.
 .IP \fB\-\-impact\-coords\fR[=\fIimpactcoords.fits\fR]
 In some circumstances, you may want to perform several computations in
 which the computed geodesics end up being exactly identical. This is
@@ -131,7 +146,7 @@ It is also possible to set the two versions of this option at the same time:
 \fB\-\-impact\-coords\fR=\fIimpactcoords.fits\fR \fB\-\-impact\-coords\fR
 .IP
 In this case, the impact coordinates are read from
-\fIimpactcoords.fits\fR, shifted in time, and save in
+\fIimpactcoords.fits\fR, shifted in time, and saved in
 \fIoutput.fits\fR.
 .RE
 
@@ -140,7 +155,11 @@ In this case, the impact coordinates are read from
 A gyoto input file in XML format. Several examples are provided in the
 source doc/examples directory. Depending on how you installed
 \fBgyoto\fR, they may be installed on your system in a place such as
-\fI/usr/share/doc/libgyoto/examples/\fR.
+\fI/usr/share/doc/libgyoto/examples/\fR. It goes beyond the scope of
+this manpage to document the XML file format supported by Gyoto,
+please refer to the library documentation which may be distributed by
+your package manager, can be compiled from the Gyoto source, and can
+be consulted online at \fIhttp://gyoto.obspm.fr/\fR.
 .IP \fIoutput.fits
 The output image in FITS format. \fBgyoto\fR will not overwrite
 \fIoutput.fits\fR unless it is prefixed with an (escaped) "!": "gyoto
@@ -151,14 +170,16 @@ format, see \fIhttp://fits.gsfc.nasa.gov/\fR.
 .SH ENVIRONMENT
 .IP GYOTO_PLUGINS
 Gyoto astronomical objects and metrics are implemented in plug-ins. To
-use more (or less!) than the standard plug-ins, you need to set the
+use more (or less!) than the standard plug-ins, you may set the
 environment variable GYOTO_PLUGINS to a comma-separated list of
 plug-ins. \fBgyoto\fR will exit with an error status if unable to load
 a specified plug-in, unless it is prefixed with "nofail:" in
-GYOTO_PLUGINS. Default value: "stdplug,nofail:lorene". Gyoto attempts
-to find plug-ins first by relying on the system's dynamic linker (so
-paths in e.g. LD_LIBRARY_PATH and ld.so.conf are searched first). If
-that fails, it looks in PREFIX/lib/gyoto/ and finally in
+GYOTO_PLUGINS. This environment variable is overwritten byt he
+\fB\-\-plugins\fR command-line parameter. Default value:
+"stdplug,nofail:lorene". Gyoto attempts to find plug-ins first by
+relying on the system's dynamic linker (so paths in
+e.g. LD_LIBRARY_PATH and ld.so.conf are searched first). If that
+fails, it looks in PREFIX/lib/gyoto/ and finally in
 PREFIX/lib/gyoto/SOVERS/ where PREFIX and SOVERS are two compile-time
 options. PREFIX usually is /usr/local or /usr. At the time of writing,
 SOVERS is 0.0.0.

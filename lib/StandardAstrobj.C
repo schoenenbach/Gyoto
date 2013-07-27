@@ -43,37 +43,48 @@ Standard::Standard(string kind) :
   Generic(kind),
   critical_value_(DBL_MIN), safety_value_(DBL_MAX)
 {
-  if (debug()) cerr << "Standard Astrobj Construction" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 Standard::Standard() :
   Generic(),
   critical_value_(DBL_MIN), safety_value_(DBL_MAX)
 {
-  if (debug()) cerr << "Standard Astrobj Construction" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 Standard::Standard(double radmax) :
   Generic(radmax),
   critical_value_(DBL_MIN), safety_value_(DBL_MAX)
 {
-  if (debug()) cerr << "Astrobj Construction" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 Standard::Standard(const Standard& orig) :
   Generic(orig), Functor::Double_constDoubleArray(orig),
   critical_value_(orig.critical_value_), safety_value_(orig.safety_value_)
 {
-    if (debug()) cerr << "DEBUG: Astrobj::Standard (Copy)" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 Standard::~Standard() {
-  if (debug()) cerr << "DEBUG: Astrobj::Standard::~Standard()" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 int Standard::Impact(Photon* ph, size_t index, Properties *data){
-  if (debug())
-    cerr << "DEBUG: Standard::Impact called for " << getKind() << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(getKind());
+# endif
   double p1[8], p2[8];
   ph->getCoord(index, p1);
   ph->getCoord(index+1, p2);
@@ -81,8 +92,8 @@ int Standard::Impact(Photon* ph, size_t index, Properties *data){
 
   if (gg_ -> getCoordKind() == GYOTO_COORDKIND_SPHERICAL){
     //Allows theta and phi to be in the correct range
-    checkPhiTheta(p1);
-    checkPhiTheta(p2);
+    ph->checkPhiTheta(p1);
+    ph->checkPhiTheta(p2);
   }
 
   double t1 = p1[0], t2=p2[0];
@@ -151,14 +162,15 @@ double Standard::getSafetyValue() const { return safety_value_; }
 
 double Standard::giveDelta(double *) {return 0.05;}
 
-int Standard::setParameter(string name, string content)  {
+int Standard::setParameter(string name, string content, string unit)  {
   if (name == "SafetyValue") safety_value_ = atof(content.c_str());
-  else return Generic::setParameter(name, content);
+  else return Generic::setParameter(name, content, unit);
   return 0;
 }
 
 #ifdef GYOTO_USE_XERCES
 void Standard::fillElement(FactoryMessenger* fmp) const {
   fmp -> setParameter("SafetyValue", safety_value_);
+  Generic::fillElement(fmp);
 }
 #endif

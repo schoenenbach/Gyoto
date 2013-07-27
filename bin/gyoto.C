@@ -1,5 +1,5 @@
 /*
-    Copyright 2011 Thibaut Paumard, Frederic Vincent
+    Copyright 2011, 2013 Thibaut Paumard, Frederic Vincent
 
     This file is part of Gyoto.
 
@@ -17,13 +17,22 @@
     along with Gyoto.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// Gyoto
+#include "GyotoDefs.h"
 #include "GyotoFactory.h"
 #include "GyotoUtils.h"
 #include "GyotoRegister.h"
-#include "GyotoDefs.h"
+
+// FITS I/O
 #include <fitsio.h>
+
+// signal()
 #include <csignal>
 
+// getpid()
+#include <sys/types.h>
+#include <unistd.h>
+ 
 using namespace std;
 using namespace Gyoto;
 
@@ -58,14 +67,13 @@ void sigint_handler(int sig)
 static std::string curmsg = "";
 static int curretval = 1;
 
-void gyotoErrorHandler( const char *msg ) {
-  cerr << curmsg << msg << endl;
+void gyotoErrorHandler( const Gyoto::Error e ) {
+  cerr << curmsg << e << endl;
   if (debug()) abort(); // to keep stack for debugger
   exit (curretval);
 }
 
 int main(int argc, char** argv) {
-
   /*
     This program aims at computing the null geodesics of photons from
     an observation screen to an astrophysical object (star orbit,
@@ -82,16 +90,20 @@ int main(int argc, char** argv) {
 
   size_t imin=1, imax=1000000000, jmin=1, jmax=1000000000;
   //  double tobs, tmin, fov, dist, paln, incl, arg;
-  double tobs, fov, dist, paln, incl, arg;
-  size_t res;
+  double tobs=0., tmin=0., fov=0., dist=0., paln=0., incl=0., arg=0.;
+  size_t res=0, nthreads=0;
   //  bool  xtobs=0, xtmin=0, xfov=0, xres=0, xdist=0, xpaln=0, xincl=0, xarg=0;
-  bool  xtobs=0, xfov=0, xres=0, xdist=0, xpaln=0, xincl=0, xarg=0;
+  bool  xtobs=0, xtmin=0, xfov=0, xres=0, xdist=0, xpaln=0, xincl=0, xarg=0, xnthreads=0;
   bool  ipct=0;
   long  ipctdims[3]={0, 0, 0};
   double ipcttime;
 
-  int i, stop=0;
-  for (i=1;i<argc;++i) {
+  string pluglist= getenv("GYOTO_PLUGINS")?
+    getenv("GYOTO_PLUGINS"):
+    GYOTO_DEFAULT_PLUGINS;
+
+  int stop=0;
+  for (int i=1;i<argc;++i) {
     param=argv[i];
     if (param.substr(0,1)=="-" && !stop) {
       if (param=="--") stop=1;
@@ -100,10 +112,42 @@ int main(int argc, char** argv) {
       else if (param.substr(0,7)=="--quiet") verbose(GYOTO_QUIET_VERBOSITY);
       else if (param.substr(0,9)=="--verbose") verbose(10);
       else if (param.substr(0,7)=="--debug") debug(1);
-      else if (param.substr(0,7)=="--imin=") imin=atoi(param.substr(7).c_str());
-      else if (param.substr(0,7)=="--imax=") imax=atoi(param.substr(7).c_str());
-      else if (param.substr(0,7)=="--jmin=") jmin=atoi(param.substr(7).c_str());
-      else if (param.substr(0,7)=="--jmax=") jmax=atoi(param.substr(7).c_str());
+      else if (param.substr(0,10)=="--plugins="){
+	pluglist=param.substr(10);
+	cout << pluglist << endl;
+      }
+      else if (param.substr(0,7)=="--imin=") {
+	imin=atoi(param.substr(7).c_str());
+	double imintest=atof(param.substr(7).c_str());
+	if (imintest<=0){
+	  cerr << "In gyoto.C: screen indices should be >0" << endl;
+	  return 1;
+	}
+      }
+      else if (param.substr(0,7)=="--imax=") {
+	imax=atoi(param.substr(7).c_str());
+	double imaxtest=atof(param.substr(7).c_str());
+	if (imaxtest<=0){
+	  cerr << "In gyoto.C: screen indices should be >0" << endl;
+	  return 1;
+	}
+      }
+      else if (param.substr(0,7)=="--jmin=") {
+	jmin=atoi(param.substr(7).c_str());
+	double jmintest=atof(param.substr(7).c_str());
+	if (jmintest<=0){
+	  cerr << "In gyoto.C: screen indices should be >0" << endl;
+	  return 1;
+	}
+      }
+      else if (param.substr(0,7)=="--jmax=") {
+	jmax=atoi(param.substr(7).c_str());
+	double jmaxtest=atof(param.substr(7).c_str());
+	if (jmaxtest<=0){
+	  cerr << "In gyoto.C: screen indices should be >0" << endl;
+	  return 1;
+	}
+      }
       else if (param.substr(0,15)=="--impact-coords")  {
 	if (param.size() > 16 && param.substr(15,1)=="=")
 	  ipctfile=param.substr(16);
@@ -112,9 +156,9 @@ int main(int argc, char** argv) {
       else if (param.substr(0,7)=="--time=") {
 	tobs=atof(param.substr(7).c_str());
 	xtobs=1;
-	/*} else if (param.substr(0,7)=="--tmin=") {
+      } else if (param.substr(0,7)=="--tmin=") {
 	tmin=atof(param.substr(7).c_str());
-	xtmin=1;*/
+	xtmin=1;
       } else if (param.substr(0,6)=="--fov=") {
 	fov=atof(param.substr(6).c_str());
 	xfov=1;
@@ -133,7 +177,10 @@ int main(int argc, char** argv) {
       } else if (param.substr(0,11)=="--argument=") {
 	arg=atof(param.substr(11).c_str());
 	xarg=1;
-      } 
+      }  else if (param.substr(0,11)=="--nthreads=") {
+	nthreads=atoi(param.substr(11).c_str());
+	xnthreads=1;
+      }
       else {
 	usage();
 	return 1;
@@ -161,15 +208,16 @@ int main(int argc, char** argv) {
 	 << " properly \n acknowledged. Please cite:\n"
 	 << "  GYOTO: a new general relativistic ray-tracing code,\n"
 	 << "  F. H. Vincent, T. Paumard, E. Gourgoulhon & G. Perrin 2011,\n"
-	 << "  Classical and Quantum Gravity, accepted. [arXiv:1109.4769]"
+	 << "  Classical and Quantum Gravity 28, 225011 (2011) "
+	 << "[arXiv:1109.4769]"
 	 << endl << endl;
 
   // set-up error reporter
-  Gyoto::setErrorHandler ( &gyotoErrorHandler );
+  Gyoto::Error::setHandler ( &gyotoErrorHandler );
 
   curmsg = "In gyoto.C: Error initializing libgyoto: ";
   curretval = 1;
-  Gyoto::Register::init();
+  Gyoto::Register::init(pluglist.c_str());
 
   Factory *factory ;
   if (verbose() >= GYOTO_QUIET_VERBOSITY) cout << "Reading parameter file: " << parfile << endl;
@@ -189,7 +237,7 @@ int main(int argc, char** argv) {
 
     if (xtobs) screen -> setTime        ( tobs );
     else tobs= screen -> getTime();
-    //      if (xtmin) screen -> setMinimumTime ( tmin );
+    if (xtmin) scenery -> setTmin ( tmin );
     if (xres)  screen -> setResolution  ( res  );
     else res = screen -> getResolution();
     if (xfov)  screen -> setFieldOfView ( fov  );
@@ -197,6 +245,7 @@ int main(int argc, char** argv) {
     if (xincl) screen -> setInclination ( incl );
     if (xpaln) screen -> setPALN        ( paln );
     if (xarg)  screen -> setArgument    ( arg  );
+    if (xnthreads)  scenery -> setNThreads    ( nthreads  );
 
     if (ipctfile != "") {
       //	  if (verbose() >= GYOTO_QUIET_VERBOSITY)
@@ -230,7 +279,7 @@ int main(int argc, char** argv) {
 
       double dt = tobs * GYOTO_C / scenery -> getMetric() -> unitLength()
 	- ipcttime;
-      for (i=0; i < ipctnelt; i+=8)
+      for (size_t i=0; i < ipctnelt; i+=8)
 	if (impactcoords[i] != DBL_MAX) impactcoords[i] += dt;
       ipcttime = tobs * GYOTO_C / scenery -> getMetric() -> unitLength();
     }
@@ -241,7 +290,7 @@ int main(int argc, char** argv) {
 
     size_t nbnuobs=0;
     if (quantities & (GYOTO_QUANTITY_SPECTRUM | GYOTO_QUANTITY_BINSPECTRUM)) {
-      SmartPointer<Spectrometer> spr = screen -> getSpectrometer();
+      SmartPointer<Spectrometer::Generic> spr = screen -> getSpectrometer();
       if (!spr) throwError("Spectral quantity requested but "
 			   "no spectrometer specified!");
       nbnuobs = spr -> getNSamples();
@@ -254,8 +303,8 @@ int main(int argc, char** argv) {
     vect = new double[nelt];
 
     // First check whether we can open file
-    long naxis=3; 
-    long naxes[] = {res, res, nbdata+nbnuobs};
+    int naxis=3; 
+    long naxes[] = {long(res), long(res), long(nbdata+nbnuobs)};
     nelements=nelt; 
 
     fits_create_file(&fptr, pixfile, &status);
@@ -360,7 +409,7 @@ int main(int argc, char** argv) {
     }
     if (quantities & GYOTO_QUANTITY_SPECTRUM) {
       data->spectrum=vect+offset*(curquant++);
-      data->offset=offset;
+      data->offset=int(offset);
       sprintf(keyname, fmt, curquant);
       fits_write_key(fptr, TSTRING, keyname,
 		     const_cast<char*>("Spectrum"),
@@ -368,7 +417,7 @@ int main(int argc, char** argv) {
     }
     if (quantities & GYOTO_QUANTITY_BINSPECTRUM) {
       data->binspectrum=vect+offset*(curquant++);
-      data->offset=offset;
+      data->offset=int(offset);
       sprintf(keyname, fmt, curquant);
       fits_write_key(fptr, TSTRING, keyname,
 		     const_cast<char*>("BinSpectrum"),
@@ -393,7 +442,7 @@ int main(int argc, char** argv) {
     if (quantities & GYOTO_QUANTITY_IMPACTCOORDS || ipct) {
       // Save if requested, copying if provided
       cout << "Saving precomputed impact coordinates" << endl;
-      long naxes_ipct[] = {16, res, res};
+      long naxes_ipct[] = {16, long(res), long(res)};
       fits_create_img(fptr, DOUBLE_IMG, naxis, naxes_ipct, &status);
       fits_write_key(fptr, TSTRING, const_cast<char*>("EXTNAME"),
 		     const_cast<char*>("Gyoto Impact Coordinates"),

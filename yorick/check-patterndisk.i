@@ -33,7 +33,7 @@ metric = gyoto_KerrBL(mass=4e6*GYOTO_SUN_MASS);
 write, format="%s", "Creating PatternDisk...";
 pd = gyoto_PatternDisk(copyintensity=intensity, copyopacity=opacity,
                        innerradius=3, outerradius=28, repeatphi=8,
-                       metric=metric);
+                       metric=metric, rmax=50);
 write, format="%s\n", " done.";
 
 write, format="%s\n", "Printing PatternDisk:";
@@ -41,41 +41,47 @@ pd;
 write, format="%s\n", " done.";
 
 screen = gyoto_Screen(metric=metric, resolution=64,
-                      time=1000.*metric(unitlength=)/GYOTO_C,
-                      distance=100.*metric(unitlength=), fov=30./100.,
+                      time=1000.*metric.unitlength/GYOTO_C,
+                      distance=100.*metric.unitlength, fov=30./100.,
                       inclination=110./180.*pi, paln=pi);
 
 write, format="%s", "Attaching PatternDisk to scenery...";
 sc = gyoto_Scenery(metric=metric, screen=screen, astrobj=pd);
 write, format="%s\n", " done.";
 
-write, format="%s", "Saving data to fits file...";
-pd, fitswrite="!check-patterndisk.fits.gz";
-write, format="%s\n", " done.";
+if (gyoto_haveXerces()) {
+  write, format="%s", "Saving data to fits file...";
+  pd, fitswrite="!check-patterndisk.fits.gz";
+  write, format="%s\n", " done.";
 
-write, format="%s", "Saving scenery to XML file...";
-sc, xmlwrite="check-patterndisk.xml";
-write, format="%s\n", " done.";
+  write, format="%s", "Saving scenery to XML file...";
+  sc, xmlwrite="check-patterndisk.xml";
+  write, format="%s\n", " done.";
 
-write, format="%s", "Reading back scenery...";
-sc2 = gyoto_Scenery("check-patterndisk.xml");
-write, format="%s\n", " done.";
+  write, format="%s", "Reading back scenery...";
+  sc2 = gyoto_Scenery("check-patterndisk.xml");
+  write, format="%s\n", " done.";
 
-write, format="%s", "Removing temporary files...";
-remove, "check-patterndisk.xml";
-remove, "check-patterndisk.fits.gz";
-write, format="%s\n", " done.";
-
+  write, format="%s", "Removing temporary files...";
+  remove, "check-patterndisk.xml";
+  remove, "check-patterndisk.fits.gz";
+  write, format="%s\n", " done.";
+ } else {
+  write, format="%s", "Cloning...";
+  sc2 = sc.clone;
+  write, format="%s\n", " done.";
+ }
+  
 write, format="%s", "Getting PatternDisk...";
-pd2 = sc2(astrobj=);
+pd2 = sc2.astrobj;
 write, format="%s\n", " done.";
 
 write, format="%s", "Comparing intensity array...";
-if (anyof(intensity != pd2(copyintensity=))) error, "CHECK FAILED";
+if (anyof(intensity != pd2.copyintensity)) error, "CHECK FAILED";
 write, format="%s\n", " done.";
 
 write, format="%s", "Comparing opacity array...";
-if (anyof(opacity != pd2(copyopacity=))) error, "CHECK FAILED";
+if (anyof(opacity != pd2.copyopacity)) error, "CHECK FAILED";
 write, format="%s\n", " done.";
 
 write, format="%s", "Performing raytracing...\n";
@@ -91,4 +97,3 @@ if (!nodisplay) {
   if (batch()) winkill;
  }
 
-if (batch()) quit;

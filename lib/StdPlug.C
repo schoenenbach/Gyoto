@@ -28,6 +28,7 @@
 #include "GyotoThinDisk.h"
 #include "GyotoPageThorneDisk.h"
 #include "GyotoThinDiskPL.h"
+#include "GyotoPolishDoughnut.h"
 #ifdef GYOTO_USE_CFITSIO
 #include "GyotoPatternDisk.h"
 #include "GyotoPatternDiskBB.h"
@@ -42,9 +43,10 @@
 using namespace Gyoto;
 
 extern "C" void __GyotostdplugInit() {
+#if defined GYOTO_USE_XERCES
   // Register Metrics
-  Gyoto::Metric::KerrBL::Init();
-  Gyoto::Metric::KerrKS::Init();
+  Metric::Register("KerrBL", &(Metric::Subcontractor<Metric::KerrBL>));
+  Metric::Register("KerrKS", &(Metric::Subcontractor<Metric::KerrKS>));
   // Register Astrobjs
   Astrobj::Register("Complex",   &(Astrobj::Subcontractor<Astrobj::Complex>));
   Astrobj::Register("Star",      &(Astrobj::Subcontractor<Astrobj::Star>));
@@ -55,6 +57,8 @@ extern "C" void __GyotostdplugInit() {
 		    &(Astrobj::Subcontractor<Astrobj::PageThorneDisk>));
   Astrobj::Register("ThinDiskPL",  
 		    &(Astrobj::Subcontractor<Astrobj::ThinDiskPL>));
+  Astrobj::Register("PolishDoughnut",
+		    &(Astrobj::Subcontractor<Astrobj::PolishDoughnut>));
 #ifdef GYOTO_USE_CFITSIO
   Astrobj::Register("PatternDisk",
 		    &(Astrobj::Subcontractor<Astrobj::PatternDisk>));
@@ -68,6 +72,9 @@ extern "C" void __GyotostdplugInit() {
 		    &(Astrobj::Subcontractor<Astrobj::Disk3D_BB>));
 #endif
   // Register Spectra
-  Gyoto::Spectrum::PowerLawInit();
-  Gyoto::Spectrum::BlackBodyInit();
+  Spectrum::Register("PowerLaw", 
+		     &(Spectrum::Subcontractor<Spectrum::PowerLaw>));
+  Spectrum::Register("BlackBody", 
+		     &(Spectrum::Subcontractor<Spectrum::BlackBody>));
+#endif
 }

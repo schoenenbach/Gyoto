@@ -16,12 +16,13 @@
     You should have received a copy of the GNU General Public License
     along with Gyoto.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "GyotoRegister.h"
 #include "GyotoUtils.h"
 #include "GyotoAstrobj.h"
 #include "GyotoMetric.h"
 #include "GyotoSpectrum.h"
+#include "GyotoSpectrometer.h"
+#include "GyotoConverters.h"
 
 #include <dlfcn.h>
 #include <cstdlib>
@@ -74,12 +75,18 @@ void Gyoto::loadPlugin(char const*const name, int nofail) {
   (*initfcn)();
 }
 
+#if defined GYOTO_USE_XERCES
 void Gyoto::Register::init(char const *  cpluglist) {
 
   // Clean registers
   Metric::initRegister();
   Astrobj::initRegister();
   Spectrum::initRegister();
+  // This cleans and fills Spectometer::Register_
+  Spectrometer::initRegister();
+
+  // Init units system
+  Units::Init();
 
   // Init built-in plug-ins
 #ifdef GYOTO_BUILTIN_STDPLUG
@@ -134,31 +141,39 @@ Register::Entry::~Entry() { if (next_) delete next_; }
 
 
 Gyoto::SmartPointee::Subcontractor_t*
-Register::Entry::getSubcontractor(std::string name) {
+Register::Entry::getSubcontractor(std::string name, int errmode) {
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_IF_DEBUG
+    GYOTO_DEBUG_EXPR(name);
+    GYOTO_DEBUG_EXPR(errmode);
+  GYOTO_ENDIF_DEBUG
+# endif
   if (name_==name) return subcontractor_;
-  if (next_) return next_ -> getSubcontractor(name);
+  if (next_) return next_ -> getSubcontractor(name, errmode);
+  if (errmode) return NULL;
   throwError ("Unregistered kind: "+name);
   return NULL; // will never get there, avoid compilation warning
 }
 
 void Gyoto::Register::list() {
   Register::Entry* entry = NULL;
+
   cout << "List of available Metrics:" << endl;
-  entry = Metric::Register_;
-  while (entry) {
+  for (entry = Metric::Register_; entry; entry = entry -> next_)
     cout << "    " << entry -> name_ << endl;
-    entry = entry -> next_ ;
-  }
   
   cout << "List of available Astrobjs:" << endl;
-  entry = Astrobj::Register_;
-  while (entry) {
+  for (entry = Astrobj::Register_; entry; entry = entry -> next_)
     cout << "    " << entry -> name_ << endl;
-    entry = entry -> next_ ;
-  }
   
   cout << "List of available Spectra:" << endl;
   for (entry = Spectrum::Register_; entry; entry = entry -> next_)
     cout << "    " << entry -> name_ << endl;
     
+  
+  cout << "List of available Spectrometers:" << endl;
+  for (entry = Spectrometer::Register_; entry; entry = entry -> next_)
+    cout << "    " << entry -> name_ << endl;
+    
 }
+#endif

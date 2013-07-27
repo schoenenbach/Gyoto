@@ -1,5 +1,5 @@
 /*
-    Copyright 2011 Thibaut Paumard
+    Copyright 2011, 2013 Thibaut Paumard
 
     This file is part of Gyoto.
 
@@ -26,179 +26,40 @@
 
 #include <iostream>
 using namespace std;
-
-
 using namespace Gyoto;
 
+YGYOTO_YUSEROBJ(Screen, Screen)
+
 extern "C" {
-  typedef struct gyoto_Screen { SmartPointer<Screen> screen; } gyoto_Screen;
-  void gyoto_Screen_free(void *obj);
-  void gyoto_Screen_print(void *obj);
-  void gyoto_Screen_eval(void *obj, int n);
-  static y_userobj_t gyoto_Screen_obj =
-    {const_cast<char*>("gyoto_Screen"), &gyoto_Screen_free, &gyoto_Screen_print, &gyoto_Screen_eval, 0, 0};
-
-  // SCREEN CLASS
-  void gyoto_Screen_free(void *obj) {
-    if (((gyoto_Screen*)obj)->screen) {
-      ((gyoto_Screen*)obj)->screen=NULL;
-    } else printf("null pointer\n");
-  }
-
-  void gyoto_Screen_print(void *obj) {
-#ifdef GYOTO_USE_XERCES
-    string rest="", sub="";
-    try { rest = Factory(((gyoto_Screen*)obj)->screen).format(); }
-    YGYOTO_STD_CATCH;
-    size_t pos=0, len;
-    while (len=rest.length())  {
-      sub=rest.substr(0, pos=rest.find_first_of("\n",0));
-      rest=rest.substr(pos+1, len-1);
-      y_print( sub.c_str(),1 );
-    }
-#else
-    y_print("GYOTO screen ",0);
-    //    SmartPointer<Screen> gg = ((gyoto_Screen*)obj)->screen;
-    //    y_print(gg->getKind().c_str(),0);
-#endif
-  }
-
   void gyoto_Screen_eval(void *obj, int argc) {
-    int rvset[1]={0}, paUsed[1]={0};
-    int k=-1;
-    char const * rmsg="Cannot set return value more than once";
-    char const * pmsg="Cannot use positional argument more than once";
-
-    SmartPointer<Screen> *screen = NULL; //&((gyoto_Screen*)obj)->screen;
-
-    if (!obj) {
-      obj = ypush_obj(&gyoto_Screen_obj, sizeof(gyoto_Screen));
-      screen = &(((gyoto_Screen*)obj)->screen);
-      *screen = new Screen();
-    } else if (argc==1 && yarg_nil(0)) { // If no parameters, return pointer
-      ypush_long( (long) ((gyoto_Screen*)obj)->screen() );
-      return;
-    } else {
-      screen = &(((gyoto_Screen*)obj)->screen);
-      *ypush_Screen()=*screen;
-    }
-      
+    SmartPointer<Screen> *OBJ_ = &((gyoto_Screen*)obj)->smptr;
     static char const * knames[]={
+      "unit",
       "metric",
       "time","fov","resolution",
       "distance", "dmax", "inclination", "paln", "argument",
+      "freqobs",
       "projection", "observerpos",
+      "fourvel", "screen1", "screen2", "screen3",
       "spectro",
       "skycoord",  "raycoord",
       "xmlwrite", "clone",
       0
     };
-#define nkw 16
-    static long kglobs[nkw+1];
-    int kiargs[nkw];
-    int piargs[]={-1,-1,-1,-1};
-    // push default return value: need to drop before pushing another one
-    yarg_kw_init(const_cast<char**>(knames), kglobs, kiargs);
-      
-    int iarg=argc, parg=0;
-    while (iarg>=1) {
-      iarg = yarg_kw(iarg, kglobs, kiargs);
-      if (iarg>=1) {
-	if (parg<4) piargs[parg++]=iarg--;
-	else y_error("gyoto_Metric takes at most 4 positional arguments");
-      }
-    }
+    YGYOTO_WORKER_INIT1(Screen, Screen, knames, 22)
 
-    /* METRIC */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error("Only one return value possible");
-	*ypush_Metric() = (*screen)->getMetric();
-      } else                // set
-	(*screen)->setMetric(*yget_Metric(kiargs[k]));
-    }
+    YGYOTO_WORKER_SET_UNIT;
+    YGYOTO_WORKER_GETSET_OBJECT(Metric);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Time);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(FieldOfView);
+    YGYOTO_WORKER_GETSET_LONG(Resolution);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Distance);
+    YGYOTO_WORKER_GETSET_DOUBLE(Dmax);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Inclination);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(PALN);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Argument);
+    YGYOTO_WORKER_GETSET_DOUBLE_UNIT(FreqObs);
 
-    /* OBSERVING TIME */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error("Only one return value possible");
-	ypush_double((*screen)->getTime());
-      } else
-	(*screen) -> setTime(ygets_d(iarg));
-    }
-
-    /* FIELD OF VIEW (fov) */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error("Only one return value possible");
-	ypush_double((*screen)->getFieldOfView());
-      } else
-	(*screen) -> setFieldOfView(ygets_d(iarg));
-    }
-
-    /* RESOLUTION */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error("Only one return value possible");
-	ypush_long((*screen)->getResolution());
-      } else
-	(*screen) -> setResolution  (ygets_l(iarg));
-    }
-
-    /* DISTANCE */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error(rmsg);
-	ypush_double((*screen)->getDistance());
-      } else
-	(*screen) -> setDistance    (ygets_d(iarg)) ;
-    }
-
-    /* DMAX */ 
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error(rmsg);
-	ypush_double((*screen)->getDmax());
-      } else
-	(*screen) -> setDmax (ygets_d(iarg)) ;
-    }
-
-    /* INCLINAITION */ 
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error(rmsg);
-	ypush_double((*screen)->getInclination());
-      } else
-	(*screen) -> setInclination (ygets_d(iarg)) ;
-    }
-
-    /* POSITION ANGLE OF THE LINE OF NODES (paln) */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error(rmsg);
-	ypush_double((*screen)->getPALN());
-      } else
-	(*screen) -> setPALN        (ygets_d(iarg)) ;
-    }
-
-    /* ARGUMENT */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get 
-	if ((*rvset)++) y_error(rmsg);
-	ypush_double((*screen)->getArgument());
-      } else
-	(*screen) -> setArgument    (ygets_d(iarg)) ;
-    }
-      
     /* PROJECTION */
     if ((iarg=kiargs[++k])>=0) { // Set Projection
       iarg+=*rvset;
@@ -206,41 +67,20 @@ extern "C" {
       double *proj=ygeta_d(iarg, &ntot, NULL);
       switch (ntot) {
       case 4:
-	(*screen)->setProjection(proj[0], proj[1], proj[2], proj[3]);
+	(*OBJ)->setProjection(proj[0], proj[1], proj[2], proj[3]);
 	break;
       case 3:
-	(*screen)->setProjection(proj[0], proj[1], proj[2]);
+	(*OBJ)->setProjection(proj[0], proj[1], proj[2]);
 	break;
       }
     }
 
-    /* OBSERVERPOS */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) { // get_observerpos
-	if ((*rvset)++) y_error(rmsg);
-	long dims[] = {1,4};
-	double * coord=ypush_d(dims);
-	(*screen)->getObserverPos(coord);
-      } else { // Set ObserverPos
-	long ntot;
-	double * pos = ygeta_d(iarg, &ntot, NULL);
-	if (ntot<4) y_error("POS must have at least 4 elements");
-	(*screen) -> setObserverPos(pos);
-      }
-    }
-
-    /* SPECTRO */
-    if ((iarg=kiargs[++k])>=0) {
-      iarg+=*rvset;
-      if (yarg_nil(iarg)) {
-	if ((*rvset)++) y_error(rmsg);
-	*ypush_Spectrometer() = (*screen) -> getSpectrometer();
-      } else {
-	(*screen) -> setSpectrometer(*yget_Spectrometer(iarg));
-      }
-    }
-
+    YGYOTO_WORKER_GETSET4(ObserverPos);
+    YGYOTO_WORKER_GETSET4(FourVel);
+    YGYOTO_WORKER_GETSET4(Screen1);
+    YGYOTO_WORKER_GETSET4(Screen2);
+    YGYOTO_WORKER_GETSET4(Screen3);
+    YGYOTO_WORKER_GETSET_OBJECT(Spectrometer);
 
     ///// METHODS //////
     /* SKYCOORD METHOD */
@@ -253,7 +93,7 @@ extern "C" {
       long dims[] = {1, 3};
       double * skypos=ypush_d(dims);
 	
-      (*screen)->coordToXYZ(pos, skypos);
+      (*OBJ)->coordToXYZ(pos, skypos);
     }
       
     /* RAYCOORD METHOD */
@@ -268,51 +108,20 @@ extern "C" {
       yarg_drop(1);
       double * coord=ypush_d(dims);
 	
-      (*screen)->getRayCoord(pos[0], pos[1], coord);
+      (*OBJ)->getRayCoord(pos[0], pos[1], coord);
     }
       
-    // Save to file
-    if ((iarg=kiargs[++k])>=0) { // xmlwrite
-      iarg+=*rvset;
-#ifdef GYOTO_USE_XERCES
-      char *filename=ygets_q(kiargs[k]);
-      Factory((*screen)).write(filename);
-#else
-      y_error("This GYOTO was compiled without XERCES: no xml i/o");
-#endif
-    }
+    YGYOTO_WORKER_XMLWRITE;
+    YGYOTO_WORKER_CLONE(Screen);
 
-    /* CLONE */
-    if ((iarg=kiargs[++k])>=0) {
-      if ((*rvset)++) y_error(rmsg);
-      *ypush_Screen() = (*screen)->clone();
-    } 
   }
 }
-
-// PUBLIC API
-
-SmartPointer<Screen> *yget_Screen(int iarg) {
-  return &((gyoto_Screen*)yget_obj(iarg, &gyoto_Screen_obj))->screen;
-}
-SmartPointer<Screen> *ypush_Screen() {
-  gyoto_Screen* obj = (gyoto_Screen*)ypush_obj(&gyoto_Screen_obj, sizeof(gyoto_Screen));
-  return &(obj->screen);
-}
-
-int yarg_Screen(int iarg) {
-  return yget_obj(iarg,0)==gyoto_Screen_obj.type_name;
-}
-
-
-// YAPI FUNCTIONS
 
 extern "C" {
 
   void Y_gyoto_Screen(int argc) {
-    void *obj = NULL;
-    if (yarg_Screen(argc)) obj = yget_obj(--argc, &gyoto_Screen_obj) ;
-    gyoto_Screen_eval(obj, argc);
+    YGYOTO_CONSTRUCTOR_INIT1(Screen, Screen, Screen);
+    gyoto_Screen_eval(OBJ, argc);
   }
 
 

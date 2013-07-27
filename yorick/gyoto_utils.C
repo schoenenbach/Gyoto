@@ -31,6 +31,8 @@ using namespace std;
 
 static YGyotoSupplier_t *YGyotoGlobalSupplier = NULL;
 
+void ygyotoErrorHandler (const Gyoto::Error e) { y_error(e); }
+
 extern "C" {
 
   void
@@ -55,15 +57,71 @@ extern "C" {
   }
 
   void
+  Y_gyoto_verbose(int argc)
+  {
+    ypush_long(Gyoto::verbose());
+    if (argc && !yarg_nil(argc)) Gyoto::verbose(ygets_l(1));
+  }
+
+
+  void
+  Y_gyoto_loadPlugin(int argc)
+  {
+    // Step 1: determine whether nofail is set (to true)
+    int nofail=0;
+    static char const * knames[2] = { "nofail", 0 };
+    static long kglobs[2];
+    int kiargs[1];
+    yarg_kw_init(const_cast<char**>(knames), kglobs, kiargs);
+    int iarg=argc-1;
+    while (iarg>=0) {
+      iarg = yarg_kw(iarg, kglobs, kiargs);
+      iarg--;
+    }
+    if (kiargs[0]>=0) {// nofail= present
+      nofail=yarg_true(kiargs[0]);
+    }
+
+    // Step 2: load plug-ins
+    long ntot=0;
+    long dims[Y_DIMSIZE];
+    ystring_t * plugins = 0;
+    for (int iarg=argc-1; iarg>=0; iarg--) {
+      if (kiargs[0]<0 ||(iarg!=kiargs[0] && iarg!=kiargs[0]+1)) {
+	plugins = ygeta_q(iarg, &ntot, dims);
+	for (long i=0; i<ntot; ++i) Gyoto::loadPlugin(plugins[i], nofail);
+      }
+    }
+    ypush_nil();
+    //    Gyoto::Register::init();
+  }
+
+  void
   Y___gyoto_initRegister(int argc)
   {
+#if defined GYOTO_USE_XERCES
     Gyoto::Register::init();
+#endif
   }
 
   void
   Y_gyoto_listRegister(int argc)
   {
+#if defined GYOTO_USE_XERCES
     Gyoto::Register::list();
+#endif
+  }
+
+  void
+  Y_gyoto_haveXerces(int)
+  {
+    ypush_long(
+#if defined GYOTO_USE_XERCES
+	       1
+#else
+	       0
+#endif
+	       );
   }
 
   void
@@ -107,12 +165,20 @@ extern "C" {
       YGyotoGlobalSupplier -> ypush_Scenery = &ypush_Scenery;
       YGyotoGlobalSupplier -> yarg_Scenery  = &yarg_Scenery;
 
+      // Plug Spectrometer ABI
+      YGyotoGlobalSupplier -> yget_Spectrometer  = &yget_Spectrometer;
+      YGyotoGlobalSupplier -> ypush_Spectrometer = &ypush_Spectrometer;
+      YGyotoGlobalSupplier -> yarg_Spectrometer  = &yarg_Spectrometer;
+      YGyotoGlobalSupplier -> ygyoto_Spectrometer_register
+	                           = &ygyoto_Spectrometer_register;
+      YGyotoGlobalSupplier -> ygyoto_Spectrometer_generic_eval
+                                   = &ygyoto_Spectrometer_generic_eval;
     }
     ypush_long(long(YGyotoGlobalSupplier));
   }
 
   void
   Y___gyoto_setErrorHandler(int argc)
-  { Gyoto::setErrorHandler(&y_error); }
+  { Gyoto::Error::setHandler(&ygyotoErrorHandler); }
 
 }

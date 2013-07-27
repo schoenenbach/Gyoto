@@ -6,7 +6,7 @@
  */
 
 /*
-    Copyright 2011 Thibaut Paumard, Frederic Vincent
+    Copyright 2011-2013 Thibaut Paumard, Frederic Vincent
 
     This file is part of Gyoto.
 
@@ -28,6 +28,8 @@
 #ifndef __GyotoAstrobj_H_ 
 #define __GyotoAstrobj_H_ 
 
+#include "GyotoConfig.h"
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
@@ -35,6 +37,7 @@
 
 #include <GyotoDefs.h>
 #include <GyotoSmartPointer.h>
+#include <GyotoConverters.h>
 
 namespace Gyoto{
   class Photon;
@@ -59,8 +62,14 @@ namespace Gyoto{
     ///< A function to build instances of a specific Astrobj::Generic sub-class
  
     /**
-     * Instead of reimplementing the wheel, your subcobtractor can simply be
-     * Gyoto::Astrobj::Subcontractor<MyKind>
+     * Instead of reimplementing the wheel, your subcontractor can simply be
+     * Gyoto::Astrobj::Subcontractor<MyKind>.
+     *
+     * If MyKind accepts any XML parameters, it should re-implement
+     * Astrobj::Generic::setParameter() or, if low-level access to the
+     * FactoryMessenger is needed, Generic::setParameters().
+     *
+     * \tparam T Gyoto::Astrobj::Generic sub-class
      */
     template<typename T> SmartPointer<Astrobj::Generic> Subcontractor
       (FactoryMessenger* fmp) {
@@ -76,11 +85,15 @@ namespace Gyoto{
      * called only from the Factory.
      *
      * \param name e.g. "Star"
+     * \param errmode 1 to return NULL in case of failure instead of
+     * throwing an Error.
      * \return pointer to the corresponding subcontractor.
      */
-    Gyoto::Astrobj::Subcontractor_t* getSubcontractor(std::string name);
+    Gyoto::Astrobj::Subcontractor_t* getSubcontractor(std::string name,
+						      int errmode = 1);
     ///< Query the Astrobj register
 
+#if defined GYOTO_USE_XERCES
     /**
      * Use the Astrobj::initRegister() once in your program to
      * initiliaze it, the Astrobj::Register() function to fill it, and
@@ -108,6 +121,7 @@ namespace Gyoto{
      */
     void Register(std::string name, Gyoto::Astrobj::Subcontractor_t* scp);
     ///< Make an Astrobj kind known to the Factory
+#endif
   }
 }
 
@@ -160,9 +174,9 @@ namespace Gyoto{
  * . If your clas implements setParameter() and/or, if necessary,
  * setParameters(), registering it is normally done using the provided
  * template:
-\code
-Astrobj::Register("MyKind", &(Astrobj::Subcontractor<Astrobj::MyKind>));
-\endcode
+ * \code
+ * Astrobj::Register("MyKind", &(Astrobj::Subcontractor<Astrobj::MyKind>));
+ * \endcode
  */
 /**
  * \class Gyoto::Astrobj::Generic
@@ -179,7 +193,7 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
  protected:
 
   /**
-   * The Metric in this end of the Universe
+   * \brief The Metric in this end of the Universe
    */
   SmartPointer<Gyoto::Metric::Generic> gg_;
 
@@ -195,8 +209,9 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    * constructor. In this case, getRmax() must always return this
    * value, not recompute it.
    *
+   * rmax_ is in geometrical units.
    */                                         
-  double rmax_; ///< Maximum distance to the center of the coordinate system.
+  double rmax_; ///< Maximum distance to the center of the coordinate system [geometrical units]
 
   /**
    * rmax_set_==1 means that rmax_ was set using setRmax() or the
@@ -242,17 +257,20 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
   /**
    * This method must be implemented by the various Astrobj::Generic
    * subclasses in order to support cloning:
-\code
-SmartPointer<Astrobj> deep_copy = original->clone();
-\endcode
+   * \code
+   * SmartPointer<Astrobj> deep_copy = original->clone();
+   * \endcode
+   *
+   * Cloning is necessary for multi-threading, recommended for
+   * interaction with the Yorick plug-in etc.
    *
    * Implementing it is very straightforward, as long as the copy
    * constructor Generic(const Generic& ) has been implemented:
-\code
-MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
-\endcode
+   * \code
+   * MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
+   * \endcode
    */
-  virtual Generic* clone() const = 0 ; ///< "Virtual" copy constructor
+  virtual Generic* clone() const = 0 ; ///< Cloner
   
   virtual ~Generic() ; ///< Destructor: does nothing.
 
@@ -260,12 +278,12 @@ MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
   // ---------
  public:
   /**
-   * Get the Metric
+   * \brief Get the Metric Generic::gg_
    */
   virtual SmartPointer<Metric::Generic> getMetric() const;
 
   /**
-   * Set the Metric
+   * \brief Set the Metric Generic::gg_
    */
   virtual void setMetric(SmartPointer<Metric::Generic>) ;
 
@@ -277,8 +295,18 @@ MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
    *
    *  It can also be set using setRmax(). If setRmax has been used
    *  to set rmax_, getRmax() must not recompute it.
+   *
+   *  \return rmax_ in geometrical units
    */
   virtual double getRmax(); ///< Get maximal distance from center of coordinate system
+
+  /**
+   *  Call getRmax() and convert result to unit.
+   *
+   *  \param unit string
+   *  \return double rmax converted to unit
+   */
+  virtual double getRmax(std::string unit); ///< Get rmax_ is specified unit
 
   const std::string getKind() const; ///< Get the kind of the Astrobj (e.g. "Star")
 
@@ -287,8 +315,18 @@ MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
    *  Photon may hit the object.
    *  
    *  Side effect: set rmax_set_ to 1.
+   *  \param val new rmax_ in geometrical units.
    */
   virtual void setRmax(double val); ///< Set maximal distance from center of coordinate system
+
+  /**
+   *  Call Generic::setRmax(double val) after converting val from unit
+   *  to geometrical units.
+   *
+   *  \param val rmax_ expressed in unit "unit";
+   *  \param unit string...
+   */
+  virtual void setRmax(double val, std::string unit); ///< Set maximal distance from center of coordinate system
 
   /**
    * getRmax() will then be free to recompute rmax_. Astrobjs
@@ -317,20 +355,26 @@ MyAstrobj* MyAstrobj::clone() const { return new MyAstrobj(*this); }
    * defaults GYOTO_QUANTITY_INTENSITY.
    */
   virtual Quantity_t getDefaultQuantities();
+  ///< Which quantities to compute if know was requested
 
   //XML I/O
  public:
   /**
-   * Assume MyKind is a sublcass of Astrobj::Generic which has towo
+   * \brief Set parameter by name
+   *
+   * Assume MyKind is a subclass of Astrobj::Generic which has two
    * members (a string StringMember and a double DoubleMember):
-\code
-int MyKind::setParameter(std::string name, std::string content) {
- if      (name=="StringMember") setStringMember(content);
- else if (name=="DoubleMember") setDoubleMemeber(atof(content.c_str()));
- else return Generic::setParameter(name, content);
- return 0;
-}
-\endcode
+   * \code
+   * int MyKind::setParameter(std::string name,
+   *                          std::string content,
+   *                          std::string unit) {
+   *   if      (name=="StringMember") setStringMember(content);
+   *   else if (name=="DoubleMember") setDoubleMember(atof(content.c_str()),
+   *                                                  unit);
+   *   else return Generic::setParameter(name, content, unit);
+   *   return 0;
+   * }
+   * \endcode
    * If MyKind is not a direct subclass of Generic but is a subclass
    * of e.g. Standard, UniformSphere of ThinDisk, it should call the
    * corresponding setParameter() implementation instead of
@@ -338,41 +382,45 @@ int MyKind::setParameter(std::string name, std::string content) {
    *
    * \param name XML name of the parameter
    * \param content string representation of the value
+   * \param unit string representation of the unit
    * \return 0 if this parameter is known, 1 if it is not.
    */
-  virtual int setParameter(std::string name, std::string content) ;
-  ///< Called from setParameters()
+  virtual int setParameter(std::string name,
+			   std::string content,
+			   std::string unit) ;
 
 #ifdef GYOTO_USE_XERCES
   /**
+   * \brief Fill XML section
+   *
    * Astrobj implementations should impement fillElement to save their
    * parameters to XML and call the generic implementation to save
    * generic parts such as Flag_radtrans: Generic::fillElement(fmp).
    */
-
   virtual void fillElement(FactoryMessenger *fmp) const ;
-                                             ///< called from Factory
 
   /**
+   * \brief Main loop in Subcontractor_t function
+   *
    * The Subcontractor_t function for each Astrobj kind should look
-   * somewhat like this:
-\code
-SmartPointer<Astrobj::Generic>
-Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
-  SmartPointer<MyKind> ao = new MyKind();
-  ao -> setParameters(fmp);
-  return ao;
-}
-\endcode
+   * somewhat like this (templated as
+   * Gyoto::Astrobj::Subcontractor<MyKind>):
+   * \code
+   * SmartPointer<Astrobj::Generic>
+   * Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
+   *   SmartPointer<MyKind> ao = new MyKind();
+   *   ao -> setParameters(fmp);
+   *   return ao;
+   * }
+   * \endcode
    *
    * Each object kind should implement setParameter(string name,
-   * string content) to interpret the individual XML
+   * string content, string unit) to interpret the individual XML
    * elements. setParameters() can be overloaded in case the specific
    * Astrobj class needs low level access to the FactoryMessenger. See
    * UniformSphere::setParameters().
    */
   virtual void setParameters(FactoryMessenger *fmp);
-  ///< Main loop in Subcontractor_t function
 
 
 #endif
@@ -413,14 +461,16 @@ Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
    */
   virtual int Impact(Gyoto::Photon* ph, size_t index,
 		     Astrobj::Properties *data=NULL) = 0 ;
-  ///< does a photon at these coordinates impact the object?
+  ///< Does a photon at these coordinates impact the object?
   
   /**
+   * \brief Fills Astrobj::Properties
+   *
    * processHitQuantities fills the requested data in Impact. To use
    * it, you need to call it in the Impact() method for your object in
    * case of hit. It will fill Redshift, Intensity, Spectrum,
    * BinSpectrum and update the Photon's transmission by calling
-   * Photon::transmi(), only if data==NULL.
+   * Photon::transmit(), only if data==NULL.
    *
    * You can overload it for your Astrobj. The generic implementation
    * calls emission(), integrateEmission() and transmission() below.
@@ -430,60 +480,108 @@ Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
                                    Astrobj::Properties* data) const;
 
   /**
+   * \brief Specific intensity I<SUB>&nu;</SUB>
+   *
    * Called by the default implementation for processHitQuantities().
    *
-   * emission() computes the intensity I_nu emitted by the small
-   * volume of length dsem. It should take self-absorption along dsem
-   * into account.
+   * emission() computes the intensity I<SUB>&nu;</SUB> emitted by the
+   * small volume of length ds<SUB>em</SUB>, in the emitter's
+   * frame. It should take self-absorption along ds<SUB>em</SUB> into
+   * account.
    *
    * Reminder :
-   *  - intensity = I_nu [erg cm^-2 s^-1 ster^-1 Hz^-1];
-   *  - invariant intensity = I_nu/nu^3, which has the same value in any frame;
-   *  - emission coefficient = j_nu [erg cm^-3 s^-1 ster^-1 Hz^-1] ,
-   *            defined by dI_nu = j_nu*ds, where ds is the distance
-   *            travelled by the photon inside the object;
-   *  - invariant emission coef = j_nu/nu^2, which has the same value
-   *            in any frame.
+   *  - intensity = I<SUB>&nu;</SUB> [J m^-2 s^-1 ster^-1 Hz^-1];
+   *
+   *  - invariant intensity = I<SUB>&nu;</SUB>/&nu;<SUP>3</SUP>, which
+   *    has the same value in any frame;
+   *
+   *  - emission coefficient = j<SUB>&nu;</SUB> [J m^-3 s^-1 ster^-1
+   *    Hz^-1] , defined by dI<SUB>&nu;</SUB> = j<SUB>&nu;</SUB>*ds,
+   *    where ds is the distance travelled by the photon inside the
+   *    object;
+   *  - invariant emission coef = j<SUB>&nu;</SUB>/&nu;<SUP>2</SUP>,
+   *    which has the same value in any frame.
    *
    * The equation used for radiative transfer (without absorption) is:
-   *                      d(I_nu/nu^3)/dlambda = (j_nu/nu^2)  [*]
-   *  where lambda is the integration parameter along the null geodesic.
    *
-   *      NB: Let us consider a particular observer, 
-   *          with nu being the frequency measured by this observer,
-   *          and ds being the proper distance (as measured by the observer) 
-   *          that the photon travels as it moves
-   *          from lambda to lambda+dlambda along its geodesic.
-   *          Then it can be shown that :
-   *                          dlambda = ds/nu
-   *          This shows that Eq. [*] is homogeneous.
+   *    d(I<SUB>&nu;</SUB>/&nu;<SUP>3</SUP>)/d&lambda; = (j<SUB>&nu;</SUB>/&nu;<SUP>2</SUP>)  [*]
    *
-   * The default implementation returns 1. if optically thick and dsem
+   * where &lambda; is the integration parameter along the null geodesic.
+   *
+   * NB: Let us consider a particular observer, with &nu; being the
+   * frequency measured by this observer, and ds being the proper
+   * distance (as measured by the observer) that the photon travels
+   * as it moves from &lambda; to &lambda;+d&lambda; along its
+   * geodesic.  Then it can be shown that:
+   *
+   *    d&lambda; = ds/&nu;
+   *
+   * This shows that Eq. [*] is homogeneous.
+   *
+   * The default implementation returns 1. if optically thick and ds<SUB>em</SUB>
    * if optically thin. It allows for a quick implementation of your
    * object for visualization purposes.
    *
-   * \param nu_em Frequency at emission
+   * \param nu_em Frequency at emission [Hz]
    * \param dsem length over which to integrate inside the object
+   *        [geometrical units]
    * \param coord_ph Photon coordinate
    * \param coord_obj Emitter coordinate at current photon position
    */
   virtual double emission(double nu_em, double dsem, double coord_ph[8],
 			  double coord_obj[8]=NULL)
-    const ; ///< INVARIANT emission j_{\nu}/\nu^{2}
+    const ;
 
   /**
-   * Compute the integral of emission() from nu1 to nu2. The default
-   * implementation is a numerical integrator which works well enough
-   * and is reasonably fast if emission() is a smooth function
-   * (i.e. no emission or absorption lines). If possible, it is wise
-   * to implement an analytical solution. It is used by
-   * processHitQuantities to compute the "BinSpectrum" quantity which
-   * is the most physical: it is the only quantity that can be
-   * actually measured directly by a real-life instrument.
+   * \brief Specific intensity I<SUB>&nu;</SUB> for several values of &nu;<SUB>em</SUB>
+   *
+   * Called by the default implementation for processHitQuantities().
+   *
+   * emission() computes the intensity I<SUB>&nu;</SUB> emitted by the small
+   * volume of length dsem. It should take self-absorption along dsem
+   * into account.
+   *
+   * Same as emission(double nu_em, double dsem, double coord_ph[8],
+   *		  double coord_obj[8]=NULL) const
+   * looping on several values of nu_em.
+   *
+   * \param Inu[nbnu] Output (must be set to a previously allocated
+   *        array of doubles)
+   * \param nu_em[nbnu] Frequencies at emission
+   * \param nbnu Size of Inu[] and nu_em[] 
+   * \param dsem Length over which to integrate inside the object
+   * \param coord_ph Photon coordinate
+   * \param coord_obj Emitter coordinate at current photon position
+   * \return I<SUB>&nu;</SUB> or dI<SUB>&nu;</SUB> [W m-2 sr-2]
+   */
+  virtual void emission(double Inu[], double nu_em[], size_t nbnu,
+			double dsem, double coord_ph[8],
+			double coord_obj[8]=NULL) const ; 
+
+  /**
+   * Compute the integral of emission() from &nu;<SUB>1</SUB> to
+   * &nu;<SUB>2</SUB>. The default implementation is a numerical
+   * integrator which works well enough and is reasonably fast if
+   * emission() is a smooth function (i.e. no emission or absorption
+   * lines). If possible, it is wise to implement an analytical
+   * solution. It is used by processHitQuantities to compute the
+   * "BinSpectrum" quantity which is the most physical: it is the only
+   * quantity that can be actually measured directly by a real-life
+   * instrument.
    */
   virtual double integrateEmission(double nu1, double nu2, double dsem,
                                   double c_ph[8], double c_obj[8]=NULL) const;
-    ///< \sum_nu1^nu2 I_nu dnu (or j_nu)
+    ///< &int;<SUB>&nu;<SUB>1</SUB></SUB><SUP>&nu;<SUB>2</SUB></SUP> I<SUB>&nu;</SUB> d&nu; (or j<SUB>&nu;</SUB>)
+
+  /**
+   * Like double integrateEmission(double nu1, double nu2, double
+   * dsem, double c_ph[8], double c_obj[8]) const for each
+   * Spectrometer channel.
+   */
+  virtual void integrateEmission(double * I, double const * boundaries,
+				 size_t const * chaninds, size_t nbnu,
+				 double dsem, double *cph, double *co) const;
+    ///< &int;<SUB>&nu;<SUB>1</SUB></SUB><SUP>&nu;<SUB>2</SUB></SUP> I<SUB>&nu;</SUB> d&nu; (or j<SUB>&nu;</SUB>)
 
   /**
    * transmission() computes the transmission of this fluid element or
@@ -495,16 +593,7 @@ Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
    * \param dsem geometrical length in geometrical units
    */
   virtual double transmission(double nuem, double dsem, double coord[8]) const ;
-     ///< Transmission: exp( \alpha_{\nu} * dsem )
-
-  /**
-   * checkPhiTheta() Modifies coord if the corrdinates are spherical-like
-   * so that coord[2]=theta is in [0,pi] and coord[3]=phi is in [0,2pi].
-   * Important to use in all astrobj in spherical coordinates
-   * to prevent "z-axis problems".
-   */
-  void checkPhiTheta(double coord[8]) const;
-
+     ///< Transmission: exp( &alpha;<SUB>&nu;</SUB> * ds<SUB>em</SUB> )
 
 };
 
@@ -512,28 +601,165 @@ Gyoto::Astrobj::MyKind::Subcontractor(FactoryMessenger* fmp) {
  * \class Gyoto::Astrobj::Properties
  * \brief Observable properties of an Astronomical object
  *
- *  The sort of properties one wants to measure on a ray-traced Gyoto::Photon which hits a Gyoto::Astrobj. Not all Astrobj are able to fill all of these properties.
+ *  The sort of properties one wants to measure on a ray-traced
+ *  Gyoto::Photon which hits a Gyoto::Astrobj. Not all Astrobj are
+ *  able to fill all of these properties.
  *
+ *  An instance of Properties essentially contains a bunch of pointers
+ *  to memory areas where the observable quantities (see Quantity_t)
+ *  should be stored.
+ *
+ *  Astrobj::Generic::processHitQuantities() fills the various arrays
+ *  upon request.  A quantity is ignored if the corresponding pointer
+ *  is NULL.
+ *
+ *  Scenery::operator()() increments the Properties between each
+ *  Photon using Properties::operator++().
+ *
+ *  The main application (gyoto, the yorick plug-in, or your user
+ *  application) is responsible for allocating the various arrays,
+ *  filling the various members of Properties, and doing whatever
+ *  meaninful with the arrays after they have been filled with values
+ *  by the ray-tracing code (e.g. saving them to disk or displaying
+ *  them).
+ *
+ *  Also see Gyoto::Scenery and Gyoto::Quantity_t.
  */
 class Gyoto::Astrobj::Properties : protected Gyoto::SmartPointee {
   friend class Gyoto::SmartPointer<Gyoto::Astrobj::Properties>;
  public:
-  double *intensity; ///< Apparent intensity (takes beaming into account); 
-  double *time; ///< Date of impact (= date of emission of the photon);
-  double *distance; ///< Behaves like the square of the closest distance between Photon and Astrobj (but not exactly that). Initialize it to DBL_MAX from float.h.;
-  double * first_dmin; ///< first local minimum in distance from object
-  int first_dmin_found; ///< first_dmin will be set to the first local minimum and first_dmin_found will be set to 1 if a local minimum in distance is found. Initialize it to 0.
-  double *redshift; ///< redshift factor nuobs/nuem (necessary for emission lines computation)
-  double *spectrum; ///< I_nu (nu) (observed specific intensity)
-  double *binspectrum; ///< I_nu1^nu2, the integral of I_nu over each spectral channel (i.e. what a spectrometer would measure)
-  int offset; ///< spectra elements are separated by offset doubles in memory. In other words, the ith spectral element is a spectrum[i*offset].
-  double * impactcoords; ///< Coordinates of the object and photon at impact
-  double *user1, *user2, *user3, *user4, *user5; ///< Quantities specific to Astrobj
+  double *intensity; ///< GYOTO_QUANTITY_INTENSITY   : Intensity
+  double *time; ///< GYOTO_QUANTITY_EMISSIONTIME: EmissionTime
+
+  /**
+   * Behaves like the square of the closest distance between Photon
+   * and Astrobj (but not exactly that). Initialize it to DBL_MAX from
+   * float.h.;
+   */
+  double *distance; ///< GYOTO_QUANTITY_MIN_DISTANCE: MinDistance
+
+  /**
+   * First local minimum in distance from object
+   */
+  double * first_dmin; ///< GYOTO_QUANTITY_FIRST_DMIN  : FirstDmin
+
+  /**
+   * Properties::first_dmin will be set to the first local minimum and
+   * Properties::first_dmin_found will be set to 1 if a local minimum
+   * in distance is found. Initialize it to 0.
+   */
+  int first_dmin_found; ///< Whether Properties::first_dmin was found
+
+  /**
+   * Redshift factor &nu;<SUB>obs</SUB>/&nu;<SUB>em</SUB> (necessary
+   * for emission lines computation)
+   */
+  double *redshift; ///< GYOTO_QUANTITY_REDSHIFT    : RedShift
+
+  /**
+   * I<SUB>&nu;</SUB> (&nu;) (observed specific intensity)
+   */
+  double *spectrum; ///< GYOTO_QUANTITY_SPECTRUM    : Spectrum
+
+  /**
+   *  I<SUB>&nu;<SUB>1</SUB></SUB><SUP>&nu;<SUB>2</SUB></SUP>, the
+   *  integral of I<SUB>&nu;</SUB> over each spectral channel
+   *  (i.e. what a spectrometer would measure)
+   */
+  double *binspectrum; ///< GYOTO_QUANTITY_BINSPECTRUM : BinSpectrum
+
+  /**
+   *  Spectra elements are separated by offset doubles in memory. In
+   *  other words, the ith spectral element is spectrum[i*offset].
+   */
+  int offset; ///< How to jump from one spectral element to the next
+
+  /**
+   * Coordinates of the object and photon at impact
+   */
+  double * impactcoords; ///< GYOTO_QUANTITY_IMPACTCOORDS: ImpactCoords
+
+  /**
+   * \brief GYOTO_QUANTITY_USER1       : User1
+   * Astrobj-specific quantity
+   */
+  double *user1;
+
+  /**
+   * \brief GYOTO_QUANTITY_USER2       : User2
+   * Astrobj-specific quantity
+   */
+  double *user2;
+
+  /**
+   * \brief GYOTO_QUANTITY_USER3       : User3
+   * Astrobj-specific quantity
+   */
+  double *user3;
+
+  /**
+   * \brief GYOTO_QUANTITY_USER4       : User4
+   * Astrobj-specific quantity
+   */
+  double *user4;
+
+  /**
+   * \brief GYOTO_QUANTITY_USER5       : User5
+   * Astrobj-specific quantity
+   */
+  double *user5;
+# ifdef HAVE_UDUNITS
+  /**
+   * \brief Converter between SI (J.m <SUP> -2</SUP>.s<SUP>-1</SUP>.sr<SUP>-1</SUP>.Hz<SUP>-1</SUP>) and requested Intensity unit
+   */
+  Gyoto::SmartPointer<Gyoto::Units::Converter> intensity_converter_ ;
+  /**
+   * \brief Converter between SI (J.m <SUP> -2</SUP>.s<SUP>-1</SUP>.sr<SUP>-1</SUP>.Hz<SUP>-1</SUP>) and requested Spectrum unit
+   */
+  Gyoto::SmartPointer<Gyoto::Units::Converter> spectrum_converter_ ;
+  /**
+   * \brief Converter between SI (J.m <SUP> -2</SUP>.s<SUP>-1</SUP>.sr<SUP>-1</SUP>) and requested BinSpectrum unit
+   */
+  Gyoto::SmartPointer<Gyoto::Units::Converter> binspectrum_converter_ ;
+# endif
  public:
   Properties(); ///< Default constructor (everything is set to NULL);
-  Properties (double*, double*); ///<< set intensity and time pointers.
+  Properties (double*, double*); ///<< Set intensity and time pointers.
+
+  /**
+   * \brief Initialize observable quantities
+   *
+   * The pointed-to values are initialized as follows (if the
+   * corresponding pointer is not NULL):
+   *
+   * - intensity, firt_dmin_found, redshift, userN: 0
+   * - time, distance, first_dmin: DBL_MAX
+   * - for spectrum and binspectrum, nbnuobs values separated by offset in memory are initialized to 0
+   * - for impactcoords, 16 contiguous values are initialized to DBL_MAX
+   */
   void init(size_t nbnuobs=0);
+
+  /**
+   * \brief Increment pointers
+   *
+   * All valid pointers are incremented by 1 (sizeof(double)), excepted
+   * impactcoords which is incremented by 16.
+   */
   Properties operator++();
+# ifdef HAVE_UDUNITS
+  void setIntensityConverter(Gyoto::SmartPointer<Gyoto::Units::Converter>);
+  ///< Set Properties::intentity_converter_
+  void setIntensityConverter(std::string);
+  ///< Set Properties::intentity_converter_
+  void setSpectrumConverter(Gyoto::SmartPointer<Gyoto::Units::Converter>);
+  ///< Set Properties::spectrum_converter_
+  void setSpectrumConverter(std::string);
+  ///< Set Properties::spectrum_converter_
+  void setBinSpectrumConverter(Gyoto::SmartPointer<Gyoto::Units::Converter>);
+  ///< Set Properties::binspectrum_converter_
+  void setBinSpectrumConverter(std::string);
+  ///< Set Properties::binspectrum_converter_
+# endif
 };
 
 #endif

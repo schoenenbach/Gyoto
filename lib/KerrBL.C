@@ -78,7 +78,7 @@ KerrBL::KerrBL() :
 }
 
 KerrBL::KerrBL(double a, double m) :
-  Generic(m, GYOTO_COORDKIND_SPHERICAL), spin_(a) 
+  Generic(m, GYOTO_COORDKIND_SPHERICAL), spin_(a)
 {
   //DEBUG!!!
   //spin_=0.;
@@ -89,13 +89,16 @@ KerrBL::KerrBL(double a, double m) :
 }
 
 // default copy constructor should be fine 
-//KerrBL::KerrBL(const KerrBL& gg) : Metric(gg), spin_(gg.spin_) {setKind("KerrBL");}
+KerrBL::KerrBL(const KerrBL& gg) : Metric::Generic(gg), spin_(gg.spin_)
+{setKind("KerrBL");}
 KerrBL * KerrBL::clone () const { return new KerrBL(*this); }
 
 
 
 KerrBL::~KerrBL() {
-  if (debug()) cerr << "In KerrBL destructor" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 // Output
@@ -112,7 +115,10 @@ std::ostream& KerrBL::print( std::ostream& o) const {
 */
 
 // Mutators
-void KerrBL::setSpin(const double spin) { spin_=spin; }
+void KerrBL::setSpin(const double spin) {
+  spin_=spin;
+  tellListeners();
+}
 
 // Accessors
 double KerrBL::getSpin() const { return spin_ ; }
@@ -131,26 +137,52 @@ double KerrBL::getRmb() const {
   return 2.-spin_+2.*sqrt(1.-spin_);
 }
 
-//Computation of metric coefficients
+//Computation of metric coefficients in covariant form
 double KerrBL::gmunu(const double * pos, int mu, int nu) const {
   double r = pos[1];
-  double theta = pos[2];
+  double sth2, cth2;
+  sincos(pos[2], &sth2, &cth2);
+  sth2*=sth2; cth2*=cth2;
   double r2=r*r;
   double a2=spin_*spin_;
-  double rho2=r2+a2*pow(cos(theta),2);
-//   if (debug()) {
-//     cerr << "DEBUG: KerrBL::gmunu: SPIN="<< spin_ << ", R=" << r << ", THETA=" << theta<< endl;
-//   }
+  double sigma=r2+a2*cth2;
+  double delta=r2-2.*r+a2;
 
-  if ((mu==0) && (nu==0)) return -(1.-2.*r/rho2); // 2*r*mass
-  if ((mu==1) && (nu==1)) return rho2/(r2-2.*r+a2);
-  if ((mu==2) && (nu==2)) return rho2;
-
-  double sth2= sin(theta); sth2*=sth2; // = sin2(theta)
+  if ((mu==0) && (nu==0)) return -(1.-2.*r/sigma);
+  if ((mu==1) && (nu==1)) return sigma/delta;
+  if ((mu==2) && (nu==2)) return sigma;
   if ((mu==3) && (nu==3))
-    return (r2+a2+2.*r*a2*sth2/rho2)*sth2; // 2*r*mass
-  if (((mu==0) && (nu==3)) || ((mu==3) && (nu==0)))
-    return -2*spin_*r*sth2/rho2; //2*r*mass
+    return (r2+a2+2.*r*a2*sth2/sigma)*sth2;
+  if (((mu==0) && (nu==3)) || ((mu==3) && (nu==0))){
+    return -2*spin_*r*sth2/sigma;
+  }
+
+  return 0.;
+} 
+
+//Computation of metric coefficients in contravariant form
+double KerrBL::gmunu_up(const double * pos, int mu, int nu) const {
+  double r = pos[1];
+  double sth2, cth2;
+  sincos(pos[2], &sth2, &cth2);
+  sth2*=sth2; cth2*=cth2;
+  double r2=r*r;
+  double a2=spin_*spin_;
+  double sigma=r2+a2*cth2;
+  double delta=r2-2.*r+a2;
+  double xi=(r2+a2)*(r2+a2)-a2*delta*sth2;
+
+  if ((mu==0) && (nu==0)) {
+    return -xi/(delta*sigma);     
+  }
+  if ((mu==1) && (nu==1)) return delta/sigma;
+  if ((mu==2) && (nu==2)) return 1./sigma;
+  if ((mu==3) && (nu==3)) {
+    return (delta-a2*sth2)/(sigma*delta*sth2);
+  }
+  if (((mu==0) && (nu==3)) || ((mu==3) && (nu==0))){
+    return -2*spin_*r/(sigma*delta);
+  }
 
   return 0.;
 } 
@@ -164,21 +196,21 @@ double KerrBL::christoffel(const double[8],
 // Optimized version
 double KerrBL::ScalarProd(const double* pos,
 			const double* u1, const double* u2) const {
-  if (debug()) {
-    cerr << "DEBUG: KerrBL::ScalarProd(pos=[" << pos[0];
-    for (int i=1; i<4; ++i) cerr << ", " << pos[i];
-    cerr << "], u1=[" << u1[0];
-    for (int i=1; i<4; ++i) cerr << ", " << u1[i];
-    cerr << "], u2=[" << u2[0];
-    for (int i=1; i<4; ++i) cerr << ", " << u2[i];
-    cerr << "])=" <<  (gmunu(pos,0,0)*u1[0]*u2[0]
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_IF_DEBUG
+    GYOTO_DEBUG_ARRAY(pos, 4);
+    GYOTO_DEBUG_ARRAY(u1, 4);
+    GYOTO_DEBUG_ARRAY(u2, 4);
+    GYOTO_DEBUG   << "ScalarProd(pos, u1, u2)="
+		  <<  (gmunu(pos,0,0)*u1[0]*u2[0]
 		      +gmunu(pos,1,1)*u1[1]*u2[1]
 		      +gmunu(pos,2,2)*u1[2]*u2[2]
 		      +gmunu(pos,3,3)*u1[3]*u2[3]
 		      +gmunu(pos,0,3)*u1[0]*u2[3]
 		      +gmunu(pos,3,0)*u1[3]*u2[0])
 	 << endl;
-  }
+  GYOTO_ENDIF_DEBUG
+# endif
     
   return gmunu(pos,0,0)*u1[0]*u2[0]
     +gmunu(pos,1,1)*u1[1]*u2[1]
@@ -196,11 +228,12 @@ and y_dot is [rdot,thetadot,phidot,tdot,prdot,pthetadot]
 */
 int KerrBL::diff(const double* coordGen, const double* cst, double* res) const{
   double a=spin_;
+  double a2=a*a;
 
   //int width=25;//15;
   //int prec=15;//8;
 
-  double rsink=1.+sqrt(1.-a*a)+drhor;
+  double rsink=1.+sqrt(1.-a2)+drhor;
 
   double r = coordGen[1] ; 
 
@@ -211,91 +244,122 @@ int KerrBL::diff(const double* coordGen, const double* cst, double* res) const{
   }
 
   if (r < rsink) {
-    if (debug()) cerr << "Too close to horizon in KerrBL::diff at r= " << r << endl;
+#   if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG << "Too close to horizon in KerrBL::diff at r= " << r << endl;
+#   endif
     return 1;
   }
 
   double r2 = r*r ; 
   double r3 = r2*r ;  
+
+  // compute and store efficiently sin, cos, cotan
   double theta=coordGen[2];
-  double costheta2=pow(cos(theta),2);
-  double tantheta=tan(theta);
+  double costheta, sintheta;
+  sincos(theta, &sintheta, &costheta);
+  double costheta2=costheta*costheta;
+  if (sintheta==0.) throwError("sintheta==0");
+  double cotantheta=costheta/sintheta;
+  double cotantheta2=cotantheta*cotantheta;
+  double cotantheta3=cotantheta2*cotantheta;
+  double sin2theta=2.*sintheta*costheta;
+  double cos2theta=2.*costheta2-1.;
+
   double pr=coordGen[5];
   double ptheta=coordGen[6];
 
-  double a2=a*a;
   double a3=a2*a;
 
   double Sigma=r2+a2*costheta2;
+  if (Sigma==0) throwError("In KerrBL::diff(): Sigma==0");
+  double Sigmam1=1./Sigma;
+  double Sigmam2=Sigmam1*Sigmam1;
+
   double Delta=r2-2*r+a2;
 
   double E=cst[1];
   double E2=E*E;
   double L=cst[2];
   double L2=L*L;
+
   double tmp1=(2.*Delta*Sigma);
+  if (tmp1==0)  throwError("In KerrBL::diff(): 2.*Delta*Sigma==0");
+  double tmp1m1=1./tmp1;
 
   if (Delta==0) throwError("In KerrBL::diff(): Delta==0");
-  if (Sigma==0) throwError("In KerrBL::diff(): Sigma==0");
-  if (tmp1==0)  throwError("In KerrBL::diff(): 2.*Delta*Sigma==0");
-  if (tantheta==0) throwError("In KerrBL::diff(): tantheta==0");
-  double cotantheta=1./tantheta; //caution, may become high if theta close to 0
 
   //NB: equations of motion are independent of Carter constant in this
   //form. However, the dependency of the dynamic on this constant
   //appears when transforming from principal momenta to coordinate
   //derivatives (e.g. p_theta -> thetadot)
 
-  res[0] = 1./tmp1*(2.*(r*(-2.*a*L+E*r3+a2*E*(2.+r))+a2*E*(a2+r*(-2.+r))*costheta2));// tdot
 
-  res[1] = Delta/Sigma*pr; //rdot
-
-  res[2] = 1./Sigma*ptheta; //thetadot
-
-  res[3] = -1./tmp1*(-2.*(r*(2.*a*E+L*(-2.+r))+L*(a2+r*(-2.+r))*cotantheta*cotantheta)); //phidot
+  /*
+    ---> Standard Kerr equations of geodesics
+  */
+  res[0] = tmp1m1*(2.*(r*(-2.*a*L+E*r3+a2*E*(2.+r))+a2*E*(a2+r*(-2.+r))
+		       *costheta2));// tdot
   
-  res[4] = 0.;// ptdot : pt = cst = -E
-
-  res[5] = -0.5*(2.*(r*(r-a2)-a2*(1.-r)*costheta2)
-		 /pow(r2+a2*costheta2,2))*pr*pr
-    -0.5*(-2.*r/pow(r2+a2*costheta2,2))*ptheta*ptheta
-    +(1./pow((a2+r*(-2.+r))*(r2+a2*costheta2),2)
+  res[1] = Delta*Sigmam1*pr; //rdot
+  
+  res[2] = Sigmam1*ptheta; //thetadot
+  
+  res[3] = -tmp1m1*(-2.*(r*(2.*a*E+L*(-2.+r))+L*(a2+r*(-2.+r))
+			 *cotantheta2)); //phidot
+  
+  res[4] = 0.;// ptdot: pt = cst = -E
+  
+  double tmp2=r2+a2*costheta2;
+  if (tmp2==0) throwError("r2+a2*costheta2==0");
+  double tmp2m2=1./(tmp2*tmp2);
+  
+  double tmp3=a2+r*(-2.+r);
+  double tmp3_2=tmp3*tmp3;
+  
+  res[5] =
+    -0.5*(2.*(r*(r-a2)-a2*(1.-r)*costheta2)*tmp2m2)*pr*pr
+    -0.5*(-2.*r*tmp2m2)*ptheta*ptheta
+    +(tmp2m2/tmp3_2
       *(a2*(a2*a2*E2-2.*a3*E*L+2.*a*E*L*r2+E2*r3*(-4.+r)
 	    +a2*(L2*(1.-r)+2*E2*r2))*costheta2
 	+r*(-r*(a2*a2*E2-2.*a3*E*L+2.*a*E*L*(4.-3.*r)*r
-		+a2*(L2+2.*E2*r*(-2.+r))+r*(E2*r3-L2*pow((-2.+r),2)))
-	    +L2*pow(a2+r*(-2.+r),2)*cotantheta*cotantheta)));// prdot
-
-
+		+a2*(L2+2.*E2*r*(-2.+r))+r*(E2*r3-L2*(-2.+r)*(-2.+r)))
+	      +L2*tmp3_2*cotantheta2)));// prdot
+  
   res[6]=
-    -0.5*((a2*Delta*sin(2*theta))/(Sigma*Sigma))*pr*pr
-    -0.5*(a2*sin(2*theta)/(Sigma*Sigma))*ptheta*ptheta
+    -0.5*(a2*Delta*sin2theta*Sigmam2)*pr*pr
+    -0.5*(a2*sin2theta*Sigmam2)*ptheta*ptheta
     +(
-      1./( Delta*Sigma*Sigma )
-      *(
-	L2*r2*Delta*cotantheta
-	+0.5*L2*Delta*(a2+2.*r2+a2*cos(2.*theta))*cotantheta*cotantheta*cotantheta
-	+a2*r*(2.*a2*E2-4.*a*E*L+L2*(2.-r)+2.*E2*r2)*cos(theta)*sin(theta)
-	)
+	Sigmam2
+	*(
+	  L2*r2*cotantheta
+	  +0.5*L2*(a2+2.*r2+a2*cos2theta)*cotantheta3
+	  +a2*r*(2.*a2*E2-4.*a*E*L+L2*(2.-r)+2.*E2*r2)*costheta*sintheta/Delta
+	  )
       ); // pthetadot
-
-  res[7] = 0.;//pphi = cst = L
+  
+  res[7] = 0.;//pphidot: pphi = cst = L
 
   return 0;
 }
 
 void KerrBL::circularVelocity(double const coor[4], double vel[4],
 			      double dir) const {
+# if GYOTO_DEBUG_ENABLED
   GYOTO_DEBUG<<"coor=["<<coor[0]<<", "<<coor[1]<<", "<<coor[2]<<", "<<coor[3]
 	     <<"], dir="<<dir<<endl;
+# endif
   double sinth = sin(coor[2]);
   double coord[4] = {coor[0], coor[1]*sinth, M_PI*0.5, coor[3]};
 
   vel[1] = vel[2] = 0.;
   vel[3] = 1./((dir*pow(coord[1], 1.5) + spin_)*sinth);
+
   vel[0] = SysPrimeToTdot(coor, vel+1);
   vel[3] *= vel[0];
-  GYOTO_DEBUG<<"vel=["<<vel[0]<<", "<<vel[1]<<", "<<vel[2]<<", "<<vel[3]<<"]\n";
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_ARRAY(vel,4);
+# endif
 }
 
 //Runge Kutta to order 4
@@ -316,9 +380,9 @@ int KerrBL::myrk4(Worldline * line, const double coordin[8],
   /*Switch BL -> principal momenta*/
   double coor[8], res_mom[8] ;
   double const * const cst = line -> getCst();
-  if (debug())
-    cerr << "DEBUG: KerrBL::myrk4(): cst=[" << cst[0]
-	 << ", " << cst[1] << ", " << cst[2] << "]\n";
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_ARRAY(cst,3);
+#endif
   MakeMomentum(coordin,cst,coor);
 
   double k1[8] ; 
@@ -391,6 +455,8 @@ int KerrBL::myrk4(Worldline * line, const double coordin[8],
   
   /*Switch principal momenta -> BL  */
   MakeCoord(res_mom,cst,res);
+
+  //  line -> checkPhiTheta(res);
  
   return 0;
 }
@@ -522,13 +588,12 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
 			   double , double , double coordout1[8],
 			   double h0, double& h1) const
 {
-  
   /*Switch BL -> principal momenta*/
+
   double coor[8], coor1[8], cstest[5], coorhalf[8], coor2[8],
     coor1bis[8], mycoor[8], delta1[8];
   double const * const cst = line -> getCst();
   MakeMomentum(coordin,cst,coor);
-
   double delta0[8], dcoor[8];
   double delta0min=1e-15, eps=0.0001, S=0.9, errmin=1e-6, hbis=0.5*h0,
     err, h1min=0.01, h1max=coor[1]*0.5, diffr, diffth, difftol=0.01, normtemp,
@@ -540,14 +605,18 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
     rtol=factrtol*(1.+sqrt(1.-a*a)), rlimitol=10.;
 
   if (coor[1] < rtol) cstol = cstol_hor;
-        // for tests of cst of motion conservation; don't ask too much
-        // if near horizon...
+  // for tests of cst of motion conservation; don't ask too much
+  // if near horizon...
   else cstol = cstol_gen;
 
-  if (fabs(fmod(coor[2]+M_PI/2, M_PI)-M_PI/2) < GYOTO_MIN_THETA) {
-    if (debug())
-      cerr << "WARNING: Too close to Z axis: stopping integration"<< endl;
-    return 1;}
+  //NB: following test ok only if theta is 0-pi
+  //    coz -pi/2[pi]=-pi/2 ...
+  /*if (fabs(fmod(coor[2]+M_PI/2, M_PI)-M_PI/2) < GYOTO_MIN_THETA) {
+    cout << "in kerr th= " << coor[2] << endl;
+    GYOTO_WARNING << "Too close to Z axis: stopping integration"<< endl;
+    return 1;
+    }*/
+  //Fred: Test removed Feb 2013, seems not necessary
 
   if (diff(coor,cst,dcoor)) return 1 ;
 
@@ -565,6 +634,8 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
       (coordinate singularity in BL) and whether we are outside
       horizon.
     */
+
+    double hinit=h0, steptol=1e3;
     while
       ( (( (rk1   =myrk4(coor,cst,h0,coor1)      ) == 1) || (rk1    == 2)) ||
         (( (rkhalf=myrk4(coor,cst,hbis,coorhalf) ) == 1) || (rkhalf == 2)) ||
@@ -578,13 +649,18 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
 	
 	zaxis=1;
 	h0*=1.1; hbis*=1.1;
-	if (debug()) 
-	  cerr << "NOTE: Passing close to z-axis at theta= "
-	       << coor[2] << " and r= " << coor[1]
-	       << ", jumping ahead with h0= " << h0 << endl;
 	
-	//throwError("stop");
-        
+	GYOTO_INFO << "NOTE: Passing close to z-axis at theta= "
+		   << coor[2] << " and r= " << coor[1]
+		   << ", jumping ahead with h0= " << h0 << endl;
+
+	if (h0/hinit>steptol){
+	  GYOTO_SEVERE << "In KerrBL::myrk4_adaptive: "
+	    "stop integration because unsolved z-axis problem" << endl;
+	  return 1;
+	}
+	  
+	
       }
 
     
@@ -593,10 +669,9 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
       // infinite jumping ahead behavior (should never happen of
       // course)
       
-      if (verbose() >= GYOTO_SEVERE_VERBOSITY)
-	cerr << "WARNING: " << endl
-	     << "in KerrBL.C couldn't solve z-axis problem ; stopping..."
-	     << endl;
+      GYOTO_INFO << "WARNING: " << endl
+		 << "in KerrBL.C couldn't solve z-axis problem ; stopping..."
+		 << endl;
       return 1;
     }
 
@@ -676,17 +751,18 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
 	    }
 	  }
 	  if (coor1[1]<rlimitol) {
-	    if (debug()) cerr << "Probable cause of warning:"
-			      << "z-axis problem badly treated in "
-			      << "KerrBL::myrk4_adaptive" << endl;
+#           if GYOTO_DEBUG_ENABLED
+	    GYOTO_DEBUG << "Probable cause of warning:"
+			<< "z-axis problem badly treated in "
+			<< "KerrBL::myrk4_adaptive" << endl;
+#           endif
 	    // some rare cases can end up with bad cst conservation
 	    // even at r = a few rhor...
 	  }else{
-	  if (verbose() >= GYOTO_SEVERE_VERBOSITY)
-	    cerr << "This warning occured at r= " << coor1[1] << endl
-		 << "i.e. far from horizon --> to be investigated"
-		 << ", or maybe increase parameter cstol" 
-		 << "in KerrBL.C" << endl;
+	    GYOTO_SEVERE << "This warning occured at r= " << coor1[1] << endl
+			 << "i.e. far from horizon --> to be investigated"
+			 << ", or maybe increase parameter cstol" 
+			 << "in KerrBL.C" << endl;
 	  }
 	}
 
@@ -706,7 +782,10 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
     
     
   } // while loop end
-  
+
+  //line -> checkPhiTheta(coordout1);
+  //for some reason the above line leads to infinite iteration with fixed star
+
   return 0;
 }
 
@@ -730,21 +809,28 @@ int KerrBL::CheckCons(const double coor_init[8], const double cst[5], double coo
    */
 
   double argsqrt, limarg=1e-5, limargbis=0.1;
-  double costh=cos(mycoor[2]), sinth=sin(mycoor[2]), a2=spin_*spin_;
+  double costh, sinth, a2=spin_*spin_;
+  sincos(mycoor[2], &sinth, &costh);
+  double sinthm2=1./(sinth*sinth), costh2=costh*costh;
   double mu=cst[0], EE=cst[1], LL=cst[2], QQ=cst[3], QQm1=cst[4];
-  double Sigma=mycoor[1]*mycoor[1]+a2*costh*costh;
-  double Qtest=Sigma*mycoor[6]*Sigma*mycoor[6]+costh*costh*(a2*(mu*mu-EE*EE)+LL*LL/(sinth*sinth));//this should be equal to constant QQ
+  double mu2=mu*mu, EE2=EE*EE, LL2=LL*LL;
+  double Sigma=mycoor[1]*mycoor[1]+a2*costh2;
+  double Sigma2=Sigma*Sigma;
+  double Qtest=
+    Sigma2*mycoor[6]*mycoor[6]+costh2*(a2*(mu2-EE2)+LL2*sinthm2);
+  //this should be equal to constant QQ
   int thdotpos=1;
-  if (debug())
-    cerr << "DEBUG: KerrBL::CheckCons(): "
-	 << "mu="<<mu<<", EE="<<EE<<", LL="<<LL<<", QQ="<<QQ<<", QQm1="<<QQm1
-	 << ", Qtest="<<Qtest<< ", fabs(Qtest-QQ)/QQm1="<< fabs(Qtest-QQ)/QQm1
-	 << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG
+    << "mu="<<mu<<", EE="<<EE<<", LL="<<LL<<", QQ="<<QQ<<", QQm1="<<QQm1
+    << ", Qtest="<<Qtest<< ", fabs(Qtest-QQ)/QQm1="<< fabs(Qtest-QQ)/QQm1
+    << endl;
+# endif
   if (fabs(Qtest-QQ)*QQm1 > 1e-6){//Then change thetadot to allow Qtest=QQ
                                   // Note: if Q==0, QQm1==1.
 
     if (mycoor[6]<0.) thdotpos=0; //to preserve the sign of thetadot
-    argsqrt=QQ-costh*costh*(a2*(mu*mu-EE*EE)+LL*LL/(sinth*sinth));//thetadot should be the sqrt of this quantity
+    argsqrt=QQ-costh2*(a2*(mu2-EE2)+LL2*sinthm2);//thetadot should be the sqrt of this quantity
 
     if (argsqrt<0 && fabs(argsqrt)<=limarg) {//if argsqrt is <0, but "small enough", put it to zero
       argsqrt=0.;
@@ -755,7 +841,7 @@ int KerrBL::CheckCons(const double coor_init[8], const double cst[5], double coo
 	if (fabs(argsqrt)>limargbis)
 	  throwError("In KerrBL::CheckCons Impossible to determine thetadot; "
 		     "maybe try to increase parameter limarg");
-	if (debug()) cerr << "WARNING In KerrBL::CheckCons argsqrt= " << argsqrt << " at theta= " << coor_init[2] << ". Putting it to 0..." << endl;
+	GYOTO_INFO << "KerrBL::CheckCons argsqrt= " << argsqrt << " at theta= " << coor_init[2] << ". Putting it to 0..." << endl;
 	argsqrt=0.;
       }
     }
@@ -800,9 +886,9 @@ void KerrBL::Normalize4v(double coord[8], const double part_mass) const {
     }
     if (argrac<0 && fabs(argrac)>arglim) {
       if (rr/rhor < 2.) {//A AFFINER?? //if the quantity is <0 and "big", but we are close to horizon --> put it to zero with Warning message
-	if (debug()) {
-	  cerr << "WARNING 0-NORM CLOSE TO HORIZON : "
-	       << "in KerrBL::Normalize4v impossible to normalize 0-mass "
+	if (verbose() >= GYOTO_WARNING_VERBOSITY) {
+	  GYOTO_WARNING << "0-NORM CLOSE TO HORIZON : "
+               << "in KerrBL::Normalize4v impossible to normalize 0-mass "
 	       << "particule next to horizon. Putting argrac to 0. "
 	       << "Effective value of argrac= " << argrac << endl
 	       << "with coord= ";
@@ -822,10 +908,15 @@ void KerrBL::Normalize4v(double coord[8], const double part_mass) const {
  
     double argrac=-(1.+gtt*tdot*tdot+2.*gtph*phdot*tdot+gthth*thdot*thdot+gphph*phdot*phdot)/grr;
     double arglim=1e-7;
+
+    GYOTO_DEBUG_ARRAY(coord, 8);
+    GYOTO_DEBUG_EXPR(argrac);
+    GYOTO_DEBUG_EXPR(rr/rhor);
+
     if (argrac<0 && fabs(argrac)<arglim) argrac=0.;
     if (argrac<0 && fabs(argrac)>arglim) {
       if (rr/rhor < 2.) {//A AFFINER??
-	if (debug()) {
+	if (verbose()>=GYOTO_WARNING_VERBOSITY) {
 	  cerr << "WARNING -1 - NORM CLOSE TO HORIZON : "
 	       << "in KerrBL::Normalize4v impossible to normalize massive "
 	       << "particle next to horizon. Putting argrac to 0. "
@@ -851,39 +942,37 @@ void KerrBL::Normalize4v(double coord[8], const double part_mass) const {
 
 
 void KerrBL::MakeCoord(const double coordin[8], const double cst[5], double coord[8]) const {
-
   double tt=coordin[0], rr = coordin[1], theta=coordin[2], phi=coordin[3], 
     pr=coordin[5], ptheta=coordin[6];
  
   double r2 = rr*rr ;
  
-  double costheta2=cos(theta)*cos(theta), sintheta2=sin(theta)*sin(theta), 
+  double sinth, costh;
+  sincos(theta, &sinth, &costh);
+  double costheta2=costh*costh, sintheta2=sinth*sinth, 
     aa=spin_, a2=aa*aa;
 
-  double Sigma=r2+a2*costheta2, Delta=r2-2*rr+a2, lambda=1.-2*rr/Sigma, 
-    xi=2.*aa*rr*sintheta2/Sigma, xi2=xi*xi, 
-    gamma = sintheta2*(r2+a2+2.*a2*rr*sintheta2/Sigma), 
-    fact=1./(gamma*lambda+xi2);
+  double Sigma=r2+a2*costheta2, Delta=r2-2*rr+a2, gtt=-(1.-2*rr/Sigma), 
+    gtp=-2.*aa*rr*sintheta2/Sigma, 
+    gpp = sintheta2*(r2+a2+2.*a2*rr*sintheta2/Sigma), 
+    det=gtp*gtp-gtt*gpp, detm1=1./det;
 
   double EE=cst[1], LL=cst[2];
     
   double rdot=Delta/Sigma*pr, thetadot=1./Sigma*ptheta, 
-    phidot=lambda*fact*LL+xi*fact*EE, tdot=-xi*fact*LL+gamma*fact*EE;
+    phidot=-(gtt*LL+gtp*EE)*detm1, tdot=(gtp*LL+gpp*EE)*detm1;
 
-  coord[0]=tt;coord[1]=rr;coord[2]=theta;coord[3]=phi;coord[4]=tdot;coord[5]=rdot;coord[6]=thetadot;coord[7]=phidot;
+  coord[0]=tt;coord[1]=rr;coord[2]=theta;coord[3]=phi;coord[4]=tdot;
+  coord[5]=rdot;coord[6]=thetadot;coord[7]=phidot;
  
 }
 
 void KerrBL::MakeMomentum(const double coord[8], const double cst[5], double coordout[8]) const{
-
   double EE=cst[1], LL=cst[2];
   
-  // double tt=coord[0], rr = coord[1], theta=coord[2], phi=coord[3], tdot=coord[4],
-  //  rdot=coord[5], thetadot=coord[6], phidot=coord[7];
   double tt=coord[0], rr = coord[1], theta=coord[2], phi=coord[3],
     rdot=coord[5], thetadot=coord[6];
-
-  double r2 = rr*rr, costheta2=cos(theta)*cos(theta);
+  double r2 = rr*rr, costheta2=cos(theta); costheta2*=costheta2;
     //    sintheta2=sin(theta)*sin(theta);
   
   double aa=spin_, a2=aa*aa;
@@ -892,7 +981,9 @@ void KerrBL::MakeMomentum(const double coord[8], const double cst[5], double coo
 
   double pr=Sigma/Delta*rdot, ptheta=Sigma*thetadot;
 
-  coordout[0]=tt;coordout[1]=rr;coordout[2]=theta;coordout[3]=phi;coordout[4]=-EE;coordout[5]=pr;coordout[6]=ptheta;coordout[7]=LL;
+  coordout[0]=tt;coordout[1]=rr;coordout[2]=theta;
+  coordout[3]=phi;coordout[4]=-EE;coordout[5]=pr;
+  coordout[6]=ptheta;coordout[7]=LL;
 }
 
 void KerrBL::nullifyCoord(double coord[8]) const {
@@ -912,12 +1003,12 @@ void KerrBL::nullifyCoord(double coord[4], double & tdot2) const {
     c+=gmunu(coord, i, i)*coord[4+i]*coord[4+i];
   }
   
-  double Delta=b*b-a*c;
-  tdot2=(-b+sqrt(Delta))/a;
-  coord[4]=(-b-sqrt(Delta))/a;
+  double sDelta=sqrt(b*b-a*c), am1=1./a;
+  tdot2=(-b+sDelta)*am1;
+  coord[4]=(-b-sDelta)*am1;
 }
 
-void KerrBL::computeCst(const double coord[8], double cst[5]) const{
+void KerrBL::computeCst(const double coord[8], double cst[5]) const{ 
   
   //double tt=coord[0], rr = coord[1], theta=coord[2], phi=coord[3], tdot=coord[4],
   //  rdot=coord[5], thetadot=coord[6], phidot=coord[7];
@@ -926,13 +1017,16 @@ void KerrBL::computeCst(const double coord[8], double cst[5]) const{
   
   double norm=ScalarProd(coord, coord+4, coord+4);
   
-  double r2 = rr*rr, costheta2=cos(theta)*cos(theta), 
-    sintheta2=sin(theta)*sin(theta);
+  double sinth, costh;
+  sincos(theta, &sinth, &costh);
+  double r2 = rr*rr, rm1=1./rr, costheta2=costh*costh, 
+    sintheta2=sinth*sinth;
   
-  double aa=spin_, a2=aa*aa;
+  double a2=spin_*spin_;
   
-  double Sigma=r2+a2*costheta2, fact=2.*aa*rr*sintheta2/Sigma;
-  
+  double Sigma=r2+a2*costheta2, fact=2.*spin_*rr*sintheta2/Sigma;
+  //fact is -g_tphi
+
   double mu;//Particule mass: 0 or 1
   if (fabs(norm)<fabs(norm+1.)){
     mu=0.;
@@ -942,7 +1036,7 @@ void KerrBL::computeCst(const double coord[8], double cst[5]) const{
   //See e.g. Levin&PerezGiz 07 and MTW
   double EE=(1-2*rr/Sigma)*tdot+fact*phidot, 
                    //OK for particule mass = 0 or 1 
-    LL=sintheta2*(r2+a2+aa*fact)*phidot-fact*tdot, 
+    LL=sintheta2*(r2+a2+spin_*fact)*phidot-fact*tdot, 
                    //OK for particule mass = 0 or 1
     QQ=Sigma*thetadot*Sigma*thetadot+costheta2
                            *(a2*(mu*mu-EE*EE)+LL*LL/sintheta2); 
@@ -965,20 +1059,9 @@ void KerrBL::fillElement(Gyoto::FactoryMessenger *fmp) {
   Metric::Generic::fillElement(fmp);
 }
 
-SmartPointer<Metric::Generic> KerrBL::Subcontractor(FactoryMessenger* fmp) {
-
-  double spin=0., mass=1.; //default values
-  string name="", content="";
-
-  while (fmp->getNextParameter(&name, &content)) {
-    if(name=="Spin") spin=atof(content.c_str());
-  }
-  SmartPointer<KerrBL> gg = new KerrBL(spin, mass);
-  gg -> processGenericParameters(fmp);
-  return gg;
+void KerrBL::setParameter(string name, string content, string unit) {
+  if(name=="Spin") setSpin(atof(content.c_str()));
+  else Generic::setParameter(name, content, unit);
 }
 
-void Gyoto::Metric::KerrBL::Init() {
-  Gyoto::Metric::Register("KerrBL", &KerrBL::Subcontractor);
-}
 #endif

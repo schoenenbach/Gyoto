@@ -1,5 +1,5 @@
 /*
-    Copyright 2011 Thibaut Paumard
+    Copyright 2011, 2013 Thibaut Paumard
 
     This file is part of Gyoto.
 
@@ -23,6 +23,7 @@
 aa=0.;
 
 gg=gyoto_KerrBL(spin=aa);
+gg2=gg.clone;
 
 write, format="%s", "Creating Photon: ";
 ph = gyoto_Photon();
@@ -60,9 +61,8 @@ st=gyoto_Star(metric=gg, radius=1., initcoord=pos, v);
 write, format="%s\n","done.\n";
 
 write, format="%s\n", "Trying gyoto_Star_xFill";
-st(xfill=770);
+st,xfill=770.;
 "done";
-gyoto_Star_xFill(st,770.);
 
 //Computing position of star at a given proper time :
 //time=212.4034;//proper time
@@ -72,32 +72,6 @@ gyoto_Star_xFill(st,770.);
 //if (abs(pos-[10.5718661339679, 1.57079398752261, 59.5795847453848])(max)<1e-5)
 //  write, format="%s\n","done.\n"; else error, "PREVIOUS CHECK FAILED";
 
-gyoto_Star_get_xyz,st,x,y;
-
-
-gyoto_Star_get_coord, st, t, r, theta, phi;
-gyoto_Star_get_dot, st, tdot, rdot, thetadot, phidot;
-gyoto_Star_get_prime, st, rp, thetap, phip;
-
-write, format="%s", "Checking gyoto_Metric_SysPrimeToTdot: ";
-tdotbis=array(double,numberof(t));
-for (n=1; n<= numberof(t); ++n)
-  tdotbis(n)=gg(prime2tdot= [t(n), r(n), theta(n), phi(n)],
-                [rp(n), thetap(n), phip(n)]
-                );
-if (max (abs( (tdot-tdotbis)/tdot ) ) < 2e-3)
-  write, format="%s\n","done.\n"; else error, "PREVIOUS CHECK FAILED";
-
-
-write, format="%s", "Checking gyoto_Metric_g: ";
-norm=array(double, numberof(t));
-for (n=1; n<= numberof(t); ++n) {
-  g=gg([t(n), r(n), theta(n), phi(n)]);
-  qvel=[tdot(n), rdot(n), thetadot(n), phidot(n)];
-  norm(n)=sum(g*qvel(,-)*qvel(-,));
- }
-if (max(abs(norm+1)) < 3e-3)
-  write, format="%s\n","done.\n"; else error, "PREVIOUS CHECK FAILED";
 
 // Ray tracing
 
@@ -106,6 +80,7 @@ screen=gyoto_Screen(metric=gg, observerpos=[1000., 100., 0.05, 0.]);
 write, format="%s\n","done.\n";
 write, format="%s", "Checking gyoto_Metric_setSpin: ";
 gg,spin=0.;
+
 write, format="%s\n","done.\n";
 write, format="%s", "Checking gyoto_Star(): ";
 orbit=gyoto_Star(metric=gg, radius=2,
@@ -115,44 +90,60 @@ write, format="%s\n","done.\n";
 N=21;
 delta=pi/(10.*N);
 screen, fov=pi/10., resolution=21;
-write, format="%s", "Checking gyoto_Photon_new: ";
-ph=gyoto_Photon_new();
-write, format="%s\n","done.\n";
 
 i=15; j=9;
 xscr=delta*(i-(N+1)/2.);
 yscr=delta*(j-(N+1)/2.);
 write, format="%s", "Checking gyoto_Photon_setInitialCondition: ";
-gyoto_Photon_setInitialCondition, ph, gg, orbit, screen, -xscr, yscr;
 ph2=gyoto_Photon(metric=gg, astrobj=orbit);
 ph1=gyoto_Photon(metric=gg, astrobj=orbit);
 ph1, initcoord=screen, -xscr, yscr;
 ph2, initcoord=screen, i, j;
 write, format="%s\n","done.\n";
-write, format="%s", "Checking gyoto_Photon_setDelta: ";
-gyoto_Photon_setDelta, ph, 1.;
+write, format="%s", "Checking gyoto_Photon(delta=1): ";
 write, format="%s\n","done.\n";
-write, format="%s", "Checking gyoto_Photon_hit: ";
-//if(gyoto_Photon_hit(ph, 0.))
-if( ph(is_hit=1) && ph1(is_hit=1) && ph2(is_hit=1))
+write, format="%s", "Checking gyoto_Photon(is_hit=1): ";
+if( ph1(is_hit=1) && ph2(is_hit=1))
   write, format="%s\n","done.\n"; else error, "PREVIOUS CHECK FAILED";
 
 "_________________________";
 
 hitmap2=hitmap1=hitmap=array(0, N, N);
+ph=gyoto_Photon(metric=gg, astrobj=orbit);
 for (i=1; i<=N; i++) {
   write , format="*** Column %i ***\n", i; 
   xscr=delta*(i-(N+1)/2.);
   for (j=1; j<=N; j++) {
     yscr=delta*(j-(N+1)/2.);
-    gyoto_Photon_setInitialCondition, ph, gg, orbit, screen, -xscr, yscr;
+    ph, initcoord=screen, -xscr, yscr;
+    ph, tmin=0.;
     ph1, initcoord=screen, -xscr, yscr;
     ph2, initcoord=screen, i, j;
-    gyoto_Photon_setDelta, ph, 1.;
-    hitmap(i,j)=gyoto_Photon_hit(ph, 0.);
+    ph, delta=1.;
+    hitmap(i,j)=ph(is_hit=1);
   }
  }
+ph2=[];
+
+
+// Check that changing spin can be done on attached metric
+ph1, metric=ph1.metric;
+ph1, xfill=0.;
+txyz=ph1.get_txyz;
+  plg, txyz(2,), txyz(1,);
+ph2=ph1.clone;
+gg2=gg.clone;
+write, format="%s", "Mutating metric spin... ";
+gg, spin=0.5;
+write, format="%s\n", "done.";
+gg2, spin=0.5;
+ph2, metric=gg2;
+
+
 ph1=ph2=[];
+
+// CLONES AND HOOKS
+
 "_________________________";
 
 ph=[];
@@ -161,5 +152,7 @@ orbit=[];
 screen=[];
 
 gg=[];
+
+
 
 write, format= "%s\n"," ALL TESTS PASSED";

@@ -1,0 +1,154 @@
+# these values filled in by    yorick -batch make.i
+Y_MAKEDIR=
+Y_EXE=
+Y_EXE_PKGS=
+Y_EXE_HOME=
+Y_EXE_SITE=
+Y_HOME_PKG=
+
+# ----------------------------------------------------- optimization flags
+
+# options for make command line, e.g.-   make COPT=-g TGT=exe
+COPT=$(COPT_DEFAULT) -L../lib -I../include
+TGT=$(DEFAULT_TGT)
+
+# ------------------------------------------------ macros for this package
+
+#include ../local_settings
+
+CPPFLAGS=@CPPFLAGS@
+XERCESLDFLAGS=@XERCESLDFLAGS@
+XERCESCPPFLAGS=@XERCESCPPFLAGS@
+UDUNITS_CPPFLAGS=@UDUNITS_CPPFLAGS@
+UDUNITS_LDFLAGS=@UDUNITS_LDFLAGS@
+DYLIB_VAR=@DYLIB_VAR@
+PTHREAD_CFLAGS= @PTHREAD_CFLAGS@
+PTHREAD_LIBS= @PTHREAD_LIBS@
+
+YGYOTO_C = $(shell ls *.C)
+GYOTO_C = $(shell ls ../lib/*.C)
+GYOTO_OBJ = $(GYOTO_C:.C=.o)
+GYOTO_H = $(shell ls ../include/*.h)
+
+PKG_NAME=gyoto
+PKG_I=gyoto.i
+
+OBJS=gyoto_utils.o gyoto_Metric.o gyoto_Photon.o \
+	gyoto_Scenery.o gyoto_Screen.o gyoto_Idx.o gyoto_Spectrum.o \
+	gyoto_Astrobj.o gyoto_ThinDisk.o \
+	gyoto_Spectrometer.o gyoto_SpectroComplex.o gyoto_SpectroUniform.o 
+
+# gyoto_KerrBL.o gyoto_KerrKS.o gyoto_Star.o gyoto_FixedStar.o gyoto_PolishDoughnut.o gyoto_ThinInfiniteDiskBL.o gyoto_ThinInfiniteDiskKS.o 
+
+# change to give the executable a name other than yorick
+PKG_EXENAME=yorick
+
+# PKG_DEPLIBS=-Lsomedir -lsomelib   for dependencies of this package
+PKG_DEPLIBS=-L../lib/.libs -lgyoto $(XERCESLDFLAGS) $(PTHREAD_LIBS)
+# set compiler (or rarely loader) flags specific to this package
+PKG_CFLAGS= -I../include $(XERCESCPPFLAGS) $(UDUNITS_CPPFLAGS) $(PTHREAD_CFLAGS)
+PKG_LDFLAGS= $(PTHREAD_CFLAGS)
+
+# list of additional package names you want in PKG_EXENAME
+# (typically Y_EXE_PKGS should be first here)
+EXTRA_PKGS=$(Y_EXE_PKGS)
+
+# list of additional files for clean
+PKG_CLEAN=
+
+# autoload file for this package, if any
+PKG_I_START=
+# non-pkg.i include files for this package, if any
+PKG_I_EXTRA=gyoto_constants.i gyotoy.i gyoto_namespace.i
+
+# -------------------------------- standard targets and rules (in Makepkg)
+
+# set macros Makepkg uses in target and dependency names
+# DLL_TARGETS, LIB_TARGETS, EXE_TARGETS
+# are any additional targets (defined below) prerequisite to
+# the plug-in library, archive library, and executable, respectively
+PKG_I_DEPS=$(PKG_I)
+Y_DISTMAKE=distmake
+
+include $(Y_MAKEDIR)/Make.cfg
+include $(Y_MAKEDIR)/Makepkg
+include $(Y_MAKEDIR)/Make$(TGT)
+
+# override macros Makepkg sets for rules and other macros
+# Y_HOME and Y_SITE in Make.cfg may not be correct (e.g.- relocatable)
+Y_HOME=$(Y_EXE_HOME)
+Y_SITE=$(Y_EXE_SITE)
+
+# Actual install directories set with ./configure --with-yorick-*
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+DEST_Y_HOME=$(DESTDIR)@Y_INST_HOME@
+DEST_Y_SITE=$(DESTDIR)@Y_INST_SITE@
+
+# ------------begin C++ source hacks
+# must use C++ to load yorick with this C++ package
+# this assumes make default CXX macro points to C++ compiler
+CXXFLAGS=$(CFLAGS) $(GYOTO_FLAGS)
+LD_DLL=$(CXX) $(LDFLAGS) $(PLUG_SHARED)
+LD_EXE=$(CXX) $(LDFLAGS) $(PLUG_EXPORT)
+
+# C++ has no standard file extension, supply default make rule(s)
+.C.o:
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c -o $@ $<
+# --------------end C++ source hacks
+
+# simple example:
+#myfunc.o: myapi.h
+# more complex example (also consider using PKG_CFLAGS above):
+#myfunc.o: myapi.h myfunc.c
+#	$(CC) $(CPPFLAGS) $(CFLAGS) -DMY_SWITCH -o $@ -c myfunc.c
+
+DEST_PKG_INSTALLED_DIR=$(DEST_Y_SITE)/packages/installed
+
+all: gyoto_std.so
+
+gyoto_std.so: stdplug/gyoto_std.so
+	cp stdplug/gyoto_std.so ./
+
+stdplug/gyoto_std.so: stdplug/*.C
+	cd stdplug; $(MAKE)
+
+gyoto.so: gyoto.i $(OBJS)
+
+check-dll: $(PKG_DLL) check.i
+	unset GYOTO_PLUGINS && \
+	$(DYLIB_VAR)=../lib/.libs:$$$(DYLIB_VAR) \
+	GYOTO_CHECK_NODISPLAY=true \
+	$(Y_EXE) -i check.i
+
+install::
+	cd stdplug; make install
+	$(YNSTALL) ygyoto.h ygyoto_supplier.C $(DEST_Y_SITE)/include
+	$(YNSTALL) gyotoy.xml $(DEST_Y_SITE)/glade
+	$(YNSTALL) gyotoy.png $(DEST_Y_SITE)/data
+	$(YNSTALL) gyotoy $(DEST_Y_SITE)/bin
+	-ln $(DEST_Y_SITE)/bin/gyotoy $(DESTDIR)$(prefix)/bin/
+	$(YNSTALL) gyotoy.1 $(DESTDIR)$(prefix)/share/man/man1
+	$(YNSTALL) gyoto.info $(DEST_PKG_INSTALLED_DIR)
+
+uninstall::
+	cd stdplug; make uninstall
+	rm -f $(DEST_Y_SITE)/include/ygyoto*
+	rm -f $(DEST_Y_SITE)/glade/gyotoy.xml
+	rm -f $(DEST_Y_HOME)/bin/gyotoy
+	rm -f $(DESTDIR)$(exec_prefix)/bin/gyotoy
+	rm -f $(DESTDIR)$(prefix)/share/man/man1/gyotoy.1
+	-rm -f $(DEST_PKG_INSTALLED_DIR)/gyoto.info
+
+clean::
+	cd stdplug; yorick -batch make.i; make clean
+	rm -f gyoto_std.so example-patterndisk.fits.gz example-patterndisk.xml
+
+distclean::
+	cd stdplug; yorick -batch make.i; make distclean
+
+%: ;
+
+.PHONY: standalone test-cppprog test-standalone test test-plugin check
+
+# -------------------------------------------------------- end of Makefile

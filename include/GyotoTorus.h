@@ -60,8 +60,8 @@ class Gyoto::Astrobj::Torus : public Gyoto::Astrobj::Standard {
    */
   double c_; ///< Large Radius
 
-  SmartPointer<Spectrum::Generic> spectrum_;
-  SmartPointer<Spectrum::Generic> opacity_;
+  SmartPointer<Spectrum::Generic> spectrum_; ///< Emission law
+  SmartPointer<Spectrum::Generic> opacity_; ///< Absorption law
 
   // Constructors - Destructor
   // -------------------------
@@ -80,31 +80,76 @@ class Gyoto::Astrobj::Torus : public Gyoto::Astrobj::Standard {
   // ---------
  public:
   /**
-   * Get large radius c_
+   * Get large radius Torus::c_ in geometrical units
    */
   double getLargeRadius() const;
 
   /**
-   * Get small radius a_
+   * Get large radius Torus::c_ in specified unit
+   */
+  double getLargeRadius(std::string unit) const;
+
+  /**
+   * Get small radius in geometrical units
    */
   double getSmallRadius() const;
 
+  /**
+   * Get small radius in specified unit
+   */
+  double getSmallRadius(std::string unit) const;
+
+  /**
+   * \brief Set large radius Torus::c_
+   */
   void setLargeRadius(double c);
+
+  /**
+   * \brief Set small radius
+   */
   void setSmallRadius(double a);
+
+  /**
+   * \brief Set large radius Torus::c_ in specified unit
+   */
+  void setLargeRadius(double c, std::string unit);
+
+  /**
+   * \brief Set small radius in specified unit
+   */
+  void setSmallRadius(double a, std::string unit);
+
+  /**
+   * \brief Set Torus::spectrum_
+   */
   virtual void setSpectrum(SmartPointer<Spectrum::Generic>);
+
+  /**
+   * \brief Get Torus::spectrum_
+   */
   virtual SmartPointer<Spectrum::Generic> getSpectrum() const;
+
+  /**
+   * \brief Set Torus::opacity_
+   */
   virtual void setOpacity(SmartPointer<Spectrum::Generic>);
+
+  /**
+   * \brief Get Torus::opacity_
+   */
   virtual SmartPointer<Spectrum::Generic> getOpacity() const;
 
+  using Standard::getRmax;
   virtual double getRmax();
 
   //XML I/O
  public:
-  virtual int setParameter(std::string name, std::string content) ;
+  virtual int setParameter(std::string name,
+			   std::string content,
+			   std::string unit) ;
 
 #ifdef GYOTO_USE_XERCES
   virtual void fillElement(FactoryMessenger *fmp) const ;
-                                             ///< called from Factory
   virtual void setParameters(FactoryMessenger *fmp) ;
 #endif
   
@@ -116,18 +161,14 @@ class Gyoto::Astrobj::Torus : public Gyoto::Astrobj::Standard {
  protected:
   virtual void getVelocity(double const pos[4], double vel[4]) ;
 
+  using Standard::emission;
   virtual double emission(double nu_em, double dsem, double coord_ph[8],
 			  double coord_obj[8]=NULL) const ;
-
+  using Standard::integrateEmission;
   virtual double integrateEmission(double nu1, double nu2, double dsem,
 				   double c_ph[8], double c_obj[8]=NULL) const;
-    ///< \sum_nu1^nu2 I_nu dnu (or j_nu)
 
   virtual double transmission(double nuem, double dsem, double coord[8]) const ;
-     ///< Transmission: exp( \alpha_{\nu} * dsem )
-  
-  // Display
-  //friend std::ostream& operator<<(std::ostream& , const Astrobj& ) ;
   
 };
 

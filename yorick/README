@@ -17,7 +17,7 @@ precompiled with many distributions of linux and is present in the
 Macports. You can also find binaries and source code at
 http://yorick.sourceforge.net/
 
-Yorick >= 2.1.06 is needed.
+Yorick >= 2.2 is needed.
 
 For the graphical user interface Gyotoy, you'll need a few additional
 pieces. First of all, I seriously doubt it will run under MS Windows,
@@ -29,20 +29,18 @@ ______
 
 A collection of utilities for Yorick, distributed as yorick-yutils in
 many Linux distributions. Actually, only pyk.i is used in Gyotoy (so
-far), and as of writting, the CVS version is required.
+far).
 
 Either get yutils > 1.4.0 from e.g. http://www.maumae.net/yorick/packages/src/
 or fetch pyk.i from the CVS browser at
 http://yorick.cvs.sourceforge.net/viewvc/*checkout*/yorick/yorick-yutils/pyk.i
 
 
-PyGTK
-_____
+Yorick-GY
+_________
 
-The graphical interface is actually coded python using the pygtk
-extension. So you'll need a recent version of python, PyGTK, and the
-Glade library, on which PyGTK depends.
-NB: the "devel" version of PyGTK is required. 
+The graphical interface gyotoy needs an additional Yorick plug-in,
+plus the Gtk 3 library. Check README.gyotoy.
 
 2- Building
 ___________
@@ -76,4 +74,4 @@ If everything goes well,
 should do, too.
 
 
-6 Apr 2009, Thibaut Paumard.
+5 June 2013, Thibaut Paumard.

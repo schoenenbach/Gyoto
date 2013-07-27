@@ -12,7 +12,7 @@
       1.22
       0.
     </Position>
-    <Time unit="geometrical">
+    <Time unit="geometrical_time">
       1000.
     </Time>
     <FieldOfView>
@@ -23,4 +23,8 @@
     </Resolution>
   </Screen>
   <Astrobj kind = "PageThorneDisk"/>
+  <MinimumTime> -1000. </MinimumTime>
+  <!--Quantities> User4 </Quantities-->
+  Bolometric emission, this is the default (and only intensity) for
+  PageThorneDisk.
 </Scenery>

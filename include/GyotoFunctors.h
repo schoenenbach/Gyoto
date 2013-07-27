@@ -1,8 +1,6 @@
 /**
  * \file GyotoFunctors.h
- * \brief Classes which an operator() method
-
-
+ * \brief Classes with an operator() method
  */
 
 /*
@@ -29,15 +27,64 @@
 #define __GyotoFunctors_H_
 
 namespace Gyoto {
+  /**
+   * \namespace Gyoto::Functor
+   * \brief Classes with an operator() method
+   */
   namespace Functor {
     class Double_constDoubleArray;
+    class Double_Double_const;
   }
 }
 
+/**
+ * \brief A functor like double (func) (double const data[])
+ */
 class Gyoto::Functor::Double_constDoubleArray
 {
  public:
+  /**
+   * \brief The actual function
+   */
   virtual double operator()(double const data[]) = 0;
+};
+
+
+/**
+ * \brief A functor like double (func) (double) const
+ */
+class Gyoto::Functor::Double_Double_const
+{
+ public:
+  /**
+   * \brief Exit status code of "various" methods (at least secant() !)
+   */
+  int status;
+
+  /**
+   * \brief The actual function
+   */
+  virtual double operator()(double) const = 0;
+
+  /**
+   * \brief Ridder's root-finding method applied on operator()()
+   * \param from, to boundaries for root-searching
+   * \return the root
+   */
+  double ridders(double from, double to) const;
+
+  /**
+   * \brief Secant root-finding method applied on operator()()
+   *
+   * Sets status to
+   *  -0 in case of convergence
+   *  -1 if two distinct inputs evaluated to the same output
+   *  -2 if maximum number of iterations (20) reached
+   *
+   * \param from, to boundaries for root-finding
+   * \return the root
+   */
+  double secant(double from, double to);
 };
 
 #endif

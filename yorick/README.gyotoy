@@ -1,0 +1,32 @@
+Running gyotoy
+______________
+
+Gyotoy is a small graphical user interface (a.k.a. "a toy", or GUI) to
+vizualize a single geodesic (a star orbit or a photon trajectory) in a
+metric. It currently supports any metric with a spherical-like
+coordinate system: KerrBL spin can be set directly, and any GYOTO
+Metric can be loaded from an XML description file.
+
+The hard work is done by the Yorick GYOTO plug-in. In addition, the
+Yorick gy plug-in is needed, as well as the Gtk 3 GObject
+Instrospection files. For now, you will need to compile gy from
+source:
+ git clone git://github.com/paumard/yorick-gy.git
+ cd yorick-gy
+ yorick -batch make.i
+ make
+ make install
+
+The GObject Introspection files for Gtk 3 may have been packaged for
+your platform.
+
+Under Mac OS X using macports, try:
+   sudo port install gtk3
+
+Under a Debian or derivative GNU/Linux system:
+   sudo apt-get install gir1.2-gtk-3.0
+
+If you get an error message in the lines of "Glib: no schemas
+installed on the system", set the environment variable XDG_DATA_DIRS
+in your shell (for instance in $HOME/.profile):
+   export XDG_DATA_DIRS=/opt/local/share

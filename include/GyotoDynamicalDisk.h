@@ -51,41 +51,44 @@ class Gyoto::Astrobj::DynamicalDisk : public Astrobj::PatternDiskBB {
   friend class Gyoto::SmartPointer<Gyoto::Astrobj::DynamicalDisk>;
  private:
   char* dirname_; ///< FITS files directory
-  double tinit_; ///< Time of the first FITS file
+  double tinit_; ///< date of the first FITS file
   double dt_; ///< Time increment between two FITS (assumed constant)
-  int nb_times_; ///< Number of times
+  int nb_times_; ///< Number of dates
 
-  /**
-   * An array of dimensionality double[nr_][nphi_][nnu_]. In FITS
-   * format, the first dimension is nu, the second phi, and the third
-   * r.
-   */
+  /// Array of PatternDisk::emission_ arrays
   double ** emission_array_;
 
-  double ** opacity_array_; ///< same dimenstions as emission, or NULL
+  /// Array of PatternDisk::opacity_ arrays
+  double ** opacity_array_;
 
-  /**
-   * An array of dimensionality double[nr_][nphi_][2]. In FITS format,
-   * the second dimension is phi, and the third r. The first plane in
-   * the first FITS dimention is dphi/dt, the second dr/dt.
-   */
-  double ** velocity_array_; ///< velocity(, r, phi)
+  /// Array of PatternDisk::velocity_ arrays
+  double ** velocity_array_; ///< 
 
-  /**
-   * In case of adaptive grid.
-   */
+  /// Array of PatternDisk::radius_ arrays
   double ** radius_array_; ///< radius vector
 
+  /// Array of PatternDisk::dnu_ values
   double * dnu_array_;
+
+  /// Array of PatternDisk::nu0_ values
   double * nu0_array_;
+
+  /// Array of PatternDisk::nu1_ values
   size_t * nnu_array_;
 
+
+  /// Array of PatternDisk::dphi_ values
   double * dphi_array_;
+
+  /// Array of PatternDisk::nphi_ values
   size_t * nphi_array_;
 
+
+  /// Array of PatternDisk::dr_ values
   double * dr_array_;
+
+  /// Array of PatternDisk::nr_ values
   size_t * nr_array_;
-  //  double r0_; // this is rin_
 
   // Constructors - Destructor
   // -------------------------
@@ -101,16 +104,23 @@ class Gyoto::Astrobj::DynamicalDisk : public Astrobj::PatternDiskBB {
   // ---------
  public:
 
-  virtual int setParameter(std::string name, std::string content);
+  virtual int setParameter(std::string name,
+			   std::string content,
+			   std::string unit);
 
+  using PatternDiskBB::emission;
   virtual double emission(double nu_em, double dsem,
 			  double c_ph[8], double c_obj[8]) const;
 
   void getVelocity(double const pos[4], double vel[4]);
-  double const * const getVelocity() const;
+  double const * getVelocity() const;
   
  protected:
 
+  /// Set underlying PatternDisk pointers to a specific date slice.
+  /**
+   * \param iq Index of the date slice.
+   */
   void copyQuantities(int iq) ;
 
  public:

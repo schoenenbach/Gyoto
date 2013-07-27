@@ -39,27 +39,34 @@ using namespace std;
 using namespace Gyoto;
 using namespace Gyoto::Astrobj;
 
+#if defined GYOTO_USE_XERCES
 Register::Entry* Gyoto::Astrobj::Register_ = NULL;
+#endif
 
 Generic::Generic(string kind) :
 
   gg_(NULL), rmax_(DBL_MAX), rmax_set_(0), kind_(kind), flag_radtransf_(0)
 {
-  if (debug()) cerr << "Astrobj Construction" << endl;
-  
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+#endif
 }
 
 Generic::Generic() :
 
   gg_(NULL), rmax_(DBL_MAX), rmax_set_(0), kind_("Default"), flag_radtransf_(0)
 {
-  if (debug()) cerr << "Astrobj Construction" << endl;
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+#endif
 }
 
 Generic::Generic(double radmax) :
   gg_(NULL), rmax_(radmax), rmax_set_(1), kind_("Default"), flag_radtransf_(0)
 {
-  if (debug()) cerr << "Astrobj Construction" << endl;
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+#endif
 }
 
 Generic::Generic(const Generic& orig) :
@@ -67,17 +74,24 @@ Generic::Generic(const Generic& orig) :
   rmax_(orig.rmax_), rmax_set_(orig.rmax_set_), kind_(orig.kind_),
   flag_radtransf_(orig.flag_radtransf_)
 {
-    if (debug()) cerr << "DEBUG: in Astrobj::Generic (Copy)" << endl;
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+#endif
     if (orig.gg_()) {
-      if (debug())
-	cerr << "DEBUG: orig had a metric, cloning" << endl;
+#if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "orig had a metric, cloning"<< endl;
+#endif
       gg_=orig.gg_->clone();
     }
-    if (debug()) cerr << "DEBUG: out of Astrobj::Generic (Copy)" << endl;
+#if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG << "done" << endl;
+#endif
 }
 
 Generic::~Generic() {
-  if (debug()) cerr << "Astrobj Destruction" << endl;
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+#endif
 }
 
 SmartPointer<Metric::Generic> Generic::getMetric() const { return gg_; }
@@ -85,6 +99,10 @@ void Generic::setMetric(SmartPointer<Metric::Generic> gg) {gg_=gg;}
 
 double Generic::getRmax() {
   return rmax_;
+}
+
+double Generic::getRmax(string unit) {
+  return Units::FromGeometrical(getRmax(), unit, gg_);
 }
 
 const string Generic::getKind() const {
@@ -96,50 +114,29 @@ void Generic::setRmax(double val) {
   rmax_=val;
 }
 
+void Generic::setRmax(double val, string unit) {
+  setRmax(Units::ToGeometrical(val, unit, gg_));
+}
+
 void Generic::unsetRmax() {
   rmax_set_=0;
 }
 
-void Generic::checkPhiTheta(double coord[8]) const{
-  switch (gg_ -> getCoordKind()) {
-  case GYOTO_COORDKIND_SPHERICAL:
-    {
-    /* Transforms theta and phi in coord so that 
-       theta is in [0,pi] and phi in [0,2pi] */
-    double thetatmp=coord[2], phitmp=coord[3];
-    while (thetatmp>M_PI) thetatmp-=2.*M_PI;
-    while (thetatmp<-M_PI) thetatmp+=2.*M_PI;//then theta in [-pi,pi]
-    if (thetatmp<0.) {
-      thetatmp=-thetatmp;//then theta in [0,pi]
-      phitmp+=M_PI;//thus, same point x,y,z
-    }
-    while (phitmp>2.*M_PI) phitmp-=2.*M_PI;
-    while (phitmp<0.) phitmp+=2.*M_PI;//then phi in [0,2pi]
-    coord[2]=thetatmp;
-    coord[3]=phitmp;
-    }
-    break;
-  case GYOTO_COORDKIND_CARTESIAN:
-    throwError("Astrobj::checkPhiTheta(): should not be called "
-	       "with cartesian-like coordinates");
-  default:
-    throwError("Astrobj::checkPhiTheta(): unknown COORDKIND");
-  }
-
-}
-
-
 #ifdef GYOTO_USE_XERCES
 void Generic::fillElement(FactoryMessenger *fmp) const {
+  if (rmax_set_) fmp -> setParameter ( "RMax", rmax_ ) ;
   fmp -> setMetric(gg_);
   fmp -> setSelfAttribute("kind", kind_);
   fmp -> setParameter ( flag_radtransf_? "OpticallyThin" : "OpticallyThick");
 }
 
 void Generic::setParameters(FactoryMessenger *fmp) {
-  string name="", content="";
-  setMetric(fmp->getMetric());
-  while (fmp->getNextParameter(&name, &content)) setParameter(name, content);
+  string name="", content="", unit="";
+  if (fmp) {
+    setMetric(fmp->getMetric());
+    while (fmp->getNextParameter(&name, &content, &unit))
+      setParameter(name, content, unit);
+  }
 }
 #endif
 
@@ -147,22 +144,22 @@ void Generic::setParameters(FactoryMessenger *fmp) {
 void Generic::setFlag_radtransf(int flag) {flag_radtransf_=flag;}
 int Generic::getFlag_radtransf() const {return flag_radtransf_;}
 
-int Generic::setParameter(string name, string content)  {
+int Generic::setParameter(string name, string content, string unit)  {
   char* tc = const_cast<char*>(content.c_str());
   if (name=="Flag_radtransf")  flag_radtransf_= atoi(tc);
   else if (name=="OpticallyThin")  flag_radtransf_= 1;
   else if (name=="OpticallyThick")  flag_radtransf_= 0;
-  else if (name=="RMax")  {
-    rmax_ = atof(tc); rmax_set_=1;
-  } else return 1;
+  else if (name=="RMax") setRmax(atof(tc), unit);
+  else return 1;
   return 0;
 }
 
 void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
 				     double* coord_obj_hit, double dt,
 				     Properties* data) const {
-  if (debug())
-    cerr << "DEBUG: in Generic::processHitQuantities:" << endl;
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+#endif
   /*
       NB: freqObs is the observer's frequency chosen in
       Screen::getRayCoord for the actual computation of the geodesic ;
@@ -171,47 +168,47 @@ void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
       (see below) ; this freqObs is used to transform the null
       worldline parameter dlambda (see below)
   */
-  double freqObs=ph->getFreqObs(), nuem; 
-  SmartPointer<Spectrometer> spr = ph -> getSpectrometer();
+  double freqObs=ph->getFreqObs(); // this is a useless quantity, always 1
+  SmartPointer<Spectrometer::Generic> spr = ph -> getSpectrometer();
   size_t nbnuobs = spr() ? spr -> getNSamples() : 0 ;
   double const * const nuobs = nbnuobs ? spr -> getMidpoints() : NULL;
   double dlambda = dt/coord_ph_hit[4]; //dlambda = dt/tdot
+  //  cout << "freqObs="<<freqObs<<endl;
   double ggredm1 = -gg_->ScalarProd(coord_ph_hit,coord_obj_hit+4,
-				    coord_ph_hit+4) / freqObs; 
+				    coord_ph_hit+4);// / 1.;  
                                        //this is nu_em/nu_obs
+                                       // for nuobs=1. Hz
   double ggred = 1./ggredm1;           //this is nu_obs/nu_em
-  double dsem = dlambda*freqObs*ggredm1;
+  double dsem = dlambda*ggredm1; // * 1Hz ?
+  double inc =0.;
   if (data) {
-    if (debug())
-      cerr << "DEBUG: Generic::processHitQuantities: data requested" << endl;
-
-    if (debug())
-      cerr << "DEBUG: Generic::processHitQuantities: data requested, "
-	   << "freqObs=" << freqObs << ", ggredm1=" << ggredm1
-	   << ", ggred=" << ggred
-	   << endl;
-
+#if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << "data requested. " 
+	      << "freqObs=" << freqObs << ", ggredm1=" << ggredm1
+	      << ", ggred=" << ggred
+	      << endl;
+#endif
 
     if (data->redshift) {
       *data->redshift=ggred;
-      if (debug())
-	cerr << "DEBUG: Generic::processHitQuantities(): "
-	     << "redshift=" << *data->redshift << endl;
+#if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG_EXPR(*data->redshift);
+#endif
     }
     if (data->time) {
       *data->time=coord_ph_hit[0];
-      if (debug())
-	cerr << "DEBUG: Generic::processHitQuantities(): "
-	     << "time=" << *data->time << endl;
+#if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG_EXPR(*data->time);
+#endif
     }
     if (data->impactcoords) {
       memcpy(data->impactcoords, coord_obj_hit, 8 * sizeof(double));
       memcpy(data->impactcoords+8, coord_ph_hit, 8 * sizeof(double));
     }
-    if (debug())
-      cerr << "DEBUG: Generic::processHitQuantities: "
-	   << "dlambda = (dt="<< dt << ")/(tdot="<< coord_ph_hit[4]
-	   << ") = " << dlambda << ", dsem=" << dsem << endl;
+#if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG << "dlambda = (dt="<< dt << ")/(tdot="<< coord_ph_hit[4]
+		<< ") = " << dlambda << ", dsem=" << dsem << endl;
+#endif
     if (data->intensity) {
       /*
 	Comment on intensity integration: 
@@ -240,59 +237,90 @@ void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
 	I_nu_obs = I_nu_em*(nu_obs/nu_em)^3
       */
 
-      //I_nu_obs increment :
-      *data->intensity += 
-	(emission(freqObs*ggredm1, dsem, coord_ph_hit, coord_obj_hit))
-	* (ph -> getTransmission(size_t(-1)))
-	* ggred*ggred*ggred;
+      //Intensity increment :
+      GYOTO_DEBUG_EXPR(freqObs);
+      GYOTO_DEBUG_EXPR(freqObs*ggredm1);
+	inc = (emission(freqObs*ggredm1, dsem, coord_ph_hit, coord_obj_hit))
+	  * (ph -> getTransmission(size_t(-1)))
+	  * ggred*ggred*ggred; // I_nu/nu^3 invariant
+#     ifdef HAVE_UDUNITS
+      if (data -> intensity_converter_)
+	inc = (*data -> intensity_converter_)(inc);
+#     endif
+      *data->intensity += inc;
 
-      if (debug())
-	cerr << "DEBUG: Generic::processHitQuantities(): "
-	     << "intensity +=" << *data->intensity
-	     << "= emission((dsem=" << dsem << "))="
-	     << (emission(freqObs*ggredm1,dsem,coord_ph_hit, coord_obj_hit))
-	     << ")*(ggred=" << ggred << ")^3*(transmission="
-	     << (ph -> getTransmission(size_t(-1))) << ")"
-	     << endl;
+#     if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG
+	  << "intensity +=" << *data->intensity
+	  << "= emission((dsem=" << dsem << "))="
+	  << (emission(freqObs*ggredm1,dsem,coord_ph_hit, coord_obj_hit))
+	  << ")*(ggred=" << ggred << ")^3*(transmission="
+	  << (ph -> getTransmission(size_t(-1))) << ")"
+	  << endl;
+#     endif
+      
     }
     if (data->binspectrum) {
-      double const * const channels = spr -> getChannels();
-      double nuem1, nuem2;
+      size_t nbounds = spr-> getNBoundaries();
+      double const * const channels = spr -> getChannelBoundaries();
+      size_t const * const chaninds = spr -> getChannelIndices();
+      double * I  = new double[nbnuobs];
+      double * boundaries = new double[nbounds];
+      for (size_t ii=0; ii<nbounds; ++ii)
+	boundaries[ii]=channels[ii]*ggredm1;
+      integrateEmission(I, boundaries, chaninds, nbnuobs,
+			dsem, coord_ph_hit, coord_obj_hit);
       for (size_t ii=0; ii<nbnuobs; ++ii) {
-	nuem1=channels[ii]*ggredm1;
-	nuem2=channels[ii+1]*ggredm1;
-	data->binspectrum[ii*data->offset] +=
-	  integrateEmission(nuem1, nuem2, dsem,
-			    coord_ph_hit, coord_obj_hit)
-	  * ph -> getTransmission(ii)
-	  *ggred*ggred*ggred*ggred;
-	if (debug())
-	  cerr << "DEBUG: Generic::processHitQuantities(): "
+	inc = I[ii] * ph -> getTransmission(ii) * ggred*ggred*ggred*ggred;
+#       ifdef HAVE_UDUNITS
+	if (data -> binspectrum_converter_)
+	  inc = (*data -> binspectrum_converter_)(inc);
+#       endif
+	data->binspectrum[ii*data->offset] += inc ;
+#       if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG
 	       << "nuobs[" << ii << "]="<< channels[ii]
-	       << ", nuem=" << nuem1 
+	       << ", nuem=" << boundaries[ii] 
 	       << ", binspectrum[" << ii+data->offset << "]="
 	       << data->binspectrum[ii*data->offset]<< endl;
+#       endif
       }
+      delete [] I;
+      delete [] boundaries;
     }
     if (data->spectrum) {
+      double * Inu  = new double[nbnuobs];
+      double * nuem = new double[nbnuobs];
       for (size_t ii=0; ii<nbnuobs; ++ii) {
-	nuem=nuobs[ii]*ggredm1;
-	data->spectrum[ii*data->offset] +=
-	  emission(nuem, dsem, coord_ph_hit, coord_obj_hit)
-	  * ph -> getTransmission(ii)
-	  *ggred*ggred*ggred;
-	if (debug())
-	  cerr << "DEBUG: Generic::processHitQuantities(): "
+	nuem[ii]=nuobs[ii]*ggredm1;
+      }
+      GYOTO_DEBUG_ARRAY(nuobs, nbnuobs);
+      GYOTO_DEBUG_ARRAY(nuem, nbnuobs);
+      emission(Inu, nuem, nbnuobs, dsem, coord_ph_hit, coord_obj_hit);
+      for (size_t ii=0; ii<nbnuobs; ++ii) {
+	inc = Inu[ii] * ph -> getTransmission(ii) * ggred*ggred*ggred;
+#       ifdef HAVE_UDUNITS
+	if (data -> spectrum_converter_)
+	  inc = (*data -> spectrum_converter_)(inc);
+#       endif
+	data->spectrum[ii*data->offset] += inc;
+	 
+#       if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG
+	       << "DEBUG: Generic::processHitQuantities(): "
 	       << "nuobs[" << ii << "]="<< nuobs[ii]
 	       << ", nuem=" << nuem 
 	       << ", dsem=" << dsem
 	       << ", Inu * GM/c2="
-	       << emission(nuem, dsem, coord_ph_hit, coord_obj_hit)
+	       << Inu[ii]
 	       << ", spectrum[" << ii*data->offset << "]="
 	       << data->spectrum[ii*data->offset]
 	       << ", transmission=" << ph -> getTransmission(ii)
 	       << ", redshift=" << ggred << ")\n";
+#       endif
       }
+      delete [] Inu;
+      delete [] nuem;
     }
     /* update photon's transmission */
     ph -> transmit(size_t(-1),
@@ -300,25 +328,45 @@ void Generic::processHitQuantities(Photon* ph, double* coord_ph_hit,
     for (size_t ii=0; ii<nbnuobs; ++ii)
       ph -> transmit(ii,transmission(nuobs[ii]*ggredm1,dsem,coord_ph_hit));
   } else {
-    if (debug())
-      cerr << "DEBUG: Generic::processHitQuantities: NO data requested!\n";
+#   if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG << "NO data requested!" << endl;
+#   endif
   }
 }
 
 double Generic::transmission(double, double, double*) const {
-  if (debug())
-    cerr << "DEBUG: Generic::transmission(): flag_radtransf_="
-	 << flag_radtransf_ << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(flag_radtransf_);
+# endif
   return double(flag_radtransf_);
 }
 
 double Generic::emission(double , double dsem, double *, double *) const
 {
-  if (debug())
-    cerr << "DEBUG: Generic::emission(): flag_radtransf_="
-	 << flag_radtransf_ << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(flag_radtransf_);
+# endif
   if (flag_radtransf_) return dsem;
   return 1.;
+}
+
+void Generic::emission(double * Inu, double * nuem , size_t nbnu,
+			 double dsem, double *cph, double *co) const
+{
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(flag_radtransf_);
+# endif
+  for (size_t i=0; i< nbnu; ++i) Inu[i]=emission(nuem[i], dsem, cph, co);
+}
+
+void Generic::integrateEmission(double * I, double const * boundaries,
+				size_t const * chaninds, size_t nbnu,
+				double dsem, double *cph, double *co) const
+{
+  for (size_t i=0; i<nbnu; ++i)
+    I[i] = integrateEmission(boundaries[chaninds[2*i]],
+			     boundaries[chaninds[2*i+1]],
+			     dsem, cph, co);
 }
 
 double Generic::integrateEmission (double nu1, double nu2, double dsem,
@@ -332,9 +380,9 @@ double Generic::integrateEmission (double nu1, double nu2, double dsem,
   double Icur = (Inu2+Inu1)*dnux2*0.25;
   double Iprev;
 
-  if (debug())
-      cerr << "DEBUG: Generic::integrateEmission(): "
-	   << "Icur=" << Icur << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(Icur);
+# endif
 
   do {
     Iprev = Icur; 
@@ -343,22 +391,22 @@ double Generic::integrateEmission (double nu1, double nu2, double dsem,
       Icur += emission(nu, dsem, coord_ph, coord_obj) * dnux2;
     }
     Icur *= 0.5;
-    if (debug())
-      cerr << "DEBUG: Generic::integrateEmission(): "
-	   << "Icur=" << Icur << endl;
+#   if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG_EXPR(Icur);
+#   endif
   } while( fabs(Icur-Iprev) > (1e-2 * Icur) );
 
-  if (debug())
-    cerr << "DEBUG: Generic::integrateEmission(): "
-	 << "dnu=" << dnux2*0.5
-	 << "=(nu2-nu1)/" << (nu2-nu1)/(dnux2*0.5) << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << "dnu=" << dnux2*0.5
+	      << "=(nu2-nu1)/" << (nu2-nu1)/(dnux2*0.5) << endl;
+# endif
 
   return Icur;
 }
 
 Quantity_t Generic::getDefaultQuantities() { return GYOTO_QUANTITY_INTENSITY; }
 
-
+#if defined GYOTO_USE_XERCES
 void Astrobj::initRegister() {
   if (Gyoto::Astrobj::Register_) delete Gyoto::Astrobj::Register_;
   Gyoto::Astrobj::Register_ = NULL;
@@ -370,11 +418,13 @@ void Gyoto::Astrobj::Register(std::string name, Subcontractor_t* scp){
   Gyoto::Astrobj::Register_ = ne;
 }
 
-Gyoto::Astrobj::Subcontractor_t* Astrobj::getSubcontractor(std::string name) {
+Gyoto::Astrobj::Subcontractor_t*
+Astrobj::getSubcontractor(std::string name, int errmode) {
   if (!Gyoto::Astrobj::Register_) throwError("No Astrobj kind registered!");
   return (Subcontractor_t*)Gyoto::Astrobj::Register_
-    -> getSubcontractor(name);
+    -> getSubcontractor(name, errmode);
 }
+#endif
 
 
 Astrobj::Properties::Properties() :
@@ -383,6 +433,10 @@ Astrobj::Properties::Properties() :
   redshift(NULL),
   spectrum(NULL), binspectrum(NULL), offset(1), impactcoords(NULL),
   user1(NULL), user2(NULL), user3(NULL), user4(NULL), user5(NULL)
+# ifdef HAVE_UDUNITS
+  , intensity_converter_(NULL), spectrum_converter_(NULL),
+  binspectrum_converter_(NULL)
+# endif
 {}
 
 Astrobj::Properties::Properties( double * I, double * t) :
@@ -391,6 +445,10 @@ Astrobj::Properties::Properties( double * I, double * t) :
   redshift(NULL),
   spectrum(NULL), binspectrum(NULL), offset(1), impactcoords(NULL),
   user1(NULL), user2(NULL), user3(NULL), user4(NULL), user5(NULL)
+# ifdef HAVE_UDUNITS
+  , intensity_converter_(NULL), spectrum_converter_(NULL),
+  binspectrum_converter_(NULL)
+# endif
 {}
 
 void Astrobj::Properties::init(size_t nbnuobs) {
@@ -409,6 +467,38 @@ void Astrobj::Properties::init(size_t nbnuobs) {
   if (user4)      *user4=0.;
   if (user5)      *user5=0.;
 }
+
+#ifdef HAVE_UDUNITS
+void Astrobj::Properties::setIntensityConverter(SmartPointer<Units::Converter> conv) {
+  intensity_converter_ = conv ;
+}
+
+void Astrobj::Properties::setIntensityConverter(string unit) {
+  intensity_converter_ =
+    new Units::Converter("J.m-2.s-1.sr-1.Hz-1",
+			 unit!=""?unit:"J.m-2.s-1.sr-1.Hz-1");
+}
+
+void Astrobj::Properties::setSpectrumConverter(SmartPointer<Units::Converter> conv) {
+  spectrum_converter_ = conv;
+}
+
+void Astrobj::Properties::setSpectrumConverter(string unit) {
+  spectrum_converter_ =
+    new Units::Converter("J.m-2.s-1.sr-1.Hz-1",
+			 unit!=""?unit:"J.m-2.s-1.sr-1.Hz-1");
+}
+
+void Astrobj::Properties::setBinSpectrumConverter(SmartPointer<Units::Converter> conv) {
+  binspectrum_converter_ = conv;
+}
+void Astrobj::Properties::setBinSpectrumConverter(string unit) {
+  binspectrum_converter_ =
+    new Units::Converter("J.m-2.s-1.sr-1",
+			 unit!=""?unit:"J.m-2.s-1.sr-1");
+}
+
+#endif
 
 Astrobj::Properties Astrobj::Properties::operator++() {
   if (intensity)  ++intensity;

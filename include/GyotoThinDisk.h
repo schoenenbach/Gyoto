@@ -74,8 +74,8 @@ class Gyoto::Astrobj::ThinDisk :
   // Data : 
   // -----
  protected:
-  double rin_ ; ///< disk inner radius
-  double rout_ ; ///< disk outer radius
+  double rin_ ; ///< disk inner radius in geometrical units
+  double rout_ ; ///< disk outer radius in geometrical units
 
   /**
    * Geometrical thickness in geometrical units. Used only in the
@@ -104,11 +104,17 @@ class Gyoto::Astrobj::ThinDisk :
   // ---------
  public:
   virtual double getInnerRadius() const ; ///< Get rin_
+  virtual double getInnerRadius(std::string unit) const ; ///< Get rin_
   virtual void   setInnerRadius(double); ///< Set rin_
+  virtual void   setInnerRadius(double, std::string unit); ///< Set rin_
   virtual double getOuterRadius() const ; ///< Get rout_
+  virtual double getOuterRadius(std::string unit) const ; ///< Get rout_
   virtual void   setOuterRadius(double); ///< Set rout_
+  virtual void   setOuterRadius(double, std::string unit); ///< Set rout_
   virtual double getThickness() const ; ///< Get thickness_
+  virtual double getThickness(std::string unit) const ; ///< Get thickness_
   virtual void   setThickness(double); ///< Set thickness_
+  virtual void   setThickness(double, std::string unit); ///< Set thickness_
   virtual int    getDir() const ; ///< Get dir_
   virtual void   setDir(int); ///< Set dir_
 
@@ -118,26 +124,27 @@ class Gyoto::Astrobj::ThinDisk :
   virtual double operator()(double const coord[]) ; ///< theta-pi/2 or z
 
   virtual double projectedRadius(double const coord[]) const ;
-      ///< projected radius of position coord on the equatorial plane
+      ///< Projected radius of position coord on the equatorial plane
 
   virtual double sphericalPhi(double const coord[]) const;
-      ///< longitude
+      ///< Longitude
 
+  /// Get fluid 4-velocity at point.
   /**
-   * Used by Standard::Impact().
-   *
    * Fill vel with the 4-vector velocity of the fluid at 4-position
    * pos. getVelocity() should work at some distance from the
    * equatorial plane. The default implementation calls
    * Metric::Generic::circularVelocity().
    *
-   * \param pos input, 4-position at which to compute velocity;
-   * \param vel output, 4-velocity at pos.
+   * \param[in] pos 4-position at which to compute velocity;
+   * \param[out] vel 4-velocity at pos.
    */
   virtual void getVelocity(double const pos[4], double vel[4])  ;
 
  public:
-  virtual int setParameter(std::string name, std::string content) ;
+  virtual int setParameter(std::string name,
+			   std::string content,
+			   std::string unit) ;
 
 #ifdef GYOTO_USE_XERCES
   /**

@@ -21,7 +21,6 @@
 #include "GyotoFactoryMessenger.h"
 #include "GyotoPhoton.h"
 #include "GyotoScreen.h"
-#include "GyotoWorldlineIntegState.h"
 #include "GyotoDefs.h"
 #include "GyotoError.h"
 
@@ -34,15 +33,15 @@
 #include <cstdlib>
 #include <cfloat>
 
-#define COUNT_MAX 100000
-
 
 using namespace std;
 using namespace Gyoto;
 
 Photon::Photon() :
-  Worldline(), freq_obs_(1.),
-  transmission_freqobs_(1.), spectro_(NULL), transmission_(NULL)
+  Worldline(),
+  object_(NULL),
+  freq_obs_(1.), transmission_freqobs_(1.),
+  spectro_(NULL), transmission_(NULL)
  {}
 
 Photon::Photon(const Photon& o) :
@@ -51,7 +50,10 @@ Photon::Photon(const Photon& o) :
   freq_obs_(o.freq_obs_), transmission_freqobs_(o.transmission_freqobs_),
   spectro_(NULL), transmission_(NULL)
 {
-  if (o.object_())  object_  = o.object_  -> clone();
+  if (o.object_()) {
+    object_  = o.object_  -> clone();
+    object_ -> setMetric(metric_);
+  }
   if (o.spectro_()) {
     spectro_ = o.spectro_ -> clone();
     _allocateTransmission();
@@ -75,18 +77,23 @@ Photon::Refined::Refined(Photon* orig, size_t i0, int dir, double step_max) :
   Photon(orig, i0, dir, step_max),
   parent_(orig)
 {
+  setFreqObs(orig->getFreqObs());
 }
 
-Photon::Photon(SmartPointer<Metric::Generic> met, SmartPointer<Astrobj::Generic> obj,
+Photon::Photon(SmartPointer<Metric::Generic> met,
+	       SmartPointer<Astrobj::Generic> obj,
 	       double* coord):
-  Worldline(), transmission_freqobs_(1.), spectro_(NULL), transmission_(NULL)
+  Worldline(), freq_obs_(1.), transmission_freqobs_(1.), spectro_(NULL), transmission_(NULL)
 {
   setInitialCondition(met, obj, coord);
 }
 
-Photon::Photon(SmartPointer<Metric::Generic> met, SmartPointer<Astrobj::Generic> obj, 
-	       SmartPointer<Screen> screen, double d_alpha, double d_delta):
-  Worldline(), object_(obj), transmission_freqobs_(1.),
+Photon::Photon(SmartPointer<Metric::Generic> met, 
+	       SmartPointer<Astrobj::Generic> obj, 
+	       SmartPointer<Screen> screen, 
+	       double d_alpha, double d_delta):
+  Worldline(), object_(obj), freq_obs_(screen->getFreqObs()),
+  transmission_freqobs_(1.),
   spectro_(NULL), transmission_(NULL)
 {
   double coord[8];
@@ -128,11 +135,11 @@ void Photon::setAstrobj(SmartPointer<Astrobj::Generic> ao) {
   object_=ao;
 }
 
-void Photon::setSpectrometer(SmartPointer<Spectrometer> spr) {
+void Photon::setSpectrometer(SmartPointer<Spectrometer::Generic> spr) {
   spectro_=spr;
   _allocateTransmission();
 }
-SmartPointer<Spectrometer> Photon::getSpectrometer() const { return spectro_; }
+SmartPointer<Spectrometer::Generic> Photon::getSpectrometer() const { return spectro_; }
 
 
 string Photon::className() const { return  string("Photon"); }
@@ -151,7 +158,7 @@ void Photon::setInitialCondition(SmartPointer<Metric::Generic> met,
   double coord[8];
   screen -> getRayCoord(d_alpha, d_delta, coord);
   Worldline::setInitialCondition(met, coord, -1);
-  object_=obj;
+  if (obj) object_=obj;
 
 }
 
@@ -159,23 +166,9 @@ void Photon::setInitialCondition(SmartPointer<Metric::Generic> met,
 				 SmartPointer<Astrobj::Generic> obj,
 				 const double coord[8])
 {
-  
-  /*if(debug()) cout << coord[0] << " "
-       << coord[1] << " "
-       << coord[2] << " "
-       << coord[3] << " "
-       << coord[4] << " "
-       << coord[5] << " "
-       << coord[6] << " "
-       << coord[7] << endl;*/
-  double gtt0=met->gmunu(coord,0,0);
-  double ObsVel[4]={sqrt(-1./gtt0),0.,0.,0.};
-  double sp_rec=met->ScalarProd(coord,coord+4,ObsVel);
-  freq_obs_ = -sp_rec;
-  //  cout << "ut= " << sqrt(-1./gtt0) << endl;
-  //  cout << "In Photon.C: freq obs= " << freq_obs_ << endl;
+  if (!met) met = metric_;
   Worldline::setInitialCondition(met, coord, -1);
-  object_=obj;
+  if (obj) object_=obj;
 }
 
 int Photon::hit(Astrobj::Properties *data) {
@@ -187,7 +180,7 @@ int Photon::hit(Astrobj::Properties *data) {
     depending on object_'s Astrobj::Properties) will be stored in data.
    */
 
-  //tlim_=-1000.;//DEBUG //NB: integration stops when t < Worldline::tlim_
+  //tmin_=-1000.;//DEBUG //NB: integration stops when t < Worldline::tmin_
 
   transmission_freqobs_=1.;
   size_t nsamples;
@@ -204,7 +197,7 @@ int Photon::hit(Astrobj::Properties *data) {
   //with small fixed step will be performed to determine more precisely
   //the surface point.
   double coord[8];
-  int dir=(tlim_>x0_[i0_])?1:-1;
+  int dir=(tmin_>x0_[i0_])?1:-1;
   size_t ind=i0_;
   int stopcond=0;
   double rr=DBL_MAX, rr_prev=DBL_MAX;
@@ -217,8 +210,8 @@ int Photon::hit(Astrobj::Properties *data) {
    */
   for (ind=i0_+dir;
        ((dir==1)?
-	(ind<=imax_ && x0_[ind]<=tlim_): // conditions if dir== 1
-	(ind>=imin_ && x0_[ind]>=tlim_)) // conditions if dir==-1
+	(ind<=imax_ && x0_[ind]<=tmin_): // conditions if dir== 1
+	(ind>=imin_ && x0_[ind]>=tmin_)) // conditions if dir==-1
 	 && !hitt;                    // condition in all cases
        ind+=dir) {
     switch (coordkind) {
@@ -235,13 +228,15 @@ int Photon::hit(Astrobj::Properties *data) {
   if (rr<rmax)
     hitt = object_ -> Impact(this, ind, data);
   if (hitt) {
-    if (debug()) cerr << "DEBUG: Photon.C: Hit for already computed position; "
-		      << "Warning: radiative transfer not implemented "
-		      << "for that case" << endl;
+#   if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG << "DEBUG: Photon.C: Hit for already computed position; "
+		<< "Warning: radiative transfer not implemented "
+		<< "for that case" << endl;
+#   endif
     return hitt;
   } else if (((dir==1)?
-	(ind==imax_ && x0_[ind]>=tlim_): // conditions if dir== 1
-	(ind>=imin_ && x0_[ind]<=tlim_)) // conditions if dir==-1
+	(ind==imax_ && x0_[ind]>=tmin_): // conditions if dir== 1
+	(ind>=imin_ && x0_[ind]<=tmin_)) // conditions if dir==-1
 	     && !hitt)
     return hitt;
   if (ind!=i0_) ind-=dir;
@@ -271,8 +266,8 @@ int Photon::hit(Astrobj::Properties *data) {
     throwError("Incompatible coordinate kind in Photon.C");
   }
 
-  SmartPointer<WorldlineIntegState> state
-    = new WorldlineIntegState(metric_, coord, delta_* dir);
+  SmartPointer<Worldline::IntegState> state
+    = new Worldline::IntegState(this, coord, delta_* dir);
   //delta_ = initial integration step (defaults to 0.01)
 
   size_t count=0;// Must remain below count_max (prevents infinite integration)
@@ -286,7 +281,7 @@ int Photon::hit(Astrobj::Properties *data) {
     - transmission_freqobs_ low [see transmission() function 
        in astrobjs, which defaults to 0 (optically thick) 
        or 1 (optically thin) in Astrobj.C]
-    - t < tlim_ (if dir=-1), [NB: tlim_ defaults to 0 in Worldline.C]
+    - t < tmin_ (if dir=-1), [NB: tmin_ defaults to -DBL_MAX in Worldline.C]
     - photon is at r>rmax (defined for each object) and goes even further
     - metric tells it's time to stop (eg horizon crossing)
     - t does not evolve [to investigate, metric should have stopped
@@ -297,9 +292,11 @@ int Photon::hit(Astrobj::Properties *data) {
 
   while (!stopcond) {
     // Next step along photon's worldline
-    stopcond  = state -> nextStep(this, coord);
+    stopcond  = state -> nextStep(coord);
     if (stopcond) {
-      if (debug()) cerr<<"DEBUG: Photon::hit(): stopcond set by integrator\n";
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "stopcond set by integrator\n";
+#     endif
       break;
     }
     if (coord[0] == x0_[ind]) { // here, ind denotes previous step
@@ -309,14 +306,15 @@ int Photon::hit(Astrobj::Properties *data) {
       break;
     }
     if((stopcond=metric_->isStopCondition(coord))) {
-      if (debug()) cerr << "DEBUG: Photo::hit(): stopcond step by metric"<<endl;
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "stopcond step by metric"<<endl;
+#     endif
       break;
     }
 
-    if ( ++count > COUNT_MAX ) {
-      if (verbose()>= GYOTO_SEVERE_VERBOSITY)
-	cerr << "***WARNING (severe): Photon::hit: too many iterations, break"
-	     << endl;
+    if ( ++count > maxiter_ ) {
+      GYOTO_SEVERE << "***WARNING (severe): Photon::hit: too many iterations, "
+		   <<" break" << endl;
       stopcond = 1;
       break;
     }
@@ -336,9 +334,10 @@ int Photon::hit(Astrobj::Properties *data) {
     if (dir==1) ++imax_; else --imin_;
 
     if (imin_!=ind && imax_!=ind) {
-      if (debug()) cerr << "\nimin_=" << imin_
-			<< ", imax_=" << imax_
-			<< ", ind=" << ind << endl;
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "imin_=" << imin_ << ", imax_=" << imax_
+		  << ", ind=" << ind << endl;
+#     endif
       throwError("BUG: Photon.C: bad index evolution, "
 		 "ind should be equal to imin or imax");
     }
@@ -359,26 +358,43 @@ int Photon::hit(Astrobj::Properties *data) {
       throwError("Incompatible coordinate kind in Photon.C");
     }
 
-    if (debug())
-      cerr << "DEBUG: Photon::hit(): rmax="<< rmax <<", rr="<<rr<<endl;
+#   if GYOTO_DEBUG_ENABLED
+    GYOTO_IF_DEBUG
+      GYOTO_DEBUG_EXPR(rmax);
+      GYOTO_DEBUG_EXPR(rr);
+    GYOTO_ENDIF_DEBUG
+#   endif
+
     if (rr<rmax) {
-      if (debug()) cerr << "DEBUG: Photon::hit() calling Astrobj::Impact\n";
+
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG << "calling Astrobj::Impact\n";
+#     endif
+
       hitt |= object_ -> Impact(this, ind, data);
       if (hitt && !data) stopcond=1;
-      if (debug()) cerr << "DEBUG: Photon::hit(): transmission_freqobs_="
-			<< transmission_freqobs_ << endl;
-      if ( transmission_freqobs_ < 1e-6 ) {
+
+#     if GYOTO_DEBUG_ENABLED
+      GYOTO_DEBUG_EXPR(transmission_freqobs_);
+#     endif
+
+      if ( getTransmissionMax() < 1e-6 ) {
 	stopcond=1;
-	if (debug()) 
-	  cerr << "DEBUG: Photon::hit(): stopping because we "
-	       << "are optically thick\n";
+
+#       if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG << "stopping because we are optically thick\n";
+#       endif
+
       }
     } else {
       if ( rr > rr_prev ) {
-	if (debug())
-	  cerr << "DEBUG: Photon::hit(): Stopping because "
-	       << "1) we are far from this object and "
-	       << "2) we are flying away" << endl;
+
+#       if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG << "Stopping because "
+		    << "1) we are far from this object and "
+		    << "2) we are flying away" << endl;
+#       endif
+
 	stopcond=1;
 	break;
       }
@@ -390,15 +406,15 @@ int Photon::hit(Astrobj::Properties *data) {
 
     //************************************
     /* 
-       3-c Checks whether t < tlim_ (with dir=-1) and expands arrays
+       3-c Checks whether t < tmin_ (with dir=-1) and expands arrays
        if necessary to be able to store next step's results
     */
     switch (dir) {
     case 1:
-      if (coord[0]>tlim_) {
-	if (debug()) 
-	  cerr << "DEBUG: Photon::hit(): stopping because time "
-	       << "goes beyond time limit\n";
+      if (coord[0]>tmin_) {
+#       if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG << "stopping because time goes beyond time limit\n";
+#       endif
 	stopcond=1;
       }
       if ((!stopcond) && (ind==x_size_)) {
@@ -407,10 +423,10 @@ int Photon::hit(Astrobj::Properties *data) {
       }
       break;
     default:
-      if (coord[0]<tlim_) {
-	if (debug()) 
-	  cerr << "DEBUG: Photon::hit(): stopping because time "
-	       << "goes beyond time limit\n";
+      if (coord[0]<tmin_) {
+#       if GYOTO_DEBUG_ENABLED
+	GYOTO_DEBUG << "stopping because time goes beyond time limit\n";
+#       endif
 	stopcond=1;
       }
       if ((!stopcond) && (imin_==0)) {
@@ -430,24 +446,25 @@ int Photon::hit(Astrobj::Properties *data) {
 double Photon::findMin(Functor::Double_constDoubleArray* object,
 		       double t1, double t2, double &tmin,
 		       double threshold) {
-  if (debug())
-    cerr << "DEBUG: in Photon::findMind()\n";
-  double p1[4] = {t1}, p2[4] = {t2};
-  getCoord(p1, 1, p1+1, p1+2, p1+3);
-  getCoord(p2, 1, p2+1, p2+2, p2+3);
-  double curval = DBL_MAX, pcur[4], val1, val2;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
+  double p1[8] = {t1}, p2[8] = {t2};
+  getCoord(p1, 1, p1+1, p1+2, p1+3, p1+4, p1+5, p1+6, p1+7);
+  getCoord(p2, 1, p2+1, p2+2, p2+3, p2+4, p2+5, p2+6, p2+7);
+  double curval = DBL_MAX, pcur[8], val1, val2;
 
   pcur[0]=t1;
-  getCoord(pcur, 1, pcur+1, pcur+2, pcur+3);
+  getCoord(pcur, 1, pcur+1, pcur+2, pcur+3, pcur+4, pcur+5, pcur+6, pcur+7);
   val1=(*object)(pcur);
 
   pcur[0]=t2;
-  getCoord(pcur, 1, pcur+1, pcur+2, pcur+3);
+  getCoord(pcur, 1, pcur+1, pcur+2, pcur+3, pcur+4, pcur+5, pcur+6, pcur+7);
   val2=(*object)(pcur);
 
   while ( (fabs(t2-t1)>GYOTO_T_TOL) && (curval>threshold) ) {
     pcur[0] = 0.5*(t1+t2);
-    getCoord(pcur, 1, pcur+1, pcur+2, pcur+3);
+    getCoord(pcur, 1, pcur+1, pcur+2, pcur+3, pcur+4, pcur+5, pcur+6, pcur+7);
     curval=(*object)(pcur);
     if (val1<val2) {
       t2=pcur[0];
@@ -471,17 +488,24 @@ double Photon::findMin(Functor::Double_constDoubleArray* object,
 void Photon::findValue(Functor::Double_constDoubleArray* object,
 		       double value,
 		       double tinside, double &toutside) {
-  double pcur[4];
+  double pcur[8];
   while (fabs(toutside-tinside) > GYOTO_T_TOL) {
     pcur[0] = 0.5*(tinside+toutside);
-    getCoord(pcur, 1, pcur+1, pcur+2, pcur+3);
+    getCoord(pcur, 1, pcur+1, pcur+2, pcur+3, pcur+4, pcur+5, pcur+6, pcur+7);
     if ( (*object)(pcur) < value ) tinside = pcur[0];
     else toutside = pcur[0];
   }
   toutside = tinside;
 }
 
-double Photon::getFreqObs() const { return freq_obs_; }
+void Photon::setFreqObs(double fo) {
+  freq_obs_=fo; 
+  GYOTO_DEBUG_EXPR(freq_obs_);
+}
+double Photon::getFreqObs() const {
+  GYOTO_DEBUG_EXPR(freq_obs_);
+  return freq_obs_;
+}
 
 double Photon::getTransmission(size_t i) const {
   if (i==size_t(-1)) return transmission_freqobs_;
@@ -489,15 +513,31 @@ double Photon::getTransmission(size_t i) const {
     throwError("Photon::getTransmission(): i > nsamples");
   return transmission_[i];
 }
+
+double Photon::getTransmissionMax() const {
+  double transmax=transmission_freqobs_;
+  if (spectro_()) {
+    size_t i=0, imax= spectro_->getNSamples();
+    for (i=0; i < imax; ++i)
+      if (transmission_[i] > transmax)
+	transmax = transmission_[i];
+  }
+# ifdef GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(transmax);
+# endif
+  return transmax;
+}
+
 double const * Photon::getTransmission() const { return transmission_; }
 void Photon::transmit(size_t i, double t) {
   if (i==size_t(-1)) { transmission_freqobs_ *= t; return; }
   if (!spectro_() || i>=spectro_->getNSamples())
     throwError("Photon::getTransmission(): i > nsamples");
   transmission_[i] *= t;
-  if (debug())
-    cerr << "DEBUG: Photon::transmit(i="<<i<< ", transmission="<<t<<"):"
-	 << "transmission_[i]="<< transmission_[i]<< "\n";
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << "(i="<<i<< ", transmission="<<t<<"):"
+	      << "transmission_[i]="<< transmission_[i]<< "\n";
+# endif
 }
 void Photon::Refined::transmit(size_t i, double t) {
   parent_->transmit(i, t);
@@ -507,37 +547,19 @@ void Photon::Refined::transmit(size_t i, double t) {
 
 #ifdef GYOTO_USE_XERCES
 void Photon::fillElement(FactoryMessenger *fmp) {
-  if (metric_)     fmp -> setMetric (metric_) ;
   if (object_)    fmp -> setAstrobj (object_) ;
-
-  double coord[8];
-  getInitialCoord(coord);
-  fmp -> setParameter("InitCoord", coord, 8);
-
-  if (delta_ != GYOTO_DEFAULT_DELTA)
-    fmp -> setParameter ("Delta", delta_);
+  Worldline::fillElement(fmp);
 }
 
-SmartPointer<Photon> Gyoto::PhotonSubcontractor(FactoryMessenger* fmp) {
+SmartPointer<Photon> Gyoto::Photon::Subcontractor(FactoryMessenger* fmp) {
 
   string name="", content="";
   SmartPointer<Metric::Generic> gg = NULL;
   SmartPointer<Astrobj::Generic> ao = NULL;
 
   SmartPointer<Photon> ph = new Photon();
-  ph -> setMetric(  fmp->getMetric() );
   ph -> setAstrobj( fmp->getAstrobj() );
-
-
-  while (fmp->getNextParameter(&name, &content)) {
-    char* tc = const_cast<char*>(content.c_str());
-    if(name=="Delta") ph -> setDelta( atof(tc) );
-    if(name=="InitCoord") {
-      double coord[8];
-      for (int i=0;i<8;++i) coord[i] = strtod(tc, &tc);
-      ph -> setInitCoord(coord, -1);
-    }
-  }
+  ph -> setParameters(fmp);
 
   return ph;
 }

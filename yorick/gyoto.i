@@ -1,6 +1,6 @@
 plug_in, "gyoto";
 /*
-    Copyright 2011 Thibaut Paumard
+    Copyright 2011-2013 Thibaut Paumard
 
     This file is part of Gyoto.
 
@@ -20,11 +20,41 @@ plug_in, "gyoto";
 
 #include "graphk.i"
 
+extern gyoto_haveXerces;
+/* DOCUMENT have_xerces = gyoto_haveXerces()
+    Tell whether GYOTO was compiled with Xerces support (XML i/o)
+   OUTPUT:
+    HAVE_XERCES=1 if compiled with Xerces, else 0.
+*/
+
 extern __gyoto_setErrorHandler;
 /* xDOCUMENT __gyoto_setErrorHandler
    Must be called once to attach the GYOTO error handler to Yorick's one
 */
 __gyoto_setErrorHandler;
+
+extern gyoto_loadPlugin;
+/* DOCUMENT gyoto_loadPlugin, plugin[, plugin2[, plugin3]] [, nofail=1]
+
+   Load Gyoto plug-ins.
+
+  INPUTS:
+   gyoto_loadPlugins() accepts an aribtrary number of positional
+   arguments, each a string or string array naming individual Gyoto
+   plugins. For instance, all of the following attempt to load the
+   plug-ins, stdplug, lorene and myplug:
+    gyoto_loadPlugin, "stdplug", "lorene", myplug"
+    gyoto_loadPlugin, ["stdplug", "lorene", myplug"]
+    gyoto_loadPlugin, "stdplug", ["lorene", myplug"]
+
+  KEYWORDS:
+   nofail= if set and true, failure to load a plug-in will not trigger
+           an error. It applies to _all_ plug-ins in the list.
+
+  EXAMPLE:
+   gyoto_loadPlugin, "stdplug"
+   gyoto_loadPlugin, "lorene", nofail=1
+ */
 
 extern __gyoto_initRegister;
 /* xDOCUMENT __gyoto_initRegister
@@ -39,12 +69,7 @@ extern __gyoto_exportSupplier;
 
 
 require, "pl3d.i";
-#include "gyoto_Photon.i"
-#include "gyoto_Scenery.i"
 #include "gyoto_constants.i"
-
-include, "gyoto_std.i", 2;
-
 
 local gyoto;
 /* DOCUMENT GYOTO -- General relativtY Orbit Tracer of Observatoire de paris
@@ -104,21 +129,26 @@ local gyoto;
     later point in time:
        gg = gyoto_KerrBL( spin=0.995, mass=4e6 ) ;
        gg, spin=0.5;
-       spin_param = gg(spin=);
+       spin_param = gg(spin=); // or spin_param = gg.spin
        
     Note how giving a member keyword without any value, as in the last
-    example above, allows _retrieving_ the previously set value. When
-    setting member, it is also possible to call the object as a
+    example above, allows _retrieving_ the previously set value. The
+    alternative dot notation is semantically equivalent but slightly
+    slower.
+
+    When setting member, it is also possible to call the object as a
     function. In that case, the return value will be the object
     itself, allowing to call it again as a function:
-       spin_val = gg(spin=0.5)(spin=);
+       spin_val = gg(spin=0.5)(spin=)
+       or spin_val = gg(spin=0.5).spin
     Although the above example is trivial, this is useful in some
     complex situations:
-       Setting the resolution in a Screen attached to a Scenery:
+       Getting the resolution in a Screen attached to a Scenery:
          res_val = scenery(screen=)(resolution=);
+         res_val = scenery.screen.resolution; // more elegant but slower
        Setting resolution:
-         noop, scenery(screen=)(resolution=res_val);
-       (The noop above is not mandatory.) 
+         noop, scenery.screen(resolution=res_val);
+       (The noop above is not mandatory but avoid spurious display). 
 
     Some member keywords accept more than one parameter, separated by
     comas. This is the first exception GYOTO makes to the Yorick
@@ -156,12 +186,12 @@ local gyoto;
                        // object
        
        gg_clone = gg(clone=);  // This is cloning: gg3 is a detached
-                               // copy
+       gg_clone = gg.clone     // copy
 
        gg_copy, spin=0.2;
        gg_clone, spin=0.7;
 
-       gg(spin=);  // the spin in gg is the same as in gg_copy, not
+       gg.spin;    // the spin in gg is the same as in gg_copy, not
                    // gg_clone.
 
     
@@ -258,7 +288,7 @@ local gyoto;
 
      Trace the trajectory of a photon in the secondary image of the above:
        ph = gyoto_Photon(initcoord=sc,77,45, xfill=870.623);
-       txyz = ph(get_txyz=1);
+       txyz = ph.get_txyz;
        plg, txyz(,3), txyz(,2);
        limits, square=1;
 
@@ -271,10 +301,350 @@ local gyoto;
     
  */
 
+//////// SCENERY
+
+extern gyoto_Scenery;
+/* DOCUMENT scenery = gyoto_Scenery([filename,] [members=values ...])
+             Create GYOTO Scenery object
+         or scenery, [members=values]
+             Set GYOTO Scenery member
+         or res = scenery(member=) or res = scenery.member
+             Get GYOTO Scenery member
+         or scenery, xmlwrite=filename
+             Save Scenery description to XML
+         or data = scenery([ irange, jrange [, quantities ]])
+             Ray-trace scenery
+
+   PURPOSE:
+    Create and use GYOTO Scenery objects.
+
+    A GYOTO Scenery is used to render an image by relativistic
+    ray-tracing. A GYOTO Scenery contains references to:
+     - a GYOTO Metric ("the stage");
+     - a GYOTO Astrobj ("the actors");
+     - a GYOTO Screen ("the camera").
+
+    See GYOTO for basic concepts and syntax.
+
+
+   MEMBERS:
+
+    metric=  see gyoto_Metric(): what "straight" means for light
+             travel;
+             
+    screen=  see gyoto_Screen(), it specifies where the obseerver is
+             located and the obseerving time;
+             
+    astrobj= see gyoto_Astrobj(): where the light comes from;
+    
+    delta=   a double scalar, the initial integration step for the
+             Photons laucnched during ray-tracing;
+             
+    adaptive= whether integration uses adaptive step
+
+    maxiter= maximum number of iterations in integration (per Photon)
+             
+    quantities= an array of strings giving the names of physical
+             quantities that should be retrieved during
+             ray-tracing. Beware that not all Astrobj kinds support
+             all of those quantities. The order in which the
+             quantities are listed when setting this member is not
+             relevant, the following are equivalent:
+                 data = scenery(quantities=["EmissionTime", "Intensity"])();
+             and
+                 data = scenery(quantities=["Intensity", "EmissionTime"])();
+             Setting quantities here is not mandatory as the third
+             positional argument used for ray-tracing permits to
+             override it in an ordered fashion.
+
+             Recognized quantities:
+               "Intensity": apparent intensity of the Astrobj;
+               "EmissionTime": time at which each photonreaching the
+                    screen was emitted;
+               "MinDistance": minimum distance ever reached between
+                    each photon (whether comingfrom the object or not)
+                    and the Astrobj);
+               "FirstDistMin": First local minimum in the
+                    Astrobj/Photon distance;
+               "Redshift": ;
+               "ImpactR", "ImpactX", "ImpactY" and "ImpactZ": R
+                    (specrical), X, Y and Z (Cartsesian) coordinates
+                    at which a photon was emitted by the Astrobj;
+               "Spectrum": Inu spectrum of the Astrobj on this pixel,
+                    the spectrometer is specified in the Screen
+                    object;
+               "BinSpectrum": spectrum of the Astrobj on this pixel
+                    (the spectrometer is specified in the Screen
+                    object), as would be detected by a real
+                    spectrometer: the value in each spectral channel
+                    is the integral of Inu over the spectral channel;
+               "User1" to "User5": other specific scalar quantities an
+                    Astrobj may be able to compute, refer to the
+                    documentation for the Astrobj kind of your choice.
+
+    nthreads=number of parallel threads to use in
+             gyoto_Scenery_rayTrace. This has no effect when
+             ray-tracing using the "data = scenery()" syntax below.
+                    
+    RAY-TRACING:
+    
+     Ray-traced data is retrieved calling the object like a function
+     with no keyword:
+        data = scenery ();
+     or data = scenery (irange, jrange, quant )
+     
+    IRANGE and JRANGE are either scalars (i, j) or ranges in the usual
+    form min:max:step. QUANT is an array of Yorick strings where each
+    element selects one quantity to retrieve (see the QUANTITIES
+    member above). QUANT may be void to use the quantities already set
+    in the Scenery or the default for the Astrobj. If specifyng QUANT,
+    DATA will be a MxNxP double array, where P=numberof(QUANT) and
+    DATA(,,i) will contain the value of the quantity specifeid by
+    QUANT(i).
+
+    QUANTITIES may also be a scalar to retrieve a single
+    quantity.
+
+    The "Spectrum" quantity is a bit peculiar since it take more than
+    one plane in data.
+    
+   SEE ALSO:
+     gyoto_Metric, gyoto_Screen, gyoto_Astrobj, gyoto_Photon,
+     gyoto_Spectrometer, gyoto_Scenery_rayTrace
+*/
+
+extern gyoto_Scenery_rayTrace
+/* DOCUMENT res = gyoto_Scenery_rayTrace(scenery, imin, imax, jmin, jmax,
+                                         impactcoords)
+
+     if IMPACTCOORDS is an unadorned, nil variable it is output. If it
+     is an expression or non-nil, it is input.
+ */
+
+func _gyoto_Scenery_adaptive_raytrace(sco, respmax, &computed) {
+/* xDOCUMENT data = gyoto_Scenery_adaptive_raytrace(scenery, pmax, [computed])
+
+BROKEN
+   
+     Ray-trace a GYOTO Scenery on an adaptive grid.
+
+     For certain kinds of objects (in particular, Stars), this routine
+     is much faster than the equivalent:
+       data = scenery(resolution=3^pmax, raytrace=1);
+     It is NOT guaranteed that the two methods yield the same result.
+
+     The minimum distance between photon and object is first computed
+     on a coarse grid which is then refined as required.
+
+   SEE ALSO: gyoto_Scenery
+ */
+  write, format="%s\n",
+    "WARNING: gyoto_Scenery_adaptive_raytrace() is under development";
+
+  sc = sco(clone=); // don't modify calling object
+  
+  DBL_MAX=1e100;
+
+  screen = sc(screen=);
+
+  respmax=long(respmax);
+  
+  resp=1;
+  resmax=3^respmax;
+  step=long(3^(respmax-resp));
+  first=step/2+1;
+
+  data=array(double, resmax, resmax, 6);
+
+  quantities = ["Intensity", "EmissionTime", "MinDistance", "ImpactX", "ImpactY", "ImpactZ"];
+  
+  screen, resolution=resmax;
+  data(first::step, first::step, ) =
+    sc(first::step, first::step, quantities);
+  
+  computed=array(long,resmax,resmax);
+
+  nb=9;
+  for (resp=2, res=3; resp<=respmax; ++resp) {
+
+    // largest distance to neighbour
+    dsub=data(first::step, first::step,);
+    ind=where(dsub>=DBL_MAX);
+    if (numberof(ind)) dsub(ind)=DBL_MAX;
+    delta = array(double, res, res);
+    d1=(dsub(dif,,4:6)^2)(,,sum);
+    d2=(dsub(,dif,4:6)^2)(,,sum);
+    delta(2:-1,2:-1)=[d1(:-1,2:-1), d1(2:,2:-1), d2(2:-1,:-1), d2(2:-1,2:)](,,max);
+    delta(1,2:-1)=[d1(1,2:-1), d2(1,:-1), d2(1,2:)](,max);
+    delta(0,2:-1)=[d1(0,2:-1), d2(0,:-1), d2(0,2:)](,max);
+    delta(2:-1,1)=[d2(2:-1,1), d1(:-1,1), d1(2:,1)](,max);
+    delta(2:-1,0)=[d2(2:-1,0), d1(:-1,0), d1(2:,0)](,max);
+    delta(0,0)=[d1(0,0), d2(0,0)](max);
+    delta(1,1)=[d1(1,1), d2(1,1)](max);
+    delta(0,1)=[d1(0,1), d2(0,1)](max);
+    delta(1,0)=[d1(1,0), d2(1,0)](max);
+
+
+    // ! BEWARE : res is updated here
+    res*=3;
+    refine=array(int, res, res);
+    refine(1::3, 1::3) =
+    refine(2::3, 1::3) =
+    refine(3::3, 1::3) =
+    refine(1::3, 2::3) =
+    refine(2::3, 2::3) =
+    refine(3::3, 2::3) =
+    refine(1::3, 3::3) =
+    refine(2::3, 3::3) =
+    refine(3::3, 3::3) =
+      (dsub(,,3)<4*delta) | (dsub(,,3)<2);
+    
+    nstep=long(3^(respmax-resp));
+    nfirst=first-nstep;
+    data(nfirst     ::step,nfirst     ::step,)=
+    data(first      ::step,nfirst     ::step,)=
+    data(first+nstep::step,nfirst     ::step,)=
+    data(nfirst     ::step,first      ::step,)=
+    data(first+nstep::step,first      ::step,)=
+    data(nfirst     ::step,first+nstep::step,)=
+    data(first      ::step,first+nstep::step,)=
+    data(first+nstep::step,first+nstep::step,)=
+      dsub;
+
+    step=nstep;
+    first=nfirst;
+    for (i=1; i<=res; ++i) {
+      ibis=(i-1)*step+first;
+      ind=where(refine(i,) & !computed(ibis,first::step));
+      nb+=numberof(ind);
+      if (numberof(ind)) {
+        indbis=(ind-1)*step+first;
+        data(ibis,indbis,)=sc(ibis, indbis, quantities);
+        computed(ibis, indbis)=resp;
+      }
+    }
+
+  }
+  nb;
+  return data;
+}
+
+// PHOTON CLASS
+extern gyoto_Photon;
+/* DOCUMENT photon = gyoto_Photon([filename], [members=values])
+            photon, member=values
+            value = photon(member=) or value = photon.member
+            value = photon(function_method=params)
+            photon, subroutine_method=params
+
+   PURPOSE:
+
+     Instanciate and use a single GYOTO photon.
+
+     Photons are mass-less particles following light-like geodesics of
+     a metric. For basic concepts, see GYOTO. For ray-tracing,
+     gyoto_Scenery() is more appropriate.
+
+   MEMBERS:
+
+     Members can be set with the syntax "photon, member=value" and
+     retrieved with the syntax "value=photon(member=)" or
+     "value=photon.member":
+     
+        metric= a GYOTO Metric (see gyoto_Metric),
+            initcoord=scenery,x,y also sets the metric.
+        astrobj=a GYOTO Astrobj (see gyoto_Astroj), the target of
+            ray-tracing.
+                  
+        initcoord= the initial coordinates (4-position & 4 velocity).
+            There are many ways to specify this:
+
+            initcoord=COORD8
+                directly give the 8 coordinates;
+            initcoord=POS4,VEL4
+                as above, with a coma in-between;
+            initcoord=POS4,VEL3 this time only 3 coordinates are given
+                for the velocity vector. The light-ray will be tangent
+                to this 3-vector.
+            initcoord=SCREEN,DALPHA,DDELTA
+                SCREEN is a gyoto_Screen, DALPHA and DDELTA specify
+                the direction this photon comes from when it reaches
+                the screen. DALPHA and DDELTA are in radians and must
+                be floating-point values.
+            initcoord=SCREEN,I,J
+                As above, but I and J are integers specifying the
+                pixel of the arrival SCREEN which the photon hits.
+            initcoord=SCENERY,DALPHA,DDELTA
+            initcoord=SCENERY,I,J
+                As above, but specify a gyoto_Scenery instead of a
+                gyoto_Screen. The Metric and Astrobj of the Senery
+                will also be attached to the Photon.
+
+            Those last ways of specifying the initial conditions are
+            very useful to get the trajectory of a specific photon in
+            a ray-traced scenery.
+
+        spectro= a gyoto_Spectrometer
+
+        delta= integration step (initial in case of adaptive, the
+               default)
+
+        adaptive= whether integration uses adaptive step
+
+        maxiter= maximum number of iterations in integration
+     
+   SUBROUTINE-LIKE METHODS:
+
+     Several of these keywords can by specified whenever creating or
+     accessing the object.
+
+     xfill=TLIM Integrate the geodesic from the time specified with
+            INITCOORD to tlim (the integrated geodesic remains stored
+            in the PHOTON);
+
+     save_txyz=FILENAME Dump the integrated geodesic in cartesian
+            coordinates in ASCII file FILENAME.
+
+     xmlwrite=filename as usual, save an XML description of this
+            photon;
+
+     setparameter=name[,value] set any low-level parameter. Name and
+            value are strings.
+
+   FUNCTION-LIKE METHODS:
+
+     The object PHOTON will return a value when called as a function
+     with the following keywords set:
+
+     is_hit=     Return 1 if this photon hits the Astrobj
+
+     get_txyz=   Return the geodesic in Cartesian coordinates:
+                     data = photon(xfill=tlim, get_txyz=)
+            data will be a Nx4 double array where data(i,) contains
+            the 4-position in Cartesian coordinates of the photon for
+            all the dates computed by the integrator between
+            INITCOORD[0] and TLIM.
+
+     get_coord= Return the geodesic in Metric coordinatess: same as
+            above, but in the prefered coordinate system for this
+            metric, which may be Cartesian or spherical.
+
+     get_coord=dates Same as above, but for the dates specified in
+            double array DATES.
+
+     get_cartesian=dates Get the 3-position and 3-velocity of the
+            Photon in Cartesian coordinates for the specified dates.
+     
+   SEE ALSO: gyoto, gyoto_Metric, gyoto_Screen, gyoto_Scenery,
+            gyoto_Astrobj
+ */
+
+/// METRIC
+
 extern gyoto_Metric;
 /* DOCUMENT gg = gyoto_Metric( filename, [members=values] )
             gg, members=values
-            retval = gg(member=);
+            retval = gg(member=) or retval = gg.member;
             retval = gg(function_method=par1, par2...)
             gg, xmlwrite=filename
             coef = gg(coordinates, mu, nu)
@@ -335,11 +705,14 @@ extern gyoto_Metric;
      Additional function-like or subroutine like methods:
      
        coord=gg(prime2tdot=pos, vel): COORD is the 8-vector where
-              COORD[1-4]==POS and COORD[5-8] is the 4-velocity
-              corresponding to the 3-velocity VEL;
+               COORD[1-4]==POS and COORD[5-8] is the 4-velocity
+               corresponding to the 3-velocity VEL;
        
-       gg, nullifycoord=pos, vel    return nullified (photon) coord tangent
-                                    to vel at pos.
+       vel4 =gg(nullifycoord=pos, vel)
+               Return nullified (photon) coord tangent to vel at pos.
+
+       prod = gg(scalarprod=pos, u1, u2)
+               Return (4-dimensional) scalar product.
 
        vels = gg(circularvelocity=coords [, dir])
                On input, COORDS is an array of doubles yielding
@@ -364,7 +737,7 @@ extern gyoto_Metric;
 extern gyoto_Astrobj;
 /* DOCUMENT ao = gyoto_Astrobj( filename );
             ao, member1=val1, member2=val2...;
-            val = ao(member=)
+            val = ao(member=) or val = ao.member
             ao, xmlwrite=filename
 
      Generic class for describing an astronomical object (a star, an
@@ -386,7 +759,7 @@ extern gyoto_Astrobj;
      All the kinds of Astrobjs share a few members that can be
      accessed with the following keywords. To set the member, use "ao,
      member=value". To retrieve the current value of the member, use
-     "retval = ao(member=)".
+     "retval = ao(member=)" or "retval = ao.member".
 
      rmax:        for optimization, tell the Scenery that this object
                   does not extend over RMAX from the center of the
@@ -420,22 +793,29 @@ extern gyoto_Astrobj;
                   for the specific class. See
                   Gyoto::Astrobj::Generic::setParameter().
      
-   SEE ALSO: gyoto
+   EXAMPLES:
     The following implement specific objects, most require gyoto_std.i:
      gyoto_Star               A spherical object moving along a geodesic
      gyoto_FixedStar          A spherical object of constant coordinates
      gyoto_Torus              A simple torus (solid, Keplerian rotation)
      gyoto_ThinDisk           A geometrically thin disk
-     gyoto_PageThorneDisk     As above with Page & Thorne 1974 emission
      gyoto_PatternDisk        As above, emission numerically provided
      gyoto_Disk3D             Thick disk, emission numerically provided
+
+    It is also possible to instanciate an astrobj by kind name even if
+    this kind is not explicitly implemented in the yorick plug-in:
+     gyoto_Astrobj("PageThorneDisk")
+                              A geometrically thin, optically thick disk
+                              with Page & Thorne 1974 emission
+
+   SEE ALSO: gyoto
      
  */
 
 extern gyoto_ThinDisk;
 /* DOCUMENT ao = gyoto_ThinDisk( filename );
             ao, member1=val1, member2=val2...;
-            val = ao(member=)
+            val = ao(member=) or val = ao.member
             ao, xmlwrite=filename
 
      A more specific version of the gyoto_Astrobj function. A very
@@ -453,9 +833,9 @@ extern gyoto_ThinDisk;
                   -1 if coounter rotating.
 
    SEE ALSO: gyoto, gyoto_Astrobj
-    There are two derived classes in gyoto_std.i:
-     gyoto_PageThorneDisk     As above with Page & Thorne 1974 emission
+    There is one derived classe in gyoto_std.i:
      gyoto_PatternDisk        As above, emission numerically provided
+    try also gyoto_Astrobj("PageThorneDisk")
      
  */
 
@@ -504,7 +884,7 @@ extern gyoto_Screen;
 
      Member keywords are used to set the value of a member (screen,
      member=value) or to retrieve the value of a memeber
-     (value=screen(member=)):
+     (value=screen(member=) or value=screen.member):
        metric, time, tmin, fov (field-of-view), resolution (N pixels
        on each side), distance (meters), inclination, paln (position
        angle of the line of nodes), argument, pojection (=[incl, paln,
@@ -572,23 +952,24 @@ extern gyoto_Spectrum;
    SEE ALSO:  gyoto, gyoto_Star
  */
 
-extern is_gyoto_Spectrum;
-
-/* DOCUMENT bool = is_gyoto_Spectrum(arg)
-     BOOL is 1 if arg is a gyoto_Spectrum
-   SEE ALSO: gyoto, gyoto_Spectrum
- */
-
 extern gyoto_debug;
 /* DOCUMENT gyoto_debug, 1/0
     Turn GYOTO debug output on/off.
    SEE ALSO: gyoto
  */
 
+extern gyoto_verbose;
+/* DOCUMENT gyoto_verbose, level
+         or level = gyoto_verbose()
+    Set/get Gyoto verbosity level
+   SEE ALSO: gyoto
+ */
+
 extern gyoto_Spectrometer;
-/* DOCUMENT spectro = gyoto_Spectrometer([members=values])
-         or spectro, members=values
-         or table = spectro( channels= | midpoints= | widths= )
+/* DOCUMENT spectro = gyoto_Spectrometer([filename],[members=values])
+         or spectro, xmlwrite=filename
+         or var = spectro( channels= | midpoints= | widths= |
+                           nsamples= | kind= | clone= )
          
      The spectrometric capabilities of a GYOTO Screen or Photon.
 
@@ -598,42 +979,128 @@ extern gyoto_Spectrometer;
 
      For basics, see GYOTO.
 
+     In the first form, if FILENAME is specified, a new Spectrometer
+     is instanciated from XML file FILENAME. FILENAME can also name a
+     Spectrometer Kind, such as "Complex" or "wave".
+
+   KEYWORDS:
+       unit=     a string, affects methods called together:
+                 channels_in_microns=spectro(channels=, unit="microm")
+
+   METHODS:
+       xmlwrite=filename, write XML desription of this spectrometer
+                  to hard drive. E.g. spectro, wmlwrite="file.xml"
+   
+     The following keywords allow retrieving information on the
+     spectrometer. They don't take a value but return one with this
+     syntax:  retval=spectro(keyword=)
+
+       kind=      returns the Spectrometer kind name, e.g. "wave",
+                  "freq" or "Complex".
+       nsamples=  returns the number of spectral channels.
+       channels=  return an array(double, NSAMPLES, 2) yielding the
+                  edges of each spectral channel in UNIT (default: Hz)
+       midpoints= returns an array(double, NSAMPLES) yielding the central
+                  frequency of each spectral channel in UNIT (default: Hz).
+       widths=    returns the width of each spectral channel in UNIT
+                  (default: Hz).
+       clone=     returns a deep copy of this Spectrometer.
+       
+   SEE ALSO: gyoto, gyoto_Screen, gyoto_Scenery,
+             gyoto_SpectroUniform, gyoto_SpetroComplex
+ */
+
+extern gyoto_SpectroUniform;
+extern _gyoto_SpectroUniform_register_as_Spectro;
+/* DOCUMENT spectro = gyoto_SpectroUniform([members=values])
+         or spectro, keywords=values
+         or retval = spectro( keyword= )
+         
+     gyoto_SpectroUniform() is a more specific implementation of
+     gyoto_Spectrometer(). It allows creating an Spectrometer::Uniform
+     object which models a spectrometer where NSAMPLES spectral
+     channels are unifromly spaced in wavelength, frequency, or log10
+     thereof.
+
+     gyoto_SpectroUniform has a superset of the functionalities of
+     gyoto_Spectrometer.
+
    MEMBERS:
      Members can be set with "spectro, member=value" and retrieved
-     with "value = spectro(member=)".
+     with "value = spectro(member=)" or "value=spectro.member".
      
        kind=     a string, one of "none", "wave", "freq", "wavelog",
                  "freqlog". KIND affects how BAND below is interpreted
-                 and how CHANNELS and MIDPOINTS are returned.
+                 and how CHANNELS and MIDPOINTS are returned. Since
+                 these four "kinds" are actually based on the same
+                 code, it is possible to convert a Spetrcometer
+                 between them.
 
        nsamples= a long, the number of spectral channels in this
                  spectrometer;
 
        band=     a pair of doubles, the lower and upper boundaries
                  of the spectral band covered by this spectrometer.
-                 The unit in which BAND is expressed depends on KIND:
+                 The default unit in which BAND is expressed depends
+                 on KIND:
                        KIND             UNIT
                        freq              Hz
-                      freqlog          Log(Hz)
+                      freqlog         log10(Hz)
                        wave              m
-                      wavelog          Log(m)
+                      wavelog         log10(m)
+                 Keyword UNIT can be set to use a different unit than
+                 the default. For kinds freqlog and wavelog,
+                 log10(unit) is used.
 
    METHODS:
-     The following keywords allow retrieving the spectral band for
-     each of the spectral channel in one of two forms:
-       channels=  an array(double, NSAMPLES+1) yielding the edges
-                  of each spectral channel, in the same unit as
-                  BAND depending on KIND.
-       midpoints= an array(double, NSAMPLES) yielding the central
-                  _frequency_ of each spectral channel expressed in
-                  the same unit as BAND depending on KIND.
-       widths=    the width of each spectral channel in Hz.
+     The following methods from gyoto_Spectrometer are implemented:
+     xmlwrite, clone, channels, midpoints, widths.
        
-       clone=     get a clone of this Spectrometer
-       
-   SEE ALSO: gyoto, gyoto_Screen, gyoto_Scenery
+   SEE ALSO: gyoto_Spectrometer, gyoto_SpectroComplex
  */
+_gyoto_SpectroUniform_register_as_Spectro;
 
+extern gyoto_SpectroComplex;
+extern _gyoto_SpCplx_register_as_Spectrometer;
+/* DOCUMENT spectro = gyoto_SpectroComplex([members=values])
+         or spectro, keywords=values
+         or retval = spectro( keyword= )
+         or subspectro = spectro(index)
+         
+     gyoto_SpectroComplex() is a more specific implementation of
+     gyoto_Spectrometer(). It allows creating an Spectrometer::Complex
+     object which models a spectrometer made of several simpler
+     Spectrometer objects (sub-spectrometers).
+
+     gyoto_SpectroComplex has a superset of the functionalities of
+     gyoto_Spectrometer.
+
+     A single sub-spectrometer can be retrieved by its INDEX. INDEX is
+     1-based, as is customary in Yorick.
+
+   EXAMPLE:
+     sp1 = gyoto_SpectroUniform(kind="wave",
+                                nsamples=10,
+                                unit="microm",
+                                band=[1, 2]);
+     sp2 = gyoto_SpectroUniform(kind="freqlog",
+                                nsamples=10,
+                                unit="eV",
+                                band=[10, 20]);
+     sp = gyoto_SpectroComplex(append=sp1)(append=sp2);
+     sp1bis = sp(1);
+     sp2bis = sp(2);
+     
+   METHODS:
+     The following methods from gyoto_Spectrometer are implemented:
+     xmlwrite, clone, channels, midpoints, widths. In addition,
+     gyoto_SpectroComplex accepts the following methods:
+       append=subspectro add new sub-spectrometer
+       remove=index      remove sub-spectrometer INDEX
+       
+   SEE ALSO: gyoto_Spectrometer, gyoto_SpectroUniform
+ */
+_gyoto_SpCplx_register_as_Spectrometer;
 
 func gyoto_plg3(x,y,z, keywords=) {
 /* DOCUMENT gyoto_plg3, x, y, z
@@ -846,19 +1313,21 @@ func gyoto_convert(&x, mass, distance, unit) {
   else return x_unit;
 }
 
-func gyoto_warning(msg) {
-  if (_gyoto_running) gyotoy_warning,msg;
-  else error, msg;
-}
-
-
+extern is_gyoto_Photon;
 extern is_gyoto_Astrobj;
-/* DOCUMENT ret = is_gyoto_Astrobj( obj )
+extern is_gyoto_Metric;
+extern is_gyoto_Spectrometer;
+extern is_gyoto_Spectrum;
+extern is_gyoto_Screen;
+extern is_gyoto_Scenery;
+/* DOCUMENT bool = is_gyoto_BASE(arg)
+   
+     BOOL is 1 if arg is a gyoto_BASE where base is Metric, Astrobj,
+     Spectrum, Spectrometer, Scenery, Screen...
 
-   Return 1 if OBJ is a GYOTO Astrobj
+   SEE ALSO: gyoto
+ */
 
-   SEE ALSO: gyoto gyoto_Astrobj
-*/
 
 
 extern gyoto_dontcatchSIGFPE;
@@ -866,5 +1335,15 @@ extern gyoto_dontcatchSIGSEGV;
 
 extern gyoto_listRegister;
 /* DOCUMENT gyoto_listRegister
-     list the register of known Astrobj, Metric and Spectrum kinds.
+     List the register of known Astrobj, Metric, Spectrum and
+     Spectrometer kinds.
+   SEE ALSO: gyoto
 */
+
+if (is_func(use)) {
+  include, "gyoto_namespace.i", 1;
+ } else {
+  gyoto_namespace=noop;
+ }
+
+include, "gyoto_std.i", 2;

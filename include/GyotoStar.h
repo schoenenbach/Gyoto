@@ -8,7 +8,7 @@
  */
 
 /*
-    Copyright 2011 Frederic Vincent, Thibaut Paumard
+    Copyright 2011, 2013 Frederic Vincent, Thibaut Paumard
 
     This file is part of Gyoto.
 
@@ -37,6 +37,7 @@ namespace Gyoto{
 #include <GyotoMetric.h>
 #include <GyotoUniformSphere.h>
 #include <GyotoSpectrum.h>
+#include <GyotoWorldline.h>
 
 #ifdef GYOTO_USE_XERCES
 #include <GyotoRegister.h>
@@ -51,24 +52,27 @@ namespace Gyoto{
  * Gyoto can compute the Star's orbit in a Gyoto::Metric and perform
  * ray-tracing on this target. The XML description of a Star looks
  * like:
-\code
-<Astrobj kind = "Star">
-  <Metric kind = "KerrBL">
-    <Spin> 0. </Spin>
-  </Metric>
-  <Radius> 2. </Radius>
-  <Velocity> 0. 0. 0.037037 </Velocity>
-  <Position> 600. 9. 1.5707999999999999741 0 </Position>
-  <Spectrum kind="BlackBody">
-    <Temperature> 6000 </Temperature>
-  </Spectrum>
-  <Opacity kind="PowerLaw">
-    <Exponent> 0 </Exponent>
-    <Constant> 0.1 </Constant>
-  </Opacity>
-  <OpticallyThin/>
-</Astrobj>
-\endcode
+ * \code
+ * <Astrobj kind = "Star">
+ *   <Metric kind = "KerrBL">
+ *     <Spin> 0. </Spin>
+ *   </Metric>
+ *   <Radius> 2. </Radius>
+ *   <Velocity> 0. 0. 0.037037 </Velocity>
+ *   <Position> 600. 9. 1.5707999999999999741 0 </Position>
+ *   <Spectrum kind="BlackBody">
+ *     <Temperature> 6000 </Temperature>
+ *   </Spectrum>
+ *   <Opacity kind="PowerLaw">
+ *     <Exponent> 0 </Exponent>
+ *     <Constant> 0.1 </Constant>
+ *   </Opacity>
+ *   <OpticallyThin/>
+ * </Astrobj>
+ * \endcode
+ *
+ * Star supports exactly the union of the parameters supported by
+ * Gyoto::Astrobj::UniformSphere and Gyoto::Worldline.
  * 
  * The Metric element can be of any kind. This Metric sets the
  * coordinate system.
@@ -93,19 +97,16 @@ class Gyoto::Astrobj::Star :
   
   // Data : 
   // -----
-  private:
-  int wait_pos_; ///< Hack in setParameters()
-  double * init_vel_; ///< Hack in setParameters()
 
   // Constructors - Destructor
   // -------------------------
  public:
  /**
   * Create Star object and set initial condition.
-  * \param gg: Gyoto::SmartPointer to the Gyoto::Metric in this part of the Universe
+  * \param gg Gyoto::SmartPointer to the Gyoto::Metric in this part of the Universe
   * \param radius star radius
-  * \param pos[4] initial position
-  * \param v[3] initial velocity
+  * \param pos initial 4-position
+  * \param v   initial 3-velocity
   */
   Star(SmartPointer<Metric::Generic> gg, double radius,
        double pos[4], double v[3]) ;                        ///< Standard constructor
@@ -140,18 +141,16 @@ class Gyoto::Astrobj::Star :
   virtual double getMass() const ; ///< Return 1.
 
  public:
+  using UniformSphere::getRmax;
   virtual double getRmax();
   virtual void unsetRmax();
   //  void setCoordSys(int); ///< Get coordinate system for integration
   //  int  getCoordSys(); ///< Set coordinate system for integration
   void setInitialCondition(double coord[8]); ///< Same as Worldline::setInitialCondition(gg, coord, sys,1)
 
-  using Worldline::setInitCoord;
-  virtual void setInitCoord(double pos[4], double vel[3], int dir=1);
-  virtual void setPosition(double pos[4]);
-  virtual void setVelocity(double vel[3]);
-
-  virtual int setParameter(std::string name, std::string content);
+  virtual int setParameter(std::string name,
+			   std::string content,
+			   std::string unit);
 
  public:
 #ifdef GYOTO_USE_XERCES
@@ -165,6 +164,14 @@ class Gyoto::Astrobj::Star :
 #endif
 
  public:
+  
+  /// Get the 6 Cartesian coordinates for specific dates.
+  /**
+   * This method is present in both the API of UniformSphere and
+   * Worldline. It is pure virtual in UniformSphere. The Star
+   * reimplementation is a trivial wrapper around
+   * Worldline::getCartesian().
+   */
   virtual void getCartesian(double const * const dates, size_t const n_dates,
 		double * const x, double * const y,
 		double * const z, double * const xprime=NULL,

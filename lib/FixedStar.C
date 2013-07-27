@@ -39,8 +39,9 @@ using namespace Gyoto::Astrobj;
 
 FixedStar::FixedStar() : UniformSphere("FixedStar")
 {
-  if (debug())
-    cerr << "DEBUG: in FixedStar::FixedStar(void)" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
   for (int i=0;i<3;++i) pos_[i]=0.;
 }
 
@@ -48,12 +49,14 @@ FixedStar::FixedStar(SmartPointer<Gyoto::Metric::Generic> gg, double StPsn[3],
 		     double rad) :
   UniformSphere("FixedStar", gg, rad)
 {
-  if (debug())
-    cerr << "DEBUG: in FixedStar::FixedStar(metric, pos, rad)" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << "(metric, pos, rad)" << endl;
+# endif
   for (int i=0;i<3;++i) pos_[i] = StPsn[i]; 
   setRadius(rad);
-  if (debug())
-    cerr << "DEBUG: out FixedStar::FixedStar(metric, pos, rad)" << endl;
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << "done" << endl;
+# endif
 }
 
 FixedStar::FixedStar(const FixedStar& orig) :
@@ -64,9 +67,9 @@ FixedStar::FixedStar(const FixedStar& orig) :
 FixedStar* FixedStar::clone() const { return new FixedStar(*this); }
 
 FixedStar::~FixedStar() {
-
-  if (debug()) cout << "FixedStar Destruction" << endl;
-
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
 }
 
 void FixedStar::getCartesian(double const * const , size_t const n_dates,
@@ -86,13 +89,17 @@ void FixedStar::getCartesian(double const * const , size_t const n_dates,
       double rs=pos_[0];
       double ths=pos_[1];
       double phs=pos_[2];
-      xs= rs*sin(ths)*cos(phs);
-      ys= rs*sin(ths)*sin(phs);
-      zs= rs*cos(ths);
+      double st, ct, sp, cp;
+      sincos(ths, &st, &ct);
+      sincos(phs, &sp, &cp);
+      xs= rs*st*cp;
+      ys= rs*st*sp;
+      zs= rs*ct;
     }
     break;
   default:
     throwError("unsupported coordkind");
+    xs=ys=zs=0.;
   }
   for (size_t i=0; i<n_dates; ++i) {
     if (x) x[i] = xs;
@@ -115,19 +122,24 @@ void FixedStar::getPos(double dst[3]) const
 { for (int i=0; i<3;++i) dst[i]=pos_[i]; }
 
 void FixedStar::setMetric(SmartPointer<Metric::Generic> gg) {
- if (debug())
-   cerr << "DEBUG: in FixedStar::setMetric(gg)\n";
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG << endl;
+# endif
  Generic::setMetric(gg);
  setRadius(radius_);
 }
 
 void FixedStar::setRadius(double r) {
+# if GYOTO_DEBUG_ENABLED
+  GYOTO_DEBUG_EXPR(r) ;
+# endif
   radius_ = r;
   critical_value_=r*r;
   safety_value_=1.1*critical_value_;
   if (!gg_()) {
-    if (debug())
-      cerr << "DEBUG: FixedStar::setRadius(radius): metric is not set yet\n";
+#   if GYOTO_DEBUG_ENABLED
+    GYOTO_DEBUG << "metric is not set yet" << endl;
+#   endif
     return;
   }
   switch (gg_ -> getCoordKind()) {
@@ -145,13 +157,13 @@ void FixedStar::setRadius(double r) {
 void FixedStar::setPos(const double p[3])
 { for (int i=0; i<3; ++i) pos_[i]=p[i]; setRadius(radius_);}
 
-int FixedStar::setParameter(string name, string content) {
+int FixedStar::setParameter(string name, string content, string unit) {
   if (name=="Position") {
     char* tc = const_cast<char*>(content.c_str());
     double pos[3];
     for (int i=0;i<3;++i) pos[i] = strtod(tc, &tc);
     setPos(pos);
-  } else return UniformSphere::setParameter(name, content);
+  } else return UniformSphere::setParameter(name, content, unit);
   return 0;
 }
 

@@ -1,0 +1,26 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+GYOTO=${exec_prefix}/bin/gyoto
+
+GYOTO_PLUGDIR=${libdir}/gyoto/@sovers@
+
+YORICK=@YORICK@
+Y_INST_HOME=@Y_INST_HOME@
+Y_INST_SITE=@Y_INST_SITE@
+
+HOME_LORENE=@HOME_LORENE@
+LORENECPPFLAGS=@LORENECPPFLAGS@
+LORENELDFLAGS=@LORENELDFLAGS@
+
+Name: Gyoto
+Description: Relativistic geodesic integration and ray-tracing
+Version: @VERSION@
+URL: http://gyoto.obspm.fr
+Requires: @pkg_requires@
+Conflicts:
+Libs: -L${libdir} -lgyoto -ldl @pkg_libs@ @PTHREAD_LIBS@
+Libs.private:
+Cflags: -I${includedir}/Gyoto @pkg_cflags@ @PTHREAD_CFLAGS@

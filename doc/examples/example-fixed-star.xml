@@ -8,9 +8,9 @@
 
   <Screen>
     <Distance unit="kpc" dmax="1e6"> 8 </Distance>
-    <Time unit="y"> 30e3 </Time>
-    <FieldOfView unit="uas"> 150 </FieldOfView>
-    <Inclination unit="deg"> 90 </Inclination>
+    <Time unit="yr"> 30e3 </Time>
+    <FieldOfView unit="µas"> 150 </FieldOfView>
+    <Inclination unit="°"> 90 </Inclination>
     <PALN> 0 </PALN>
     <Argument> 0 </Argument>
     <Resolution> 32 </Resolution>
@@ -20,7 +20,6 @@
     <Radius> 12 </Radius>
     <Position> 0 0 0 </Position>
     <UseGenericImpact/>
-    <RMax> 10000. </RMax>
     <Spectrum kind="PowerLaw">
       <Exponent> 0 </Exponent>
       <Constant> 0.001 </Constant>
@@ -33,5 +32,16 @@
   </Astrobj>
 
   <Delta> 1e0 </Delta>
+  <MinimumTime> 0. </MinimumTime>
+  <Quantities>
+    Intensity
+  </Quantities>
+  One can also specify a unit (if Gyoto was compiled with --with-udunits):
+    Intensity[mJy/pix²]
+    Intensity[mJy/µas²]
+    Intensity[J.m-2.s-1.sr-1.Hz-1]
+    Intensity[erg.cm-2.s-1.sr-1.Hz-1]
+    Intensity[mJy.sr-1]
+    Intensity[Jy.sr-1]
 
 </Scenery>
