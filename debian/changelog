@@ -1,3 +1,9 @@
+gyoto (0.1.0-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Thibaut Paumard <thibaut@debian.org>  Sat, 27 Jul 2013 11:35:04 +0200
+
 gyoto (0.0.3-5) unstable; urgency=low
 
   * skip test suite on mips as lucatelli fails on it (but it runs fine on

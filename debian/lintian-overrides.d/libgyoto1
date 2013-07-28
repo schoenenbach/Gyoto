@@ -1,6 +1,6 @@
 # Maintaining a symbols file would be unsustainable. See e.g.:
 # http://www.eyrie.org/~eagle/journal/2012-02/001.html
-libgyoto0: no-symbols-control-file usr/lib/libgyoto.so.0.0.0
+libgyoto1: no-symbols-control-file usr/lib/libgyoto.so.1.0.0
 
 # The fortifiable functions are all in the main library libgyoto.so.
-libgyoto0: hardening-no-fortify-functions usr/lib/gyoto/0.0.0/libgyoto-stdplug.so
+libgyoto1: hardening-no-fortify-functions usr/lib/gyoto/1.0.0/libgyoto-stdplug.so.0.0.0

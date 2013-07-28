@@ -1,0 +1,3 @@
+usr/lib/libgyoto.so.?.?.?
+usr/lib/gyoto/*/libgyoto*.so*
+debian/lintian-overrides.d/libgyoto?         usr/share/lintian/overrides

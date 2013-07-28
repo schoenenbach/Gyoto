@@ -1,2 +1,3 @@
 version=3
-https://github.com/gyoto/Gyoto/tags .*/tarball/(\d[\d\.]+)
+opts=filenamemangle=s/.+\/v?(\d\S*)\.tar\.gz/Gyoto-$1.tar.gz/ \
+  https://github.com/gyoto/Gyoto/tags .*/archive/v?(\d\S*)\.tar\.gz

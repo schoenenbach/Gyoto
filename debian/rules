@@ -14,6 +14,9 @@ DPKG_EXPORT_BUILDFLAGS = 1
 # Don't accidentally build the lorene plug-in
 unexport HOME_LORENE
 
+configure_flags = --with-yorick=/usr/bin/yorick --with-udunits --with-xerces \
+	--without-lorene --prefix=/usr --enable-static --enable-shared
+
 install-arch: build-stamp
 	dh_auto_install
 	dh_install -a -N yorick-gyoto
@@ -43,6 +46,7 @@ override_dh_auto_build:
 
 build-stamp:
 	dh_testdir -a
+	./configure $(configure_flags) --disable-doc
 	make COPT_DEFAULT="" \
 	     Y_CFLAGS="$(CFLAGS) $(CPPFLAGS)" \
 	     Y_LDFLAGS="$(LDFLAGS)"
@@ -57,6 +61,7 @@ endif
 
 doc-stamp:
 	dh_testdir -i
+	./configure $(configure_flags) --enable-doc
 	make doc
 	touch doc-stamp
 
@@ -68,8 +73,13 @@ binary-indep: install-indep
 binary-arch: install-arch
 	dh $@
 
-clean:
+configure-stamp:
+	./configure --without-lorene --prefix=/usr
+	touch configure-stamp
+
+clean: configure-stamp
 	dh_testdir
+	./configure $(configure_flags) --enable-doc
 	make distclean
 	dh_clean doc-stamp build-stamp
 
