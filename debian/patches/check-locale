@@ -1,0 +1,28 @@
+Description: Make sure checks are done with UTF8 locale
+Author: Thibaut Paumard <thibaut@debian.org>
+Origin: vendor
+Forwarded: no
+Last-Update: 2013-07-28
+
+--- a/bin/Makefile.am
++++ b/bin/Makefile.am
+@@ -11,7 +11,7 @@
+ gyoto_CPPFLAGS = $(AM_CPPFLAGS) $(CFITSIOCPPFLAGS)
+ gyoto_LDFLAGS  = $(AM_LDFLAGS) $(CFITSIOLDFLAGS) -export-dynamic
+ 
+-CHECK_CMD = unset GYOTO_PLUGINS && ./gyoto
++CHECK_CMD = unset GYOTO_PLUGINS && LANG=C.UTF-8 ./gyoto
+ check: gyoto
+ 	$(CHECK_CMD) ../doc/examples/example-thin-disk.xml \
+ 	   \!example-thin-disk.fits
+--- a/bin/Makefile.in
++++ b/bin/Makefile.in
+@@ -301,7 +301,7 @@
+ gyoto_LDADD = @top_builddir@/lib/libgyoto.la
+ gyoto_CPPFLAGS = $(AM_CPPFLAGS) $(CFITSIOCPPFLAGS)
+ gyoto_LDFLAGS = $(AM_LDFLAGS) $(CFITSIOLDFLAGS) -export-dynamic
+-CHECK_CMD = unset GYOTO_PLUGINS && ./gyoto
++CHECK_CMD = unset GYOTO_PLUGINS && LANG=C.UTF-8 ./gyoto
+ all: all-am
+ 
+ .SUFFIXES:

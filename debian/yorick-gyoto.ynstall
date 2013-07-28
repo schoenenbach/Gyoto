@@ -1,4 +1,6 @@
 debian/tmp/usr/lib/yorick/glade/gyotoy.xml           glade
+debian/tmp/usr/lib/yorick/data/gyotoy.png     data usr/share/pixmaps/gyotoy.png
+debian/gyotoy.desktop				     usr/share/applications
 debian/tmp/usr/lib/yorick/i/gyotoy.i                 i       usr/bin/gyotoy
 debian/tmp/usr/lib/yorick/i/*.i
 debian/tmp/usr/lib/yorick/i0/*.i                     i0

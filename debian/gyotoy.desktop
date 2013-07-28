@@ -1,0 +1,8 @@
+[Desktop Entry]
+Categories=Education;Science;Astronomy;GTK;
+Type=Application
+Exec=gyotoy %F
+Icon=gyotoy
+Name=Gyotoy
+GenericName=General Relativity Orbit Tracer
+Terminal=false

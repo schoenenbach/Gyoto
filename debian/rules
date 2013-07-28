@@ -54,7 +54,7 @@ ifeq (,$(filter nocheck, $(DEB_BUILD_OPTIONS)))
 ifeq (,$(filter $(DEB_HOST_ARCH), kfreebsd-i386 kfreebsd-amd64 mips))
 # skip the test suite on kfreebsd-any as gyoto package not beeing built
 # skip on mips as lucatelli2 fails on it (but the binary works on other boxes)
-	make check
+	LANG=C.UTF-8 make check
 endif
 endif
 	touch build-stamp

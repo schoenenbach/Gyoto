@@ -1,0 +1,68 @@
+Description: Remove UTF strings from units in example files
+Author: Thibaut Paumard <thibaut@debian.org>
+Origin: vendor
+Forwarded: not-needed
+Last-Update: 2013-07-28
+---
+This patch header follows DEP-3: http://dep.debian.net/deps/dep3/
+--- a/doc/examples/example-fixed-star.xml
++++ b/doc/examples/example-fixed-star.xml
+@@ -9,8 +9,8 @@
+   <Screen>
+     <Distance unit="kpc" dmax="1e6"> 8 </Distance>
+     <Time unit="yr"> 30e3 </Time>
+-    <FieldOfView unit="µas"> 150 </FieldOfView>
+-    <Inclination unit="°"> 90 </Inclination>
++    <FieldOfView unit="microas"> 150 </FieldOfView>
++    <Inclination unit="degree"> 90 </Inclination>
+     <PALN> 0 </PALN>
+     <Argument> 0 </Argument>
+     <Resolution> 32 </Resolution>
+--- a/doc/examples/example-polish-doughnut.xml
++++ b/doc/examples/example-polish-doughnut.xml
+@@ -13,22 +13,22 @@
+ 	  "dmax" is a tuning parameter and is always expressed in
+ 	  geometrical units.
+     <Time unit="yr"> 30e3 </Time>
+-    <FieldOfView unit="µas"> 150 </FieldOfView>
++    <FieldOfView unit="microas"> 150 </FieldOfView>
+           A reasonable field-of-view, about 15 Schwarzschild radii.
+-    <Inclination unit="°"> 90 </Inclination>
++    <Inclination unit="degree"> 90 </Inclination>
+           90° is edge-on
+-    <PALN unit="°"> 180 </PALN>
++    <PALN unit="degree"> 180 </PALN>
+           Put top on top...
+     <Argument> 0 </Argument>
+     <Resolution> 32 </Resolution>
+     <Spectrometer kind="Complex">
+-      <SubSpectrometer kind="wave" nsamples="1" unit="µm">
++      <SubSpectrometer kind="wave" nsamples="1" unit="microm">
+ 	0.9 1.1      
+       </SubSpectrometer>
+-      <SubSpectrometer kind="wave" nsamples="1" unit="µm">
++      <SubSpectrometer kind="wave" nsamples="1" unit="microm">
+ 	2.1 2.3      
+       </SubSpectrometer>
+-      <SubSpectrometer kind="wave" nsamples="1" unit="µm">
++      <SubSpectrometer kind="wave" nsamples="1" unit="microm">
+ 	2.9 3.1      
+       </SubSpectrometer>
+     </Spectrometer>
+@@ -36,14 +36,14 @@
+ 
+   <!--Quantities>BinSpectrum[W/m²/pix²]</Quantities-->
+           This is what a real-life detector measures.
+-  <Quantities>Spectrum[mJy/pix²]</Quantities>
++  <Quantities>Spectrum[mJy/pix^2]</Quantities>
+           This unit can easily be confronted to observations.
+ 
+   <Astrobj kind = "PolishDoughnut" plugin = "stdplug">
+           We can specify the plug-in in which this Astrobj is implemented.
+     <Lambda>0.3</Lambda>
+     <TempRatio>0.1</TempRatio>
+-    <CentralDensity unit="g/cm³">1e-17</CentralDensity>
++    <CentralDensity unit="g/cm^3">1e-17</CentralDensity>
+           g/cm³ is actually the same as kg/L, the default.
+     <CentralTempOverVirial>0.02</CentralTempOverVirial>
+     <Beta>0.1</Beta>
