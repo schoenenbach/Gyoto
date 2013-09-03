@@ -1,3 +1,11 @@
+gyoto (0.1.0-2) unstable; urgency=low
+
+  * Bug fix: "fails to upgrade from &#39;testing&#39; - trying to
+    overwrite /usr/include/Gyoto/Gyoto.h", thanks to Andreas Beckmann
+    (Closes: #718629).
+
+ -- Thibaut Paumard <thibaut@debian.org>  Sat, 03 Aug 2013 22:59:39 +0200
+
 gyoto (0.1.0-1) unstable; urgency=low
 
   * New upstream release

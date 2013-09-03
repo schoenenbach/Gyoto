@@ -58,6 +58,8 @@ Architecture: any
 Section: libdevel
 Depends: ${shlibs:Depends}, ${misc:Depends}, libgyoto1 (= ${binary:Version}),
 	 libc-dev, libxerces-c3.1
+Replaces: libgyoto0-dev
+Breaks:   libgyoto0-dev
 Description: development files for libgyoto
  Gyoto aims at providing a framework for computing orbits and
  ray-traced images in General relativity.
