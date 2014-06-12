@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <Scenery>
   <Metric kind = "KerrBL">
-    <Spin>
-      0.
-    </Spin>
+    <Spin>0.5</Spin>
+    <PseudoB> 0.0 </PseudoB>      <!-- 2.37037037037 -->
   </Metric>
   <Screen>
     <Position>
@@ -19,7 +18,7 @@
       0.314159265358979323846264338327950288419716
     </FieldOfView>
     <Resolution>
-      32
+      128
     </Resolution>
   </Screen>
   <Astrobj kind = "PageThorneDisk"/>

@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with Gyoto.  If not, see <http://www.gnu.org/licenses/>.
     
-    Modified Version by Thomas Schönenbach 2013-2014
+    Modified Version by Thomas Schönenbach 2013
     Includes correction terms due to pseudo-complex GR.
     Is written in a way to make extensive use of metric functions 
     instead of always redefining Delta, Sigma and so on.
@@ -68,8 +68,6 @@ militari stop.
 //#define GYOTO_MIN_THETA 1e-5 //seems too big
 #define GYOTO_MIN_THETA 1e-10
 
-
-// TS modified january
 #define drhor 1e-1
   //stop integration at r_horizon+drhor ; it speeds up a lot if high
   //enough (prevents geodesic from "accumulating" next to horizon) ;
@@ -151,32 +149,8 @@ double KerrBL::getRms() const {
   double  z2 = pow(3.*aa2 + z1*z1,1./2.);
   //TS no rms with B for some a values => modify to include pc rms
   //Both radii seem to have no influence on the norm drifts. Tested values 10. and 0.
-  if (pseudoB_ != 0)
-  {
-   if (aa == 0.0) 
-   {
-     return(5.24392);
-   }
-   else if (aa == 0.1) 
-   {
-     return(4.82365);
-   }
-   else if (aa == 0.2) 
-   {
-     return(4.35976);
-   }
-   else if (aa == 0.3) 
-   {
-     return(3.81529);
-   }
-   else if (aa == 0.4) 
-   {
-     return(2.99911);
-   }
-   else
-   {
-     return(inneredge(spin_));
-   }
+  if (pseudoB_ != 0.) {
+    return (4./3.);
   }
   else
   return (3. + z2 - pow((3. - z1)*(3. + z1 + 2.*z2),1./2.));
@@ -185,9 +159,7 @@ double KerrBL::getRms() const {
 //Prograde marginally bound orbit
 double KerrBL::getRmb() const {
   if (pseudoB_ != 0.) {  // TS Modify
-  // needs to be fixed to include the real rmb
-    throwError( "KerrBL.C : should never come here to find marginally bound orbit" );
-    return (inneredge(spin_));
+    return (4./3.);
   }
   else
     return 2.-spin_+2.*sqrt(1.-spin_);
@@ -224,58 +196,6 @@ double KerrBL::funSigma(const double * pos) const
  return r*r + a*a*costheta*costheta;
 }
 
-// Radius of the compact object
-// assumed to be at 4/3 + drhor
-double KerrBL::inneredge(const double aa) const 
-{
-     return(4./3. +drhor);
-//   if (aa == 0.0) 
-//    {
-//      return(4./3. +drhor);
-//    }
-//    else if (aa == 0.1) 
-//    {
-//      return(1.33829);
-//    }
-//    else if (aa == 0.2) 
-//    {
-//      return(1.35261);
-//    }
-//    else if (aa == 0.3) 
-//    {
-//      return(1.37485);
-//    }
-//    else if (aa == 0.4) 
-//    {
-//      return(1.40299);
-//    }
-//    else if (aa == 0.5) 
-//    {
-//      return(1.43487);
-//    }
-//    else if (aa == 0.6) 
-//    {
-//      return(1.46850);
-//    }
-//    else if (aa == 0.7) 
-//    {
-//      return(1.502229);
-//    }
-//    else if (aa == 0.8) 
-//    {
-//      return(1.53476);
-//    }
-//    else if (aa == 0.9) 
-//    {
-//      return(1.56514);
-//    }
-//    else if (aa == 1.0) 
-//    {
-//      return(1.59268);
-//    }
-}
-
-
 //Computation of metric coefficients in covariant form
 //TS One of the most important functions in this file
 double KerrBL::gmunu(const double * pos, int mu, int nu) const {
@@ -298,7 +218,11 @@ double KerrBL::gmunu(const double * pos, int mu, int nu) const {
   if ((mu==3) && (nu==3)) return (r2+a2+(psi)
 				  *a2*sth2/sigma)*sth2;
   if (((mu==0) && (nu==3)) || ((mu==3) && (nu==0))){
+    if (!modifkerr_CS_) // Kerr metric
       return -(psi)*spin_*sth2/sigma;
+    else // CS modified metric
+      return -2*spin_*r*sth2/sigma+
+	5./8.*dzeta_*spin_/(r2*r2)*(1.+12./7.*1./r+27./10.*1./r2)*sth2;
   }
 
   return 0.;
@@ -321,16 +245,44 @@ double KerrBL::gmunu_up(const double * pos, int mu, int nu) const {
   double xi=(r2+a2)*(r2+a2)-a2*delta*sth2;
 
   if ((mu==0) && (nu==0)) {
+    if (!modifkerr_CS_){
       return -xi/(delta*sigma);    
+    }else{
+      double gtt=-(1.-(psi)/sigma);
+      double gtp=-(psi)*spin_*sth2/sigma+
+	5./8.*dzeta_*spin_/(r2*r2)*(1.+12./7.*1./r+27./10.*1./r2)*sth2;
+      double gpp=(r2+a2+(psi)*a2*sth2/sigma)*sth2;
+      double det=gtp*gtp-gtt*gpp;
+      return -gpp/det;    
+    }
   }
   if ((mu==1) && (nu==1)) return delta/sigma;
   if ((mu==2) && (nu==2)) return 1./sigma;
   if ((mu==3) && (nu==3)) {
-      return (delta-a2*sth2)/(sigma*delta*sth2);   
+    if (!modifkerr_CS_)
+      return (delta-a2*sth2)/(sigma*delta*sth2);
+    else{
+      double gtt=-(1.-(psi)/sigma);
+      double gtp=-2*spin_*r*sth2/sigma+
+	5./8.*dzeta_*spin_/(r2*r2)*(1.+12./7.*1./r+27./10.*1./r2)*sth2;
+      double gpp=(r2+a2+(psi)*a2*sth2/sigma)*sth2;
+      double det=gtp*gtp-gtt*gpp;
+      return -gtt/det;    
     }
-  if (((mu==0) && (nu==3)) || ((mu==3) && (nu==0))){
-      return -(psi)*spin_/(sigma*delta);
   }
+  if (((mu==0) && (nu==3)) || ((mu==3) && (nu==0))){
+    if (!modifkerr_CS_)
+      return -(psi)*spin_/(sigma*delta);
+    else{
+      double gtt=-(1.-(psi)/sigma);
+      double gtp=-2*spin_*r*sth2/sigma+
+	5./8.*dzeta_*spin_/(r2*r2)*(1.+12./7.*1./r+27./10.*1./r2)*sth2;
+      double gpp=(r2+a2+(psi)*a2*sth2/sigma)*sth2;
+      double det=gtp*gtp-gtt*gpp;
+      return gtp/det;    
+    }
+  } 
+
   return 0.;
 } 
 
@@ -381,29 +333,21 @@ int KerrBL::diff(const double* coordGen, const double* cst, double* res) const{
   //int prec=15;//8;
 
   //TS Put in the limit of 4/3 for our model
-  // January 2014: actually it changes some thing... not sure what at the moment
+  // doesn't change a thing... The horizon warning was never reached
   double rsink=1.+sqrt(1.-a2)+drhor;
- // TS this is not the bug I'm looking for...
- // connected to negative Fluxes
-  if (pseudoB_ != 0)
-   {
-     rsink = inneredge(spin_) ;
-//      rsink = 2.0;
-   }
-  
+  //double rsink =4./3. +drhor;
   double r = coordGen[1] ; 
 
   if (r < 0.) {
     cerr << "r= " << r << endl;
     throwError( "KerrBL.C : r negative!!!!! the horizon may have been crossed..." );
+    
   }
 
   if (r < rsink) {
 #   if GYOTO_DEBUG_ENABLED
     GYOTO_DEBUG << "Too close to horizon in KerrBL::diff at r= " << r << endl;
 #   endif
-//  check if this code actually is executed 
-//      cout << "Program came here";
     return 1;
   }
 
@@ -478,7 +422,7 @@ int KerrBL::diff(const double* coordGen, const double* cst, double* res) const{
   double delLR = -2.*a*parant_1 - 2.*Delta*parant_2 ;
   double delLTH = -2.* cotantheta2 * L ;
   
-  double delrDelta = 2.*r -2. - B/(2.*r2) ;
+^x  double delrDelta = 2.*r -2. - B/(2.*r2) ;
   double delrSigma = 2.*r ;
   double delrR = 4.*parant_1*r*E -delrDelta * (mu2 *r2 +parant_2*parant_2 +Q) -2.*mu2*Delta*r ;
 
@@ -520,6 +464,86 @@ int KerrBL::diff(const double* coordGen, const double* cst, double* res) const{
   //appears when transforming from principal momenta to coordinate
   //derivatives (e.g. p_theta -> thetadot)
 
+
+  
+  //  ---> Standard Kerr equations of geodesics
+/*  
+  res[0] = tmp1m1*(2.*(r*(-2.*a*L+E*r3+a2*E*(2.+r))+a2*E*(a2+r*(-2.+r))
+		       *costheta2));// tdot
+  
+  res[1] = Delta*Sigmam1*pr; //rdot
+  
+  res[2] = Sigmam1*ptheta; //thetadot
+  
+  res[3] = -tmp1m1*(-2.*(r*(2.*a*E+L*(-2.+r))+L*(a2+r*(-2.+r))
+			 *cotantheta2)); //phidot
+  
+  res[4] = 0.;// ptdot : pt = cst = -E
+ 
+  double tmp2=r2+a2*costheta2;
+  if (tmp2==0) throwError("r2+a2*costheta2==0");
+  double tmp2m2=1./(tmp2*tmp2);
+  
+  double tmp3=a2+r*(-2.+r);
+  double tmp3_2=tmp3*tmp3;
+ 
+  res[5] =
+    -0.5*(2.*(r*(r-a2)-a2*(1.-r)*costheta2)*tmp2m2)*pr*pr
+    -0.5*(-2.*r*tmp2m2)*ptheta*ptheta
+    +(tmp2m2/tmp3_2
+      *(a2*(a2*a2*E2-2.*a3*E*L+2.*a*E*L*r2+E2*r3*(-4.+r)
+	    +a2*(L2*(1.-r)+2*E2*r2))*costheta2
+	+r*(-r*(a2*a2*E2-2.*a3*E*L+2.*a*E*L*(4.-3.*r)*r
+		+a2*(L2+2.*E2*r*(-2.+r))+r*(E2*r3-L2*(-2.+r)*(-2.+r)))
+	      +L2*tmp3_2*cotantheta2)));// prdot // TS NEU SCHREIBEN
+ 
+
+    
+  res[6]=
+    -0.5*(a2*Delta*sin2theta*Sigmam2)*pr*pr
+    -0.5*(a2*sin2theta*Sigmam2)*ptheta*ptheta
+    +(
+	Sigmam2
+	*(
+	  L2*r2*cotantheta
+	  +0.5*L2*(a2+2.*r2+a2*cos2theta)*cotantheta3
+	  +a2*r*(2.*a2*E2-4.*a*E*L+L2*(2.-r)+2.*E2*r2)*costheta*sintheta/Delta
+	  )
+      ); // pthetadot
+  
+  res[7] = 0.;//pphi = cst = L
+  */
+/* 
+ cout << test1 << " " << res[5] << " " << test1-res[5] << " " << test1/res[5] << " ---- " << test2 << " " << res[6] << " " << test2-res[6] 
+      << " " << test2/res[6] << " --- " 
+      << (Delta* delthSigma)/(2.* Sigma* Sigma)/( -0.5*(a2*Delta*sin2theta*Sigmam2)) 
+      << " " << delthSigma /(2.* Sigma *Sigma)/( -0.5*(a2*sin2theta*Sigmam2)) << endl;
+*/
+      
+  if (modifkerr_CS_){
+    /*
+      ---> Chern-Simons modifications to 1st order
+    */
+      double tmp2=r2+a2*costheta2;
+      if (tmp2==0) throwError("r2+a2*costheta2==0");
+      double tmp2m2=1./(tmp2*tmp2);
+  
+      double tmp3=a2+r*(-2.+r);
+      double tmp3_2=tmp3*tmp3;
+    
+    
+    res[0]+=tmp1m1*(a*L*(r-2.)*(189.+120.*r+70.*r2)*dzeta_*Sigma)
+      /(56.*(2.-r)*r3*r3*r2);
+    res[3]+=-tmp1m1*(a*E*(r-2.)*(189.+120.*r+70.*r2)*dzeta_*Sigma)
+      /(56.*(2.-r)*r3*r3*r2);
+    res[5]+=a*E*L*dzeta_*
+      (
+       r*(r-2.)*(r-2.)*(1701.+15*r-50.*r2-280.*r3)
+       +a2*(-189.*(16.-7.*r)+3.*(7.-12.*r)*r
+	    +10.*(12.-7.*r)*r2+70.*(7.-3.*r)*r3)
+       )
+      /(56.*r3*r3*r3*(r-2.)*(r-2.)*Delta*Delta);
+  }
   return 0;
 }
 
@@ -533,20 +557,38 @@ void KerrBL::circularVelocity(double const coor[4], double vel[4],
   double coord[4] = {coor[0], coor[1]*sinth, M_PI*0.5, coor[3]};
 
   vel[1] = vel[2] = 0.;
+  if (!modifkerr_CS_)
     // vel[3] = 1./((dir*pow(coord[1], 1.5) + spin_)*sinth); //TS Modified to incorporate
 							       // our modified angular velocity
                                                              // don't understand the projection with sinth yet.
 							     // corresponds to beeing at the equator?!
-  vel[3] = 1./((dir * pow( (2.*pow(coord[1],5))/(2. * coord[1] * coord[1] -1.5 * pseudoB_),0.5) + spin_) * sinth) ;
-//   cout << "Winkelgeschwindigkeit vorher" << vel[3] << "\n"; 
+    vel[3] = 1./((dir * pow( (2.*pow(coord[1],5))/(2. * coord[1] * coord[1] -1.5 * pseudoB_),0.5) + spin_) * sinth) ;
+  else{ // Chern-Simons rotation velocity
+    double rr=coord[1], r2=rr*rr, r5=r2*r2*rr,
+      a2=spin_*spin_;
+    vel[3] = 
+      (
+       spin_*(-112.*r5+567.*dzeta_+300.*rr*dzeta_+140.*r2*dzeta_)
+       +r5*r2*
+       sqrt(1./(r5*r5*r2*r2)
+	    *(12544.*r5*r5*r2*rr
+	      -127008.*a2*r5*dzeta_
+	      -67200.*a2*r5*rr*dzeta_
+	      -31360.*a2*r5*r2*dzeta_
+	      +321489.*a2*dzeta_*dzeta_
+	      +340200.*a2*rr*dzeta_*dzeta_
+	      +248760.*a2*r2*dzeta_*dzeta_
+	      +84000.*a2*r2*rr*dzeta_*dzeta_
+	      +19600.*a2*r2*r2*dzeta_*dzeta_
+	      )
+	    )
+       )
+      /
+      (
+       112.*r5*(r2*rr-a2)
+       );
+  }
   vel[0] = SysPrimeToTdot(coor, vel+1);
-   if ( vel[0] == 0) 
-   {
-//      cout << "angular velocity: " << vel[3] << " and sintheta: " << sinth << "\n";
-     cout <<"coor=["<<coor[0]<<", "<<coor[1]<<", "<<coor[2]<<", "<<coor[3]
-	     <<"], dir="<<dir<<endl;
-     cout << "pseudoB = " << pseudoB_ << "\n" ;
-   }
   vel[3] *= vel[0];
 # if GYOTO_DEBUG_ENABLED
   GYOTO_DEBUG_ARRAY(vel,4);
@@ -648,7 +690,7 @@ int KerrBL::myrk4(Worldline * line, const double coordin[8],
   MakeCoord(res_mom,cst,res);
 
   //  line -> checkPhiTheta(res);
-
+ 
   return 0;
 }
 
@@ -681,12 +723,6 @@ int KerrBL::myrk4(const double coor[8], const double cst[5],
   double aa=spin_;
   double rhor=1.+sqrt(1.-aa*aa), factrtol=5.;
   double thetatol_hor=1e-1, thetatol_gen=1e-3, thetatol;
-  
-  // TS modify
-  if (pseudoB_ != 0)
-  {
-    rhor = inneredge(spin_);
-  }
   /*
     If theta is closer to 0 than thetatol and if the derivatives
     returned by diff are higher than derlim, a z-axis problem is
@@ -702,6 +738,7 @@ int KerrBL::myrk4(const double coor[8], const double cst[5],
     These factrtol, thetatol_* and derlim_* parameters are to be
     played with to smooth the integration.
    */
+
   if (coor[1] < factrtol*rhor) {
     thetatol=thetatol_hor;derlim=derlim_hor;
   }else{
@@ -801,15 +838,9 @@ int KerrBL::myrk4_adaptive(Worldline * line, const double coordin[8],
   double a=spin_, factrtol=3.,
     rtol=factrtol*(1.+sqrt(1.-a*a)), rlimitol=10.;
 
-  //TS modify
-  if (pseudoB_ != 0)
-  {
-    rtol = factrtol* inneredge(spin_);
-  }
-    
   if (coor[1] < rtol) cstol = cstol_hor;
   // for tests of cst of motion conservation; don't ask too much
-  // if near horizon...	
+  // if near horizon...
   else cstol = cstol_gen;
 
   //NB: following test ok only if theta is 0-pi
@@ -1084,7 +1115,7 @@ void KerrBL::Normalize4v(double coord[8], const double part_mass) const {
   // no influence at all
   if (pseudoB_ != 0)
   {
-    rhor = inneredge(spin_);
+    rhor = 4./3.;
   }
   
   double gtt=gmunu(coord, 0, 0), gtph=gmunu(coord, 0, 3), grr=gmunu(coord, 1, 1), gthth=gmunu(coord, 2, 2), gphph=gmunu(coord, 3, 3);

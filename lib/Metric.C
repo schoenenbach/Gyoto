@@ -129,7 +129,7 @@ double Metric::Generic::SysPrimeToTdot(const double pos[4], const double v[3]) c
     }
   }
   if (sum>=0) {
-    GYOTO_WARNING << "v>c\n";
+    GYOTO_WARNING << "v>c : " << sum <<"\n" ;
     return 0.;
   }
   return pow(-sum, -0.5);
@@ -305,7 +305,7 @@ void Metric::Generic::cartesianVelocity(double const coord[8], double vel[3]) {
   }
 }
 
-int Metric::Generic::myrk4_adaptive(Worldline* line, const double * coord, double lastnorm , double normref, double* coordnew , double h0, double& h1, double h1max) const{ 
+int Metric::Generic::myrk4_adaptive(Worldline* line, const double * coord, double lastnorm , double normref, double* coordnew , double h0, double& h1) const{ 
   
   double delta0[8];
   double delta0min=1e-15;
@@ -314,9 +314,8 @@ int Metric::Generic::myrk4_adaptive(Worldline* line, const double * coord, doubl
   double S=0.9;
   double errmin=1e-6;
   double h1min=0.001;
+  double h1max=1e6;
   double factnorm=2.;
-
-  if (h1max<h1min) h1max=h1min;
  
   //cout << "1st diff" << endl;
   diff(coord,dcoord) ;
@@ -356,8 +355,7 @@ int Metric::Generic::myrk4_adaptive(Worldline* line, const double * coord, doubl
     
     for (int i = 0;i<8;i++){
       delta1[i]=coord2[i]-coordnew[i];
-      double err_i=fabs(delta1[i]/delta0[i]);
-      if (err<err_i) err=err_i;
+      if (err<fabs(delta1[i]/delta0[i])) err=fabs(delta1[i]/delta0[i]);
     }
 
     if (err>1) {
@@ -378,7 +376,7 @@ int Metric::Generic::myrk4_adaptive(Worldline* line, const double * coord, doubl
       	//myrk4(coord,h0/10.,coordnew);
       	//h1/=10.;
       }
-      GYOTO_DEBUG << "step used= " << h0 << endl;
+      //cout << "Metric.C: step used= " << h0 << endl;
       break;
     
 

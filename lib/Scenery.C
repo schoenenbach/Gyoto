@@ -45,7 +45,7 @@ using namespace std;
 */
 Scenery::Scenery() :
   gg_(NULL), screen_(NULL), obj_(NULL), delta_(GYOTO_DEFAULT_DELTA),
-  adaptive_(1), secondary_(1),
+  adaptive_(1),
   quantities_(0), ph_(), tmin_(DEFAULT_TMIN), nthreads_(0),
   maxiter_(GYOTO_DEFAULT_MAXITER){}
 
@@ -53,7 +53,7 @@ Scenery::Scenery(SmartPointer<Metric::Generic> met,
 		 SmartPointer<Screen> screen,
 		 SmartPointer<Astrobj::Generic> obj) :
   gg_(met), screen_(screen), obj_(obj), delta_(GYOTO_DEFAULT_DELTA),
-  adaptive_(1), secondary_(1),
+  adaptive_(1),
   quantities_(0), ph_(), tmin_(DEFAULT_TMIN), nthreads_(0),
   maxiter_(GYOTO_DEFAULT_MAXITER)
 {
@@ -63,10 +63,8 @@ Scenery::Scenery(SmartPointer<Metric::Generic> met,
 
 Scenery::Scenery(const Scenery& o) :
   SmartPointee(o),
-  gg_(NULL), screen_(NULL), obj_(NULL), delta_(o.delta_), 
-  adaptive_(o.adaptive_), secondary_(o.secondary_),
-  quantities_(o.quantities_), ph_(o.ph_), tmin_(o.tmin_), 
-  nthreads_(o.nthreads_),
+  gg_(NULL), screen_(NULL), obj_(NULL), delta_(o.delta_), adaptive_(o.adaptive_),
+  quantities_(o.quantities_), ph_(o.ph_), tmin_(o.tmin_), nthreads_(o.nthreads_),
   maxiter_(o.maxiter_)
 {
   // We have up to 3 _distinct_ clones of the same Metric.
@@ -174,8 +172,6 @@ static void * SceneryThreadWorker (void *arg) {
 
   // local variables to store our parameters
   size_t i, j;
-  size_t eol_offset =
-    larg->sc->getScreen()->getResolution() - larg->imax + larg->imin -1;
   Astrobj::Properties data;
   double * impactcoords = NULL;
 
@@ -200,18 +196,16 @@ static void * SceneryThreadWorker (void *arg) {
 #endif
       break;
     }
-
-    data = *larg->data; 
-    // update i, j and pointer
+    // update i & j
     ++larg->i;
-    ++(*larg->data);
-    if (larg->impactcoords) {
-      impactcoords = larg->impactcoords; larg->impactcoords+=16;
-    }
     if (larg->i > larg->imax) {
       ++larg->j; larg->i=larg->imin;
-      (*larg->data) += eol_offset;
-      if (larg->impactcoords) larg->impactcoords+=16*eol_offset;
+    }
+
+    // copy output pointers and update them
+    data = *larg->data; ++(*larg->data);
+    if (larg->impactcoords) {
+      impactcoords = larg->impactcoords; larg->impactcoords+=16;
     }
 
 #ifdef HAVE_PTHREAD
@@ -278,16 +272,10 @@ void Scenery::rayTrace(size_t imin, size_t imax,
   screen_ -> getRayCoord(imin,jmin, coord);
   ph_ . setInitialCondition(gg_, obj_, coord);
   ph_ . adaptive(adaptive_);
-  ph_ . secondary(secondary_);
   ph_ . maxiter(maxiter_);
   // delta is reset in operator()
 
-  if (data) {
-    setPropertyConverters(data);
-    size_t first_index=(jmin-1)*npix + imin -1;
-    (*data) += first_index;
-    if (impactcoords) impactcoords += first_index * 16;
-  }
+  if (data) setPropertyConverters(data);
 
   SceneryThreadWorkerArg larg;
   larg.sc=this;
@@ -351,10 +339,6 @@ void Scenery::operator() (
   double coord[8];
   SmartPointer<Spectrometer::Generic> spr = screen_->getSpectrometer();
   size_t nbnuobs = spr() ? spr -> getNSamples() : 0;
-
-  if (data) data -> init(nbnuobs); // Initialize requested quantities to 0. or DBL_MAX
-  if (!(*screen_)(i,j)) return; // return if pixel is masked out
-
   SmartPointer<Metric::Generic> gg = NULL;
   SmartPointer<Astrobj::Generic> obj = NULL;
   if (!ph) {
@@ -367,7 +351,6 @@ void Scenery::operator() (
     ph -> setTmin(tmin_);
     ph -> setFreqObs(screen_->getFreqObs());
     ph -> adaptive(adaptive_);
-    ph -> secondary(secondary_);
     ph -> maxiter(maxiter_);
     obj=obj_;
     gg=gg_;
@@ -378,13 +361,13 @@ void Scenery::operator() (
 # endif
   ph -> setDelta(delta_);
   ph -> adaptive(adaptive_);
-  ph -> secondary(secondary_);
   ph -> maxiter(maxiter_);
   ph -> setTmin(tmin_);
 
 # if GYOTO_DEBUG_ENABLED
   GYOTO_DEBUG << "init nbnuobs" << endl;
 # endif
+  if (data) data -> init(nbnuobs); // Initialize requested quantities to 0. or DBL_MAX
 
   if (impactcoords) {
 #   if GYOTO_DEBUG_ENABLED
@@ -580,9 +563,6 @@ void Scenery::setTmin(double tmin, const string &unit) {
 void Scenery::adaptive(bool mode) { adaptive_ = mode; }
 bool Scenery::adaptive() const { return adaptive_; }
 
-void Scenery::secondary(bool sec) { secondary_ = sec; }
-bool Scenery::secondary() const { return secondary_; }
-
 void Scenery::maxiter(size_t miter) { maxiter_ = miter; }
 size_t Scenery::maxiter() const { return maxiter_; }
 
@@ -655,7 +635,7 @@ SmartPointer<Scenery> Gyoto::Scenery::Subcontractor(FactoryMessenger* fmp) {
     if (name=="MaxIter")     sc -> maxiter(atoi(tc));
     if (name=="Adaptive")    sc -> adaptive(true);
     if (name=="NonAdaptive") sc -> adaptive(false);
-    if (name=="PrimaryOnly") sc -> secondary(false);
+
   }
 
   return sc;

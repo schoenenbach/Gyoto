@@ -1,3 +1,13 @@
+                            MODIFIED GYOTO VERSION
+
+This version includes modifications in the Metric to describe
+a modified Kerr metric. See
+http://arxiv.org/abs/1312.1170
+http://arxiv.org/abs/1209.2815
+for further details. Main changes are to the files
+"KerrBL.C"
+"PageThorneDisk.C"
+
                              ***  GYOTO  ***
 
        General relativitY Orbit Tracer of Observatoire de Paris

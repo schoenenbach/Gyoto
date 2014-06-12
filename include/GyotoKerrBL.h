@@ -21,6 +21,8 @@
 
     You should have received a copy of the GNU General Public License
     along with Gyoto.  If not, see <http://www.gnu.org/licenses/>.
+    
+    Modifications by Thomas Schönenbach 2013
  */
 
 #ifndef __GyotoKerrBL_H_
@@ -49,7 +51,9 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   // -----
  protected:
   double spin_ ;  ///< Angular momentum parameter
+  double pseudoB_; // pc Parameter B
   int modifkerr_CS_; ///< Chern-Simons modification
+  double dzeta_; ///< Chern-Simons coupling constant
   
   // Constructors - Destructor
   // -------------------------
@@ -69,17 +73,26 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
  public:
   // default operator= is fine
   void setSpin(const double spin); ///< Set spin
+  void setPseudoB(const double pseudoB); // Set pc Parameter B
+  void setCoupling(const double couple);
+  ///< Set coupling constant if mdified Kerr
   virtual KerrBL * clone () const ;
 
 
   // Accessors
   // ---------
  public:
-  double getSpin() const ; ///< Returns spin
-
+  double getSpin() const ; ///< Returns spin 
+  double getPseudoB() const ; /// Returns the pseudo complex Parameter B
+  
   double getRms() const; ///< Returns prograde marginally stable orbit
 
   double getRmb() const; ///< Returns prograde marginally bound orbit
+  
+  double funPsi(const double * pos) const; /// Function to include pc-corrections terms in a concise way
+  double funDelta(const double * pos) const; /// Standard BL Delta
+  double funSigma(const double * pos) const; /// Standard BL Sigma - beware different nomenclature in some literature.
+  double inneredge(const double aa) const; /// Sets the radius of the compact object
   
   double gmunu(const double * const x, int mu, int nu) const ;
 
@@ -109,7 +122,7 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
 				double dir=1.) const ;
 
  public:
-  virtual void MakeCoord(const double coordin[8], const double cst[5], double coordout[8]) const ;
+  void MakeCoord(const double coordin[8], const double cst[5], double coordout[8]) const ;
   ///< Inverse function of MakeMomentumAndCst
 
    ///< Computes pr, ptheta, E and L from rdot, thetadot, phidot, tdot
@@ -130,7 +143,7 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   int myrk4(Worldline * line, const double coordin[8], double h, double res[8]) const; //external-use RK4
  private:
   int myrk4(const double coor[8], const double cst[5], double h, double res[8]) const;///< Internal-use RK4 proxy
-  int myrk4_adaptive(Gyoto::Worldline* line, const double coor[8], double lastnorm, double normref, double coor1[8], double h0, double& h1, double h1max) const; ///< Interal-use adaptive RK4 proxy
+  int myrk4_adaptive(Gyoto::Worldline* line, const double coor[8], double lastnorm, double normref, double coor1[8], double h0, double& h1) const; ///< Interal-use adaptive RK4 proxy
   /**
    * \brief Ensure conservation of the constants of motion
    *
@@ -151,11 +164,10 @@ class Gyoto::Metric::KerrBL : public Metric::Generic {
   /** 
    * \brief Used in RK4 proxies.
    */
-  virtual int diff(const double y[8], const double cst[5], 
-		   double res[8]) const ;
+  int diff(const double y[8], const double cst[5], double res[8]) const ;
   /** Integrator. Computes the evolution of y (initcond=y(0)).
    */
-  virtual void computeCst(const double coord[8], double cst[5]) const;
+  void computeCst(const double coord[8], double cst[5]) const;
  public:
   void setParticleProperties(Worldline* line, const double* coord) const;
   

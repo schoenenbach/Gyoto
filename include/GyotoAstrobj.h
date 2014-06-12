@@ -90,7 +90,7 @@ namespace Gyoto{
      * \return pointer to the corresponding subcontractor.
      */
     Gyoto::Astrobj::Subcontractor_t* getSubcontractor(std::string name,
-						      int errmode = 0);
+						      int errmode = 1);
     ///< Query the Astrobj register
 
 #if defined GYOTO_USE_XERCES
@@ -227,7 +227,7 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    * The kind should match the name of the class, e.g. "Star" for a
    * Gyoto::Star.
    */
-  std::string kind_; ///< Kind of object (e.g. "Star"...)
+  const std::string kind_; ///< Kind of object (e.g. "Star"...)
 
   int flag_radtransf_; ///< 1 if radiative transfer inside Astrobj, else 0
 
@@ -307,13 +307,6 @@ class Gyoto::Astrobj::Generic : protected Gyoto::SmartPointee {
    *  \return double rmax converted to unit
    */
   virtual double getRmax(std::string unit); ///< Get rmax_ is specified unit
-
-  /// Get max step constraint for adaptive integration
-  /**
-   * \param[in] coord position
-   * \return max step to find this object reliably
-   */
-  virtual double deltaMax(double coord[8]);
 
   const std::string getKind() const; ///< Get the kind of the Astrobj (e.g. "Star")
 
@@ -753,15 +746,6 @@ class Gyoto::Astrobj::Properties : protected Gyoto::SmartPointee {
    * impactcoords which is incremented by 16.
    */
   Properties operator++();
-
-  /**
-   * \brief Increment pointers by offset
-   *
-   * All valid pointers are incremented by offset (sizeof(double)), excepted
-   * impactcoords which is incremented by 16*offset.
-   */
-  Properties operator+=(ptrdiff_t offset);
-
 # ifdef HAVE_UDUNITS
   void setIntensityConverter(Gyoto::SmartPointer<Gyoto::Units::Converter>);
   ///< Set Properties::intentity_converter_

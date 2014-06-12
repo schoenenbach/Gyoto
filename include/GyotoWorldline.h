@@ -78,7 +78,6 @@ class Gyoto::Worldline
   size_t i0_;  ///< Index of initial condition in array
   size_t imax_;///< Maximum index for which x0, x1... have been computed
   bool   adaptive_; ///< Whether integration should use adaptive delta
-  bool secondary_; ///< choose 0 to compute only primary image
   double delta_;///< Initial integrating step ; defaults to 0.01
   double tmin_;///< Minimum time for integration, stop integration if t<tmin ; defaults to -DBL_MAX
   double * cst_; ///< Worldline's csts of motion (if any)
@@ -146,12 +145,12 @@ class Gyoto::Worldline
   /**
    * The default size is GYOTO_DEFAULT_X_SIZE
    */
-  virtual void xAllocate(); ///< Allocate x0, x1 etc. with default size
+  void xAllocate(); ///< Allocate x0, x1 etc. with default size
 
   /**
    * \param size : number of cells in each array x0, x1 etc.
    */
-  virtual void xAllocate(size_t size); ///< Allocate x0, x1 etc. with a specified size.
+  void xAllocate(size_t size); ///< Allocate x0, x1 etc. with a specified size.
 
   /**
    * Double the size of arrays x0, x1 etc. and copy old version of the
@@ -164,18 +163,8 @@ class Gyoto::Worldline
    * \return ind : if dir=1, new index of old last element, if dir=-1,
    * new index of old first element
    */
-  virtual size_t xExpand(int dir); ///< Expand x0, x1 etc... to hold more elements
+  size_t xExpand(int dir); ///< Expand x0, x1 etc... to hold more elements
  
-
-  /**
-   * If you need to expand more arrays than x0_ ... x3_ and the dots,
-   * call this on your array before calling xExpand(int dir).
-   *
-   * \param[inout] x array to expand
-   * \param[in] dir
-   */
-  virtual void xExpand(double * &x, int dir); ///< Expand one array to hold more elements
-
   // Mutators / assignment
   // ---------------------
  public:
@@ -189,8 +178,6 @@ class Gyoto::Worldline
   void setTmin(double tlim); ///< Set tmin to a given value
   void adaptive (bool mode) ; ///< Set adaptive_
   bool adaptive () const ; ///< Get adaptive_
-  void secondary (bool sec) ; ///< Set secondary_
-  bool secondary () const ; ///< Get secondary_
   void maxiter (size_t miter) ; ///< Set maxiter_
   size_t maxiter () const ; ///< Get maxiter_
 
@@ -223,9 +210,7 @@ class Gyoto::Worldline
   void getCoord(size_t index, double dest[8]) const; ///< Get coordinates corresponding to index
   void getCartesianPos(size_t index, double dest[4]) const; ///< Get Cartesian expression of 4-position at index.
 
-
-  virtual void xStore(size_t ind, double coord[8]) ; ///< Store coord at index ind
-  virtual void xFill(double tlim) ; ///< Fill x0, x1... by integrating the Worldline from previously set inittial condition to time tlim
+  void xFill(double tlim) ; ///< Fill x0, x1... by integrating the Worldline from previously set inittial condition to time tlim
 
   /**
    * \brief Set parameter by name
@@ -431,9 +416,8 @@ class Gyoto::Worldline::IntegState : SmartPointee {
   /// Make one step.
   /**
    * \param[out] coord Next position-velocity;
-   * \param[in] h1max maximum step in case of adaptive integration
    */
-  virtual int nextStep(double *coord, double h1max=1e6);
+  virtual int nextStep(double *coord);
 
   virtual ~IntegState();
 };

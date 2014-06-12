@@ -122,7 +122,6 @@ extern gyoto_Star;
         delta=  integration step (initial if adaptive).
         adaptive= whether the integration uses adaptive step.
         maxiter= maximum number of iterations in integration.
-        deltamaxoverradius, deltamaxoverdistance: numerical parameters
 
    METHODS
 
@@ -151,13 +150,10 @@ extern gyoto_Star;
                    st, initcoord=conditions;
                    st, reset=;
                    
-        setparameter=name,string_value
+        setparameter=name,string_value       
 
      Function-like (retval=st(function_method=parameters)):
 
-        startrace=tmin, tmax : make a StarTrace object. See
-              gyoto_StarTrace.
-     
       The following return the position of the star for all the dates
       that where evaluated by the integrated when XFILL, above, was
       called, in various coordinate systems:
@@ -218,43 +214,9 @@ extern gyoto_Star;
        data = gyoto_Star(get_txyz=1, initialpos=pos, v, xfill=tlim,
                          metric=gyoto_KerrBL(spin=a));
                 
-   SEE ALSO: gyoto_Metric, gyoto_Kerr, gyoto_StarTrace
+   SEE ALSO: gyoto_Metric, gyoto_Kerr
  */
 gyoto_namespace, Star=gyoto_Star;
-
-/////////// STARTRACE
-extern _gyoto_StarTrace_register_as_Astrobj;
-_gyoto_StarTrace_register_as_Astrobj
-/* xDOCUMENT _gyoto_StarTrace_register_as_Astrobj
-      To be called exactly once ins gyoto_std.i
-*/
-   
-extern gyoto_StarTrace;
-/* DOCUMENT st = gyoto_StarTrace([filename, ][members=values])
-
-     A StarTrace is like a Star that is at all time ubiquitous on its
-     orbit. This allows efficiently precomputing a mask for
-     ray-tracing many images of the star on its orbit. A StarTrace
-     accepts all the same keywords as a Star, except the STARTRACE
-     keyword itself. StarTrace accepts the STAR keyword instead to
-     retrieve the underlying Star object.
-
-   EXAMPLE:
-
-     sc = gyoto_Scenery("file.xml");
-     star = sc.astrobj;
-     startrace = star(startrace=0, 100);
-     startrace, adaptive=0, opticallythin=0, delta=1;
-     sc, astrobj=startrace;
-     mask = sc(,,"Intensity");
-     noop, sc.screen(mask=mask);
-     sc, astrobj=star;
-     image = sc(,,);
-
-   SEE ALSO: gyoto, gyoto_Star
-   
- */
-gyoto_namespace, StarTrace=gyoto_StarTrace;
 
 ///////// FIXEDSTAR
 
@@ -283,7 +245,6 @@ extern gyoto_FixedStar;
       metric=    any GYOTO Metric object
       position=  3D position of the star
       radius=    radius of the star, in geometrical units
-      deltamaxoverradius, deltamaxoverdistance: numerical parameters
      
     In addition, the standard gyoto_Astrobj members and methods are
     supported.
@@ -421,9 +382,6 @@ extern gyoto_Disk3D;
     at NNU frequencies going from NU0 to NU0*DNU*(NNU-1). The cube
     EMISSQUANT is an array(double, NNU, NPHI, NZ, NR).
 
-    Optional opacity field may be provided, with same dimensions as
-    emissquant.
-
     The fluid velocity field must be specified
     with VELOCITY==array(double, 3, NPHI, NZ, NR).
     VELOCITY(1,..)==dphi/dt; VELOCITY(2,..)==dz/dt;
@@ -461,10 +419,7 @@ extern gyoto_Disk3D;
                   array will also be freed (as it has
                   inconsistent dimensions).
 
-    copyopacity=OPACITY
-                same as COPYEMISSQUANT for opacity field.
-    
-    copyvelocity=VELOCITY
+     copyvelocity=VELOCITY
                 same as COPYEMISSQUANT but to attach the fluid velocity
                 field, a 3 x NPHI x NZ x NR array where
                 VELOCITY(1,..)==dphi/dt, VELOCITY(2,..)==dz/dt

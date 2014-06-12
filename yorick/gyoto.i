@@ -883,7 +883,7 @@ extern gyoto_Screen;
    KEYWORDS:
 
      Member keywords are used to set the value of a member (screen,
-     member=value) or to retrieve the value of a member
+     member=value) or to retrieve the value of a memeber
      (value=screen(member=) or value=screen.member):
        metric, time, tmin, fov (field-of-view), resolution (N pixels
        on each side), distance (meters), inclination, paln (position
@@ -893,8 +893,7 @@ extern gyoto_Screen;
        geometrical units), spectro (see gyoto_Spectrometer);
 
     Screens provide two function-like methods and the usual
-    subroutine-like method xmlwrite plus two methods for specifying
-    a mask:
+    subroutine-like method xmlwrite:
 
      skycoord = [x0, x1, x2, x3] returns screen (=sky) coordinates
        d_alpha, d_delta, d_dist
@@ -904,12 +903,6 @@ extern gyoto_Screen;
        direction d_alpha, d_delta.
 
      xmlwrite = filename to export screen to XML.
-
-     mask= [nil | filename | image] use nil to retrieve the mask,
-       filename to load mask from FITS file, image array to set mask
-       from Yorick array.
-
-     maskwrite=filename: save mask to FITS file.
 
    SEE ALSO:
      gyoto, gyoto_Metric, gyoto_Scenery, gyoto_Astrobj,

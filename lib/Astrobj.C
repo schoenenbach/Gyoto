@@ -412,27 +412,6 @@ void Astrobj::initRegister() {
   Gyoto::Astrobj::Register_ = NULL;
 }
 
-double Generic::deltaMax(double coord[8]) {
-  double rr,h1max;
-
-  if (!gg_)
-    throwError("Please set metric before calling Astrobj::Generic::deltaMax()");
-
-  switch (gg_ -> getCoordKind()) {
-  case GYOTO_COORDKIND_SPHERICAL:
-    rr=coord[1];
-    break;
-  case GYOTO_COORDKIND_CARTESIAN:
-    rr=sqrt(coord[1]*coord[1]+coord[2]*coord[2]+coord[3]*coord[3]);
-    break;
-  default:
-    throwError("Incompatible coordinate kind in Astrobj.C");
-  }
-
-  if (rr<getRmax()) h1max=1.; else h1max=1e6;
-  return h1max;
-}
-
 void Gyoto::Astrobj::Register(std::string name, Subcontractor_t* scp){
   Register::Entry* ne =
     new Register::Entry(name, (SmartPointee::Subcontractor_t*)scp, Gyoto::Astrobj::Register_);
@@ -521,24 +500,19 @@ void Astrobj::Properties::setBinSpectrumConverter(string unit) {
 
 #endif
 
-Astrobj::Properties Astrobj::Properties::operator+=(ptrdiff_t offset) {
-  if (intensity)    intensity    += offset;
-  if (time)         time         += offset;
-  if (distance)     distance     += offset;
-  if (first_dmin)   first_dmin   += offset;
-  if (redshift)     redshift     += offset;
-  if (spectrum)     spectrum     += offset;
-  if (binspectrum)  binspectrum  += offset;
-  if (impactcoords) impactcoords += 16*offset;
-  if (user1)        user1        += offset;
-  if (user2)        user2        += offset;
-  if (user3)        user3        += offset;
-  if (user4)        user4        += offset;
-  if (user5)        user5        += offset;
-  return *this;
-}
-
 Astrobj::Properties Astrobj::Properties::operator++() {
-  (*this) += 1;
+  if (intensity)  ++intensity;
+  if (time)       ++time;
+  if (distance)   ++distance;
+  if (first_dmin) ++first_dmin;
+  if (redshift)   ++redshift;
+  if (spectrum)   ++spectrum;
+  if (binspectrum)++binspectrum;
+  if (impactcoords) impactcoords += 16;
+  if (user1)      ++user1;
+  if (user2)      ++user2;
+  if (user3)      ++user3;
+  if (user4)      ++user4;
+  if (user5)      ++user5;
   return *this;
 }

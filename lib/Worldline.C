@@ -33,7 +33,6 @@ using namespace Gyoto;
 
 
 Worldline::Worldline() : imin_(1), i0_(0), imax_(0), adaptive_(1),
-			 secondary_(1),
 			 delta_(GYOTO_DEFAULT_DELTA),
 			 tmin_(-DBL_MAX), cst_(NULL), cst_n_(0),
 			 wait_pos_(0), init_vel_(NULL),
@@ -41,7 +40,7 @@ Worldline::Worldline() : imin_(1), i0_(0), imax_(0), adaptive_(1),
 { xAllocate(); }
 
 Worldline::Worldline(const size_t sz) : imin_(1), i0_(0), imax_(0),
-					adaptive_(1), secondary_(1),
+					adaptive_(1),
 					delta_(GYOTO_DEFAULT_DELTA),
 					tmin_(-DBL_MAX),
 					cst_(NULL), cst_n_(0),
@@ -52,7 +51,7 @@ Worldline::Worldline(const size_t sz) : imin_(1), i0_(0), imax_(0),
 Worldline::Worldline(const Worldline& orig) :
   metric_(NULL),
   x_size_(orig.x_size_), imin_(orig.imin_), i0_(orig.i0_), imax_(orig.imax_),
-  adaptive_(orig.adaptive_), secondary_(orig.secondary_),
+  adaptive_(orig.adaptive_),
   delta_(orig.delta_), tmin_(orig.tmin_), cst_(NULL), cst_n_(orig.cst_n_),
   wait_pos_(orig.wait_pos_), init_vel_(NULL),
   maxiter_(orig.maxiter_)
@@ -98,7 +97,7 @@ Worldline::Worldline(const Worldline& orig) :
 Worldline::Worldline(Worldline *orig, size_t i0, int dir, double step_max) :
   metric_(orig->metric_),
 //  x_size_(orig.x_size_), imin_(orig.imin_), i0_(orig.i0_), imax_(orig.imax_),
-  adaptive_(orig->adaptive_), secondary_(orig->secondary_),
+  adaptive_(orig->adaptive_),
   delta_(orig->delta_), tmin_(orig->tmin_), cst_n_(orig->cst_n_),
   wait_pos_(orig->wait_pos_), init_vel_(NULL),
   maxiter_(orig->maxiter_)
@@ -188,35 +187,59 @@ void Worldline::xAllocate(size_t sz)
   x3dot_ = new double[x_size_];
 }
 
-void Worldline::xExpand(double* &x, int dir) {
-  double * old;
-  size_t offset=(dir==1)?0:x_size_;
-  size_t i;
-  size_t nsize=2*x_size_;
-
-  old=x;
-  x=new double[nsize];
-  for (i=imin_;i<=imax_;++i) x[i+offset]=old[i];
-  delete [] old;
-}
-
 size_t Worldline::xExpand(int dir) {
 # if GYOTO_DEBUG_ENABLED
   GYOTO_DEBUG_EXPR(dir);
 # endif
-
-  xExpand(x0_, dir);
-  xExpand(x1_, dir);
-  xExpand(x2_, dir);
-  xExpand(x3_, dir);
-  xExpand(x0dot_, dir);
-  xExpand(x1dot_, dir);
-  xExpand(x2dot_, dir);
-  xExpand(x3dot_, dir);
-
-  size_t retval=(dir==1)?(x_size_-1):x_size_;
+  double * old;
   size_t offset=(dir==1)?0:x_size_;
+  size_t retval=(dir==1)?(x_size_-1):x_size_;
+  size_t i;
+
   x_size_*=2;
+
+  old = x0_;
+  //GYOTO_DEBUG<< "In Wl x0_[0]= " << x0_[0] << endl;
+  x0_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x0_[i+offset]=old[i];
+  delete[] old;
+  //GYOTO_DEBUG<< "In Wl imin= " << imin_ << " " << imax_ << endl;
+  //GYOTO_DEBUG<< " In Wl x0_[offset], old[0]= " << x0_[1024] << " " << old[0] << endl;
+  
+  old = x1_;
+  x1_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x1_[i+offset]=old[i];
+  delete[] old;
+  
+  old = x2_;
+  x2_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x2_[i+offset]=old[i];
+  delete[] old;
+  
+  old = x3_;
+  x3_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x3_[i+offset]=old[i];
+  delete[] old;
+  
+  old = x0dot_;
+  x0dot_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x0dot_[i+offset]=old[i];
+  delete[] old;
+  
+  old = x1dot_;
+  x1dot_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x1dot_[i+offset]=old[i];
+  delete[] old;
+  
+  old = x2dot_;
+  x2dot_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x2dot_[i+offset]=old[i];
+  delete[] old;
+  
+  old = x3dot_;
+  x3dot_ = new double[x_size_];
+  for (i=imin_;i<=imax_;++i) x3dot_[i+offset]=old[i];
+  delete[] old;
   
   imin_+=offset;
   i0_+=offset;
@@ -326,7 +349,6 @@ int Worldline::setParameter(std::string name,
   else if (name=="MaxIter")     maxiter_  = atoi(content.c_str());
   else if (name=="NonAdaptive") adaptive_ = false;
   else if (name=="Adaptive")    adaptive_ = true;
-  else if (name=="PrimaryOnly") secondary_= false;
   else return 1;
   return 0;
 }
@@ -404,19 +426,6 @@ void Worldline::reInit() {
   }
 }
 
-
-void Worldline::xStore(size_t ind, double coord[8])
-{
-  x0_[ind] = coord[0];
-  x1_[ind] = coord[1];
-  x2_[ind] = coord[2];
-  x3_[ind] = coord[3];
-  x0dot_[ind] = coord[4];
-  x1dot_[ind] = coord[5];
-  x2dot_[ind] = coord[6];
-  x3dot_[ind] = coord[7];
-}
-
 void Worldline::xFill(double tlim) {
 
   //GYOTO_DEBUG<< "In xFill" << endl;
@@ -481,7 +490,14 @@ void Worldline::xFill(double tlim) {
       Error ( "***WARNING STOP: in Worldline.C unexplained stop !!!" );
     }
     // store particle's trajectory for later use
-    xStore(ind, coord);
+    x0_[ind] = coord[0];
+    x1_[ind] = coord[1];
+    x2_[ind] = coord[2];
+    x3_[ind] = coord[3];
+    x0dot_[ind] = coord[4];
+    x1dot_[ind] = coord[5];
+    x2dot_[ind] = coord[6];
+    x3dot_[ind] = coord[7];
 
     // Check stop condition and whether we need to expand the arrays
     if (dir==1) {
@@ -1059,9 +1075,6 @@ void Worldline::setTmin(double tmin) { tmin_ = tmin; }
 
 void Worldline::adaptive(bool mode) { adaptive_ = mode; }
 bool Worldline::adaptive() const { return adaptive_; }
-
-void Worldline::secondary(bool sec) { secondary_ = sec; }
-bool Worldline::secondary() const { return secondary_; }
 
 void Worldline::maxiter(size_t miter) { maxiter_ = miter; }
 size_t Worldline::maxiter() const { return maxiter_; }

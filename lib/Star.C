@@ -40,9 +40,8 @@ Star::Star() :
   UniformSphere("Star"),
   Worldline()
 {
-# ifdef GYOTO_DEBUG_ENABLED
-  GYOTO_DEBUG << "done." << endl;
-# endif
+  if (debug())
+    cerr << "DEBUG: in Star::Star()" << endl;
 }
 
 Star::Star(SmartPointer<Metric::Generic> met, double rad,

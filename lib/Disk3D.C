@@ -43,35 +43,29 @@ using namespace Gyoto::Astrobj;
 
 Disk3D::Disk3D() :
   Generic("Disk3D"), filename_(""),
-  emissquant_(NULL), velocity_(NULL), opacity_(NULL),
+  emissquant_(NULL), velocity_(NULL),
   dnu_(1.), nu0_(0), nnu_(0),
   dphi_(0.), phimin_(-DBL_MAX), nphi_(0), phimax_(DBL_MAX), repeat_phi_(1),
   dz_(0.), zmin_(-DBL_MAX), nz_(0), zmax_(DBL_MAX),
-  dr_(0.), rin_(-DBL_MAX), nr_(0), rout_(DBL_MAX),
-  zsym_(1)
+  dr_(0.), rin_(-DBL_MAX), nr_(0), rout_(DBL_MAX)
 {
   GYOTO_DEBUG << "Disk3D Construction" << endl;
 }
 
 Disk3D::Disk3D(const Disk3D& o) :
   Generic(o), filename_(o.filename_),
-  emissquant_(NULL), velocity_(NULL), opacity_(NULL),
+  emissquant_(NULL), velocity_(NULL),
   dnu_(o.dnu_), nu0_(o.nu0_), nnu_(o.nnu_),
   dphi_(o.dphi_), phimin_(o.phimin_),
   nphi_(o.nphi_), phimax_(o.phimax_), repeat_phi_(o.repeat_phi_),
   dz_(o.dz_), zmin_(o.zmin_), nz_(o.nz_), zmax_(o.zmax_),
-  dr_(o.dr_), rin_(o.rin_), nr_(o.nr_), rout_(o.rout_),
-  zsym_(o.zsym_)
+  dr_(o.dr_), rin_(o.rin_), nr_(o.nr_), rout_(o.rout_)
 {
   GYOTO_DEBUG << "Disk3D Copy" << endl;
   size_t ncells = 0;
   if (o.emissquant_) {
     emissquant_ = new double[ncells = nnu_ * nphi_ * nz_ * nr_];
     memcpy(emissquant_, o.emissquant_, ncells * sizeof(double));
-  }
-  if (o.opacity_) {
-    opacity_ = new double[ncells = nnu_ * nphi_ * nz_ * nr_];
-    memcpy(opacity_, o.opacity_, ncells * sizeof(double));
   }
   if (o.velocity_) {
     velocity_ = new double[ncells = 3 * nphi_ * nz_ * nr_];
@@ -89,10 +83,6 @@ Disk3D::~Disk3D() {
 
 void Disk3D::setEmissquant(double * pattern) {
   emissquant_ = pattern;
-}
-
-void Disk3D::setOpacity(double * pattern) {
-  opacity_ = pattern;
 }
 
 void Disk3D::setVelocity(double * pattern) {
@@ -142,27 +132,6 @@ void Disk3D::getEmissquantNaxes( size_t naxes[3] ) const
   naxes[0] = nnu_; naxes[1] = nphi_; naxes[2] = nz_; 
   naxes[3] = nr_;
 }
-
-void Disk3D::copyOpacity(double const *const opacity, size_t const naxes[4]) {
-  GYOTO_DEBUG << endl;
-  if (opacity_) {
-    GYOTO_DEBUG << "delete [] opacity_;" << endl;
-    delete [] opacity_; opacity_ = NULL;
-    flag_radtransf_=0;
-  }
-  if (opacity) {
-    if (nnu_ != naxes[0] || nphi_ != naxes[1] || nz_ != naxes[2] || nr_ != naxes[3])
-      throwError("Please set intensity before opacity. "
-		 "The two arrays must have the same dimensions.");
-    GYOTO_DEBUG << "allocate opacity_;" << endl;
-    opacity_ = new double[nnu_ * nphi_ * nz_ * nr_];
-    GYOTO_DEBUG << "opacity >> opacity_" << endl;
-    memcpy(opacity_, opacity, nnu_ * nphi_ * nz_ * nr_ * sizeof(double));
-    flag_radtransf_=1;
-  }
-}
-
-double const * Disk3D::getOpacity() const { return opacity_; }
 
 void Disk3D::copyVelocity(double const *const velocity, size_t const naxes[3]) {
   GYOTO_DEBUG << endl;
@@ -365,35 +334,6 @@ void Disk3D::fitsRead(string filename) {
   }
   GYOTO_DEBUG << " done." << endl;
 
-  ////// FIND OPTIONAL OPACITY HDU ///////
-
-  fits_movnam_hdu(fptr, ANY_HDU,
-		  const_cast<char*>("GYOTO Disk3D opacity"),
-		  0, &status);
-  if (status) {
-    if (status == BAD_HDU_NUM) {
-      GYOTO_INFO << "FITS file does not contain opacity extension" << endl;
-      // FITS file does not contain opacity information
-      status = 0;
-      if (opacity_) { delete [] opacity_; opacity_ = NULL; }
-    } else throwCfitsioError(status) ;
-  } else {
-    GYOTO_INFO << "FITS file contains opacity extension" << endl;
-    if (fits_get_img_size(fptr, 4, naxes, &status)) throwCfitsioError(status) ;
-    if (   size_t(naxes[0]) != nnu_
-	|| size_t(naxes[1]) != nphi_
-	|| size_t(naxes[2]) != nz_
-	|| size_t(naxes[3]) != nr_ )
-      throwError("Disk3D::readFile(): opacity array not conformable");
-    if (opacity_) { delete [] opacity_; opacity_ = NULL; }
-    opacity_ = new double[nnu_ * nphi_ * nz_ * nr_];
-    if (fits_read_subset(fptr, TDOUBLE, fpixel, naxes, inc, 
-			 0, opacity_,&anynul,&status)) {
-      delete [] opacity_; opacity_=NULL;
-      throwCfitsioError(status) ;
-    }
-  }
-
   ////// FIND MANDATORY VELOCITY HDU ///////
 
   fits_movnam_hdu(fptr, ANY_HDU,
@@ -524,17 +464,6 @@ void Disk3D::fitsWrite(string filename) {
 		 &CRPIX1, CNULL, &status);
   fits_write_pix(fptr, TDOUBLE, fpixel, nnu_*nphi_*nz_*nr_, emissquant_, &status);
   if (status) throwCfitsioError(status) ;
-
-  ////// SAVE OPTIONAL OPACITY HDU ///////
-  if (opacity_) {
-    GYOTO_DEBUG << "saving opacity_\n";
-    fits_create_img(fptr, DOUBLE_IMG, 4, naxes, &status);
-    fits_write_key(fptr, TSTRING, const_cast<char*>("EXTNAME"),
-		   const_cast<char*>("GYOTO Disk3D opacity"),
-		   CNULL, &status);
-    fits_write_pix(fptr, TDOUBLE, fpixel, nnu_*nphi_*nz_*nr_, opacity_, &status);
-    if (status) throwCfitsioError(status) ;
-  }
 
   ////// SAVE MANDATORY VELOCITY HDU ///////
   if (velocity_) {
@@ -673,17 +602,7 @@ int Disk3D::Impact(Photon *ph, size_t index,
   double t1=coord1[0], t2=coord2[0];
   double deltatmin=0.1, deltat12=fabs(t2-t1)*0.1;
   //Break the worldline in pieces of "size" deltat:
-  //double deltat= deltat12 < deltatmin ? deltat12 : deltatmin;
-  double deltat= deltatmin;
-  /*
-    IMPORTANT REMARK: putting deltat to either deltatmin or deltat12
-    leads to changing significantly the intensity of two nearby pixels
-    for a very optically thick object as then the final intensity
-    is typically 'some quantity'*deltat. Thus the value of deltat
-    should be the same for all pixels.
-    The value of deltatmin is thus a tricky point if one is interested
-    in a very precise radiative transfer.
-   */
+  double deltat= deltat12 < deltatmin ? deltat12 : deltatmin;
   double tcur=t2;
   double myrcur=coord2[1], thetacur=coord2[2], 
     zcur=myrcur*cos(thetacur),rcur=sqrt(myrcur*myrcur-zcur*zcur);
@@ -696,11 +615,8 @@ int Disk3D::Impact(Photon *ph, size_t index,
   while (tcur>t1+deltat 
 	 && 
 	 (
-	  (zsym_ && ((zmin_<0. && zcur<zmin_) || (zmin_>=0. && zcur<-zmax_)) )
-	  ||
-	  (!zsym_ && zcur<zmin_ )
-	  || 
-	  zcur>zmax_ || rcur>rout_ || rcur<rin_)
+	  ((zmin_<0. && zcur<zmin_) || (zmin_>=0. && zcur<-zmax_)) 
+	  || zcur>zmax_ || rcur>rout_ || rcur<rin_)
 	 ){
     //Condition: current point stays between t1 and t2, keep going 
     //until current point gets inside the grid
@@ -736,7 +652,7 @@ int Disk3D::Impact(Photon *ph, size_t index,
       tcur-=deltat;
     }else{//this is for last step of this loop
           //to integrate until t1
-      //deltat=tcur-t1; //No: see important remark above, don't change deltat
+      deltat=tcur-t1;
       tcur=t1;
     }
     coord_ph_hit[0]=tcur;
@@ -749,11 +665,8 @@ int Disk3D::Impact(Photon *ph, size_t index,
     zcur=myrcur*cos(thetacur);
     rcur=sqrt(myrcur*myrcur-zcur*zcur);
     if (
-	(zsym_ && ((zmin_<0. && zcur<zmin_) || (zmin_>=0. && zcur<-zmax_)) )
-	||
-	(!zsym_ && zcur<zmin_ )
-	|| 
-	zcur>zmax_ || rcur>rout_ || rcur<rin_
+	((zmin_<0. && zcur<zmin_) || (zmin_>=0. && zcur<-zmax_))
+	|| zcur>zmax_ || rcur>rout_ || rcur<rin_
 	){//then out of grid
       indisk=0;
     }else{ //Inside grid: compute emission
@@ -777,8 +690,7 @@ int Disk3D::Impact(Photon *ph, size_t index,
 int Disk3D::setParameter(std::string name,
 			 std::string content,
 			 std::string unit) {
-  if      (name == "File")              fitsRead( content );
-  if      (name == "NoZsymmetrizeGrid") zsym_ = 0;
+  if      (name == "File")          fitsRead( content );
   else return Generic::setParameter(name, content, unit);
   return 0;
 }

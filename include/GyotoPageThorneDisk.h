@@ -68,6 +68,7 @@ class Gyoto::Astrobj::PageThorneDisk
   friend class Gyoto::SmartPointer<Gyoto::Astrobj::PageThorneDisk>;
  private:
   double aa_; ///< Generic::gg_ spin parameter, monitored by tell()
+  double pseudoB_; ///< Generic::gg_ pc-parameter parameter, monitored by tell()
   double aa2_; ///< aa_<SUP>2</SUP>
   double x0_; ///< Value cached for bolometricEmission()
   double x1_; ///< Value cached for bolometricEmission()
@@ -97,7 +98,10 @@ class Gyoto::Astrobj::PageThorneDisk
   ///< Set metric, checking that it is either KerrBL or KerrKS
 
   virtual void updateSpin() ;
+  virtual void updateB() ;
   ///< Get spin from metric, which must be KerrBL or KerrKS
+  
+  static double integrand(double x, void * params) ;
 
  public:
   using ThinDisk::emission;
@@ -116,6 +120,8 @@ class Gyoto::Astrobj::PageThorneDisk
 virtual double bolometricEmission(double nuem, double dsem,
 				    double c_obj[8]) const;
 
+
+				    
   /**
    * \brief 
    * processHitQuantities fills the requested data in Impact. For

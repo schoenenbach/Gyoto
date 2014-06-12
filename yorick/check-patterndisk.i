@@ -20,6 +20,8 @@
 #include "gyoto.i"
 #include "gyoto_std.i"
 
+if (get_env("GYOTO_CHECK_NODISPLAY")) nodisplay = 1;
+
 opacity=array(double, 1, 2, 10);
 opacity(,1,1::2)=100.;
 opacity(,2,2::2)=100.;
@@ -86,10 +88,12 @@ write, format="%s", "Performing raytracing...\n";
 im = sc();
 write, format="%s\n", "done.";
 
-write, format="%s", "Displaying image...";
-window, style="nobox.gs";
-pli, im;
-write, format="%s\n", " done.";
-pause, 1000;
-if (batch()) winkill;
+if (!nodisplay) {
+  write, format="%s", "Displaying image...";
+  window, style="nobox.gs";
+  pli, im;
+  write, format="%s\n", " done.";
+  pause, 1000;
+  if (batch()) winkill;
+ }
 

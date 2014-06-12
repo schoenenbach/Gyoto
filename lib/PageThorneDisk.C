@@ -37,6 +37,8 @@
 #include <cstring>
 #include <time.h> 
 
+#include <gsl/gsl_integration.h>
+
 using namespace std;
 using namespace Gyoto;
 using namespace Gyoto::Astrobj;
@@ -90,8 +92,76 @@ void PageThorneDisk::updateSpin() {
   x1_ = 2.*cos(acosaao3 - M_PI/3.);
   x2_ = 2.*cos(acosaao3 + M_PI/3.); 
   x3_ = -2.*cos(acosaao3);
-
   if (rin_==0.) rin_=(3.+z2-sqrt((3.-z1)*(3.+z1+2.*z2)));
+  pseudoB_ = static_cast<SmartPointer<Metric::KerrBL> >(gg_) -> getPseudoB();
+  if (pseudoB_ != 0.0)
+  {
+   if (aa_ == 0.0) 
+   {
+     rin_= 5.24392;
+     x0_ = sqrt(rin_);
+   }
+   else if (aa_ == 0.1) 
+   {
+     rin_= 4.82365;
+     x0_ = sqrt(rin_);
+   }
+   else if (aa_ == 0.2) 
+   {
+     rin_= 4.35976;
+     x0_ = sqrt(rin_);
+   }
+   else if (aa_ == 0.3) 
+   {
+     rin_= 3.81529;
+     x0_ = sqrt(rin_);
+   }
+   else if (aa_ == 0.4) 
+   {
+     rin_= 2.99911;
+     x0_ = sqrt(rin_);
+   }
+   else
+   {
+    rin_= 1.334;
+     x0_ = sqrt(rin_);
+   }
+//    else if (aa_ == 0.5) 
+//    {
+//      rin_= 1.43487;
+//      x0_ = sqrt(rin_);
+//    }
+//    else if (aa_ == 0.6) 
+//    {
+//      rin_= 1.46850;
+//      x0_ = sqrt(rin_);
+//    }
+//    else if (aa_ == 0.7) 
+//    {
+//      rin_= 1.502229;
+//      x0_ = sqrt(rin_);
+//    }
+//    else if (aa_ == 0.8) 
+//    {
+//      rin_= 1.53476;
+//      x0_ = sqrt(rin_);
+//    }
+//    else if (aa_ == 0.9) 
+//    {
+//      rin_= 1.56514;
+//      x0_ = sqrt(rin_);
+//    }
+//    else if (aa_ == 1.0) 
+//    {
+//      rin_= 1.59268;
+//      x0_ = sqrt(rin_);
+//    }
+  }
+}
+
+void PageThorneDisk::updateB() {
+  pseudoB_ = static_cast<SmartPointer<Metric::KerrBL> >(gg_) -> getPseudoB();
+//  if (pseudoB_ != 0)  x0_ = 1.34;
 }
 
 void PageThorneDisk::setMetric(SmartPointer<Metric::Generic> gg) {
@@ -102,6 +172,7 @@ void PageThorneDisk::setMetric(SmartPointer<Metric::Generic> gg) {
       ("PageThorneDisk::setMetric(): metric must be KerrBL or KerrKS");
   ThinDisk::setMetric(gg);
   updateSpin();
+  updateB();
   gg->hook(this);
 }
 
@@ -137,6 +208,26 @@ Quantity_t PageThorneDisk::getDefaultQuantities() {
   return GYOTO_QUANTITY_USER4;
 }
 
+// Create the integrand for the Flux integral. This is not the complete function f of 
+// Page and Thorne but only the integrand in the integral in f: (E-omega*L)d/dr(L).
+double PageThorneDisk::integrand (double r, void * params) {
+  // receive two parameters, spin a and pseudo-complex B
+  double a = *((double *) params);
+  double B = *((double *) params +1);
+//   cout << "Spin a = "<< a << " --- B =" << B << endl;
+  // Now the integrand  CForm of Mathematica output
+  double f = (6*pow(a,3)*pow(r,1.5)*sqrt(1/(-3*B + 4*pow(r,2)))*(15*pow(B,2) - 32*B*pow(r,2) + 16*pow(r,4)) + 
+     2*pow(r,3)*(15*pow(B,2) - 8*(-6 + r)*pow(r,4) - 2*B*pow(r,2)*(20 + 3*r)) - 
+     4*pow(a,2)*(18*pow(B,2)*r + 4*(8 - 3*r)*pow(r,5) + 3*B*pow(r,3)*(-16 + 5*r)) + 
+     a*(18*pow(B,2)*(10 - 7*r)*pow(r,2.5)*sqrt(1/(-3*B + 4*pow(r,2))) + 96*(2 - 3*r)*pow(r,6.5)*sqrt(1/(-3*B + 4*pow(r,2))) + 
+        16*B*pow(r,4.5)*(-19 + 24*r)*sqrt(1/(-3*B + 4*pow(r,2))) - 45*pow(B,3)*sqrt(r/(-3*B + 4*pow(r,2)))))/
+   (2.*(3*B - 4*pow(r,2))*(a + 2*sqrt(pow(r,5)/(-3*B + 4*pow(r,2))))*
+     (4*pow(r,4)*(-3 + r + 4*a*sqrt(r/(-3*B + 4*pow(r,2)))) + B*(5*pow(r,2) - 12*a*sqrt(pow(r,5)/(-3*B + 4*pow(r,2))))));
+  return f;
+}
+
+
+
 double PageThorneDisk::bolometricEmission(double nuem, double dsem,
 				    double coord_obj[8]) const{
   //See Page & Thorne 74 Eqs. 11b, 14, 15. This is F(r).
@@ -156,11 +247,38 @@ double PageThorneDisk::bolometricEmission(double nuem, double dsem,
     throwError("Unknown coordinate system kind");
     xx=0;
   }
+/*  
+//*+++++++++++++++++++++++++++++++++++++++++++++++++++  
+  // Ein pointer namens "w" des Typs gls_integration_workspace
+// wird erzeugt und auf den Wert gsl_integration_workspace_alloc (1000) gesetzt
+  gsl_integration_workspace * w 
+    = gsl_integration_workspace_alloc (1000);
+  
+  double result, error;  
+  double alpha = 1.0, expected = 4.0;
+
+// Erzeugung eines Objekts(?) "F" des Types gsl_function
+  gsl_function F;
+// F.function wird auf die Adresse von f gesetzt.  
+  F.function = &PageThorneDisk::f;
+  F.params = &alpha;
+
+  gsl_integration_qags (&F, 0, 1, 0, 1e-7, 1000,
+                        w, &result, &error); 
+  printf ("result          = % .18f\n", result);
+  printf ("exact result    = % .18f\n", expected);
+  printf ("estimated error = % .18f\n", error);
+  printf ("actual error    = % .18f\n", result - expected);
+  printf ("intervals =  %d\n", w->size);
+
+  gsl_integration_workspace_free (w);
+//*+++++++++++++++++++++++++++++++++++++++++++++++++++    
+*/  
   
   // the above formula assume M=1 (x=sqrt(r/M)=sqrt(r))
   double x2=xx*xx;
   
-  double ff=
+/*  double ff=
     3./(2.)*1./(xx*xx*(xx*xx*xx-3.*xx+2.*aa_))
     *( 
       xx-x0_-3./2.*aa_*log(xx/x0_)
@@ -174,6 +292,8 @@ double PageThorneDisk::bolometricEmission(double nuem, double dsem,
   // f of Page&Thorne, in units M=1
   
   double Iem=ff/(4.*M_PI*M_PI*x2);
+  */
+  
   /*
     with Mdot=1 (NB: Mdot is a constant)
     Assuming isotropic emission: 
@@ -183,10 +303,118 @@ double PageThorneDisk::bolometricEmission(double nuem, double dsem,
     NBB: the cgs value of I is c^6/G^2*Mdot/M^2 * Iem, it can be
     recovered from the dimensionless Iem a posteriori if needed
   */
+  /*
+   * TS: This stays the same. The determinant of the metric
+   * is unaffected by the pc-parameter B and thus the connection
+   * between intensity and flux stays unchanged.
+   */
+
+  // TS: Modification of ff. Need numerical integration here.  
+  // Initializing a gsl integrator
+  gsl_integration_workspace * w 
+    = gsl_integration_workspace_alloc (1000);
+  
+  double result, result2, error;
+  // Parameters to store a and B  
+  double myPars[] = {aa_, pseudoB_};
+  double *cur_par = myPars;
+  
+  // prefactor of the Integral (E-omega*L)^(-2)*d/dr(omega)
+  double B= myPars[1];
+  double r=x2;
+  double prefactor =
+  (-3*pow(r,1.5)*(-5*B + 4*pow(r,2))*sqrt(1/(-3*B + 4*pow(r,2))))/
+   (4*pow(r,4)*(-3 + r + 4*aa_*sqrt(r/(-3*B + 4*pow(r,2)))) + B*(5*pow(r,2) - 12*aa_*sqrt(pow(r,5)/(-3*B + 4*pow(r,2)))));
+  
+//   if (prefactor > 0) cout << "Prefactor " << prefactor << " and the corresponding r: " << r << "\n";
+  // create the gsl_function
+  gsl_function F; 
+  F.function = &PageThorneDisk::integrand;
+  F.params = cur_par;  
+  
+  // Adapt the ISCO, if B!=0
+  // This is ugly, as there is no closed form for the ISCO
+  //Sqrt of ISCO = rms
+  // Terms are rounded up to avoid singularities 
+  // isco_classic = [6.0, 5.6693, 5.32944, 4.97862, 4.61434, 4.233, 3.82907, 3.39313, 
+  //              2.90664, 2.32088, 1.0]
+  double rms = x0_*x0_;
+  /*   if (aa_ == 0.0) 
+   {
+     rms= 6.0;
+   }
+   else if (aa_ == 0.1) 
+   {
+     rms= 5.6693;
+   }
+   else if (aa_ == 0.2) 
+   {
+     rms= 5.32944;
+   }
+   else if (aa_ == 0.3) 
+   {
+     rms= 4.97862;
+   }
+   else if (aa_ == 0.4) 
+   {
+     rms= 4.61434;
+   }
+   else if (aa_ == 0.5) 
+   {
+     rms= 4.233;
+   }
+   else if (aa_ == 0.6) 
+   {
+     rms= 3.82907;
+   }
+   else if (aa_ == 0.7) 
+   {
+     rms= 3.39313;
+   }
+   else if (aa_ == 0.8) 
+   {
+     rms= 2.90664;
+   }
+   else if (aa_ == 0.9) 
+   {
+     rms= 2.32088;
+   }
+   else
+   {
+     rms= 1.0;     
+   }
+   */
+
+   //TS: Adapt the inner radius of the integration
+   // the radius is the radius, where the angular frequency has its maximum
+   // really depends on the value of B, so be careful here. the value here
+//    is for B= 64/27 m^3
+   if (aa_ >= 0.5 && pseudoB_ != 0.0) 
+   {
+     rms= 1.72132593165;
+   }
+
+  // Do the integration
+  // rms=2.05743  --- r= 32.8107
+//   cout << "rms= " << rms << " --- r= "<< x2 << endl;
+  gsl_integration_qags (&F, rms, x2, 0, 1e-7, 1000,
+                        w, &result, &error); 
+  
+  gsl_integration_workspace_free (w);
+  // TS 20. Januar. Fluss wird negativ....
+//   result2 = - prefactor * result;
+  result2 = -prefactor * result;
+  double Iem= result2/(4.*M_PI*M_PI*x2);
+// TS: end  
   
   if (flag_radtransf_) Iem *= dsem;
   GYOTO_DEBUG_EXPR(Iem);
+//       cout << "Prefactor=" << prefactor << "\n";
+//     cout << "Integrand=" << F.function << "\n";
   
+//   if (Iem < 0){
+//     cout << "Iem=" << Iem << "\n";
+//   }
   return Iem;
   
 }
@@ -217,6 +445,20 @@ void PageThorneDisk::processHitQuantities(Photon* ph, double* coord_ph_hit,
   if (uniflux_) ggred=1.;
   double dsem = dlambda*ggredm1; // *1.
   double inc =0.;
+//   cout << "data requested. " 
+// 	      << ", ggredm1=" << ggredm1
+// 	      << ", ggred=" << ggred
+// 	      << endl;
+// 	      
+//   cout << "Koordinaten, 4er Geschwindigkeit, 4er Impuls der Photonen" << endl;
+//   cout << "Koordinaten: " << "t: "<< coord_ph_hit[0] << " r: "<< coord_ph_hit[1] 
+//        << " theta: "<< coord_ph_hit[2] << " phi: "  << coord_ph_hit[3] << endl;
+//   cout << "4er Geschwindigkeit: " << "ut: "<< coord_obj_hit[4] << " ur: "<< coord_obj_hit[5] 
+//        << " utheta: "<< coord_obj_hit[6] << " uphi: "  << coord_obj_hit[7] << endl;
+//   cout << "4er Impuls: " << "pt: "<< coord_ph_hit[4] << " pr: "<< coord_ph_hit[5] 
+//        << " ptheta: "<< coord_ph_hit[6] << " pphi: "  << coord_ph_hit[7] << endl;
+       
+
   if (data) {
 #if GYOTO_DEBUG_ENABLED
   GYOTO_DEBUG << "data requested. " 
@@ -284,6 +526,7 @@ void PageThorneDisk::processHitQuantities(Photon* ph, double* coord_ph_hit,
 
 void PageThorneDisk::tell(Hook::Teller* msg) {
   updateSpin();
+  updateB();
 }
 
 int PageThorneDisk::setParameter(std::string name,

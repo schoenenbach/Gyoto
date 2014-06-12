@@ -20,7 +20,6 @@
 #include "../ygyoto.h"
 #include "yapi.h"
 #include <GyotoStar.h>
-#include <GyotoStarTrace.h>
 #ifdef GYOTO_USE_XERCES
 #include <GyotoFactory.h>
 #endif
@@ -42,15 +41,13 @@ void ygyoto_Star_eval(SmartPointer<Astrobj::Generic>* ao_, int argc) {
   static char const * knames[]={
     "unit",
     "radius", "metric", "initcoord", "spectrum", "opacity", "delta", "adaptive",
-    "deltamaxoverradius", "deltamaxoverdistance",
     "maxiter", "reset", "xfill",
     YGYOTO_ASTROBJ_GENERIC_KW,
     "get_skypos", "get_txyz", "get_prime", "get_coord", "get_cartesian",
-    "startrace",
     0
   };
 
-  YGYOTO_WORKER_INIT(Astrobj, Star, knames, YGYOTO_ASTROBJ_GENERIC_KW_N+19);
+  YGYOTO_WORKER_INIT(Astrobj, Star, knames, YGYOTO_ASTROBJ_GENERIC_KW_N+16);
 
   YGYOTO_WORKER_SET_UNIT;
   YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Radius); 
@@ -104,8 +101,6 @@ void ygyoto_Star_eval(SmartPointer<Astrobj::Generic>* ao_, int argc) {
 #undef yget_Opacity
   YGYOTO_WORKER_GETSET_DOUBLE_UNIT(Delta);
   YGYOTO_WORKER_GETSET_LONG2(adaptive);
-  YGYOTO_WORKER_GETSET_DOUBLE2(deltaMaxOverRadius);
-  YGYOTO_WORKER_GETSET_DOUBLE2(deltaMaxOverDistance);
   YGYOTO_WORKER_GETSET_LONG2( maxiter );
   YGYOTO_WORKER_RUN( reset() );
   YGYOTO_WORKER_RUN( xFill(ygets_d(iarg+*rvset)) );
@@ -218,17 +213,6 @@ void ygyoto_Star_eval(SmartPointer<Astrobj::Generic>* ao_, int argc) {
 			  data,         data +   nel, data + 2*nel,
 			  data + 3*nel, data + 4*nel, data + 5*nel);
     
-  }
-
-  /* STARTRACE */
-  if ((iarg=kiargs[++k])>=0) {
-    if (*rvset)  y_error(rmsg);
-    if (*paUsed) y_error(pmsg);
-    double tmin=ygets_d(iarg);
-    double tmax=ygets_d(piargs[0]);
-    ++(*rvset);
-    ++(*paUsed);
-     *ypush_Astrobj() = new StarTrace(**ao, tmin, tmax);
   }
   
   

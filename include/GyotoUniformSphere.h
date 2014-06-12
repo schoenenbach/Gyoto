@@ -76,12 +76,6 @@ namespace Gyoto{
  *     <Radius> value </Radius>
  *     <Spectrum kind="..."> parameters for this spectrum kind </Spectrum>
  *     <Opacity kind="..."> parameters for this spectrum kind </Opacity>
- *
- *     The following are numerical parameters mostly usefull when the
- *     sphere is far from the compact object. Larger values speed up
- *     computation but may miss the sphere.
- *     <DeltaMaxOverRadius> 0.1 </DeltaMaxOverRadius>
- *     <DeltaMaxOverDistance> 0.1 </DeltaMaxOverDistance>
  *  \endcode
  * setGenericParameters() also takes care of calling
  * setParameter().
@@ -94,13 +88,8 @@ class Gyoto::Astrobj::UniformSphere :
   // -----
  protected:
   double radius_ ; ///< sphere radius [geometrical units]
-  int isotropic_; ///< if 1, then emission just returns 1
-  double alpha_; ///< such that nu*I_nu = nu^alpha_; note that Xray photon
-              ///< index Gamma is: alpha_ = 2-Gamma
   SmartPointer<Spectrum::Generic> spectrum_; ///< sphere emission law
   SmartPointer<Spectrum::Generic> opacity_; ///< if optically thin, opacity law
-  double dltmor_; ///< see deltaMax(double*)
-  double dltmod_; ///< see deltaMax(double*)
 
   // Constructors - Destructor
   // -------------------------
@@ -146,12 +135,6 @@ class Gyoto::Astrobj::UniformSphere :
   double getRadius(std::string) const ; ///< Get radius_ in specified unit
   void   setRadius(double, std::string); ///< Set radius_ in specified unit
 
-  double deltaMaxOverRadius(); ///< Get dltmor_
-  void   deltaMaxOverRadius(double f); ///< Set dltmor_
-
-  double deltaMaxOverDistance(); ///< Get dltmod_
-  void   deltaMaxOverDistance(double f); ///< Set dltmod_
-
  public:
   virtual int setParameter(std::string name,
 			   std::string content,
@@ -182,13 +165,6 @@ class Gyoto::Astrobj::UniformSphere :
   virtual double operator()(double const coord[4]) ;
   ///< Square distance to the center of the sphere
 
-  ///< Ensure integration does not miss the object
-  /**
-   * \parame[in] coord current photon position
-   * \return max( dltmor_*radius_, dltmxod_*operator()(double coord[]) )
-   */
-  virtual double deltaMax(double*);
-
  protected:
   /**
    * If the coordinate system of the Metric object is spherical, use a
@@ -212,10 +188,7 @@ class Gyoto::Astrobj::UniformSphere :
 				   double c_ph[8], double c_obj[8]=NULL) const;
   virtual double transmission(double nuem, double dsem, double*) const ;
   ///< Transmission is determined by opacity_
-  void processHitQuantities(Photon* ph, double* coord_ph_hit,
-			    double* coord_obj_hit, double dt,
-			    Properties* data) const;
-    
+
 };
 
 

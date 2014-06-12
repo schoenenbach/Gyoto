@@ -43,12 +43,12 @@ Worldline::IntegState::IntegState(Worldline * line,
 }
 
 
-int Worldline::IntegState::nextStep(double coord[8], double h1max) {
+int Worldline::IntegState::nextStep(double coord[8]) {
   int j;
   double h1;
 
   if (adaptive_){
-    if (gg_ -> myrk4_adaptive(line_,coord_,norm_,normref_,coord,delta_,h1, h1max)) return 1;
+    if (gg_ -> myrk4_adaptive(line_,coord_,norm_,normref_,coord,delta_,h1)) return 1;
     delta_ = h1;
   }else{
     if (gg_ -> myrk4(line_,coord_,delta_,coord)) return 1; 
@@ -68,8 +68,7 @@ int Worldline::IntegState::nextStep(double coord[8], double h1max) {
     GYOTO_SEVERE << 
       "in Worldline::IntegState.C: "
       "norm is drifting"
-      " - with norm,normref= " << norm_ << " " 
-		 << normref_ << " -- x1,x2,x3= " << coord[1] 
+      " - with norm/x0dot**2,x1,x2,x3= " << norm_ << " " << coord[1] 
 		 << " " << coord[2] << " " << coord[3] << " " << endl;
   }
 
